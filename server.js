@@ -1,20 +1,26 @@
 const express = require('express');
 const http = require('http');
 const socketIO = require('socket.io');
-const path = require('path');
 
 const app = express();
 const server = http.createServer(app);
 const io = socketIO(server);
- 
+
 // Serve the index.html file for the root URL
 app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, 'index.html'));
+  res.sendFile(__dirname + '/index.html');
 });
 
 // Handle Socket.IO connections
 io.on('connection', (socket) => {
   console.log('A user connected');
+
+  // Listen for chat messages from the client
+  socket.on('chat message', (msg) => {
+    io.emit('chat message', msg);    
+  });
+
+  // Handle user disconnection
   socket.on('disconnect', () => {
     console.log('A user disconnected');
   });

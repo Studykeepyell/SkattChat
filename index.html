@@ -8,5 +8,25 @@
 <body>
   <h1>SkyChat</h1>
   <p>YYYY</p>
+  
 </body>
+<script src="/socket.io/socket.io.js"></script>
+  <script>
+  // Connect to the server using Socket.IO
+  const socket = io();
+
+  // Listen for the 'connect' event to confirm the connection
+  socket.on('connect', () => {
+    console.log('Connected to the server');
+  });
+
+  // Handle receiving chat messages
+  socket.on('chat message', function(msg) {
+    const messages = document.querySelector('#messages');
+    const newMessage = document.createElement('li');
+    newMessage.textContent = msg;
+    messages.appendChild(newMessage);
+  });
+</script>
+
 </html>
