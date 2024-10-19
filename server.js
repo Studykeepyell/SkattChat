@@ -6,6 +6,9 @@ const app = express();
 const server = http.createServer(app);
 const io = socketIO(server);
 
+// Serve static files (e.g., index.html, client.js, styles.css) from the current directory
+app.use(express.static(__dirname));
+
 // Serve the index.html file for the root URL
 app.get('/', (req, res) => {
   res.sendFile(__dirname + '/index.html');
