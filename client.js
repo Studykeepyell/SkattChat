@@ -1,25 +1,67 @@
+document.addEventListener('DOMContentLoaded', function() {
+  const urlParams = new URLSearchParams(window.location.search);
+  let username = urlParams.get('username') || localStorage.getItem('username');
 
-// Connect to the server using Socket.IO
-const socket = io();
+  // Validate the username
+  if (!username || !username.trim()) {
+      alert('Username is required to join the chat');
+      window.location.href = '/'; // Redirect to login page if username is invalid
+      return;
+  }
 
-// Listen for form submission to send the message to the server
-document.querySelector('#chat-form').addEventListener('submit', function(e) {
-  e.preventDefault(); // Prevent form from reloading the page
+  // Save the username to localStorage for future reconnections
+  localStorage.setItem('username', username);
 
-  const input = document.querySelector('#message-input');
-  const message = input.value;
+  // Display a welcome message
+  const welcomeMessageElement = document.getElementById('welcomeMessage');
+  if (welcomeMessageElement) {
+      welcomeMessageElement.textContent = `Welcome, ${username}!`;
+  } else {
+      console.warn('Welcome message element not found.');
+  }
 
-  // Emit the chat message to the server
-  socket.emit('chat message', message);
+  // Connect to the Socket.IO server
+  const socket = io();
 
-  // Clear the input field after sending
-  input.value = '';
-});
+  // Send the username to the server
+  socket.emit('join', username);
 
-// Listen for chat messages from the server
-socket.on('chat message', function(msg) {
-  const messages = document.querySelector('#messages');
-  const newMessage = document.createElement('li');
-  newMessage.textContent = msg;
-  messages.appendChild(newMessage);
+  // Handle the form submission to send a message
+  const messageForm = document.getElementById('chat-form');
+  if (messageForm) {
+      messageForm.addEventListener('submit', function(event) {
+          event.preventDefault(); // Prevent the form from submitting normally
+
+          // Get the message input value
+          const messageInput = document.getElementById('messageForm');
+          const message = messageInput ? messageInput.value : '';
+
+          // Send the message to the server if it's not empty
+          if (message.trim()) {
+              socket.emit('chat message', { username, message });
+
+              // Clear the input field
+              messageInput.value = '';
+          }
+      });
+  } else {
+      console.warn('Message form element not found.');
+  }
+
+  // Listen for chat messages from the server
+  socket.on('chat message', function(data) {
+      const messagesList = document.getElementById('messages');
+      if (messagesList) {
+          const item = document.createElement('li');
+          item.textContent = `${data.username}: ${data.message}`;
+          messagesList.appendChild(item);
+      } else {
+          console.warn('Messages list element not found.');
+      }
+  });
+
+  // Handle socket disconnection
+  socket.on('disconnect', () => {
+      console.log('You have been disconnected');
+  });
 });
