@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Chat Room</title>
+  <link rel="stylesheet" href="styles.css">
+  <script src="/socket.io/socket.io.js"></script>
+</head>
+<body>
+  <ul id="welcomeMessage"></ul>
+
+  <form id="chat-form">
+    <input id="messageForm" autocomplete="off" placeholder="Type a message" />
+    <button type="submit">Send</button>
+  </form>
+
+  <button id="deleteAllMessages" style="margin-top: 10px;">Delete All Messages</button>
+
+  <div class="message-container" id="message-container">
+    <div class="character-picture" id="character-picture"></div>
+    <div class="buble-wrapper"id= "buble-wrapper">
+        <div class="speech-bubble"id="speech-bubble">
+            <div id="messages" class="messages">[username]: [message content]</div>
+        </div>
+    </div>
+    <div class="lower-tex">[Formatted timestamp]</div>
+</div>
+
+
+  <script src="client.js"></script>
+</body>
+</html>
