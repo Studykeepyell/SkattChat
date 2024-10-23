@@ -11,6 +11,8 @@ const server = http.createServer(app);
 const io = socketIO(server);
 const User = require('./models/User');
 const Message = require('./models/Message');
+require('dotenv').config();
+
 
 
 // Middleware to parse request bodies
