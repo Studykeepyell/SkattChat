@@ -4,7 +4,6 @@ const socketIO = require('socket.io');
 const bodyParser = require('body-parser');
 const mongoose = require('mongoose');
 const path = require('path');
-const bcrypt = require('bcrypt');
 
 const app = express();
 const server = http.createServer(app);
@@ -125,7 +124,6 @@ socket.on('chat message', (data) => {
             console.log('Error saving message:', err);
         });
 });
-
 
 // Handle the 'clear messages' event
 socket.on('clear messages', () => {
