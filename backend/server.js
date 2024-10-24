@@ -141,7 +141,7 @@ io.on('connection', (socket) => {
     });
 });
 
-// 404 handler
+// Place the 404 handler at the end, after all routes
 app.use((req, res) => {
     res.status(404).send('Page not found');
 });
