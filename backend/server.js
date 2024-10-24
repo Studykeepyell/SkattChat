@@ -31,10 +31,6 @@ mongoose.connect(mongoURI, {
 .then(() => console.log('MongoDB Atlas connected'))
 .catch(err => console.log('MongoDB connection error:', err));
 
-// Serve the login and chat HTML files
-app.get('/login.js', (req, res) => {
-    res.sendFile(path.join(__dirname, '../public', 'login.js'));
-});
 
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, '../public', 'index.html'));

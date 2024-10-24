@@ -4,6 +4,7 @@ applications:
       phases:
         preBuild:
           commands:
+            - nvm install 20
             - npm install
         build:
           commands:
@@ -15,4 +16,3 @@ applications:
       cache:
         paths:
           - node_modules/**/*
-
