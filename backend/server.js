@@ -15,6 +15,11 @@ const Message = require('../backend/models/Message');
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
+app.use((req, res, next) => {
+    console.log(`Serving request for: ${req.url}`);
+    next();
+});
+
 // Serve static files from the 'public' directory
 app.use(express.static(path.join(__dirname, '../public')));
 
@@ -27,6 +32,10 @@ mongoose.connect(mongoURI, {
 .catch(err => console.log('MongoDB connection error:', err));
 
 // Serve the login and chat HTML files
+app.get('/login.js', (req, res) => {
+    res.sendFile(path.join(__dirname, '../public', 'login.js'));
+});
+
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, '../public', 'index.html'));
 });
