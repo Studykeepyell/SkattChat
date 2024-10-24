@@ -33,6 +33,12 @@ app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
+app.get('*', (req, res) => {
+    if (!req.path.includes('.')) {
+      res.sendFile(path.join(__dirname, 'public', 'index.html'));
+    }
+  });
+  
 app.get('/chat.html', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'chat.html'));
 });
