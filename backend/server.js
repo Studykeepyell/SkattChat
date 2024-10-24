@@ -18,7 +18,7 @@ const Message = require('../backend/models/Message');
 app.use(bodyParser.urlencoded({ extended: true }));
 
 // Serve static files from the 'public' directory
-app.use(express.static(path.join(__dirname, 'public')));
+app.use(express.static(path.join(__dirname, '../public')));
 
 // MongoDB connection
 const mongoURI = process.env.MONGO_URI || 'fallback-mongo-connection-string';
@@ -30,21 +30,17 @@ mongoose.connect(mongoURI, {
 
 // Serve the login and chat HTML files
 app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'index.html'));
+    res.sendFile(path.join(__dirname, '../public', 'index.html'));
 });
 
-app.get('*', (req, res) => {
-    if (!req.path.includes('.')) {
-      res.sendFile(path.join(__dirname, 'public', 'index.html'));
-    }
-  });
+
   
 app.get('/chat.html', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'chat.html'));
+    res.sendFile(path.join(__dirname, '../public', 'chat.html'));
 });
 
 app.get('/register', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'register.html'));
+    res.sendFile(path.join(__dirname, '../public', 'register.html'));
 });
 
 app.use((req, res, next) => {
