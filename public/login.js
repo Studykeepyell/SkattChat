@@ -12,7 +12,6 @@ document.getElementById('login-form').addEventListener('submit', function(event)
 });
 
 function validateInput(username, password) {
-    // Basic validation: Check if username and password are not empty
     return username !== '' && password !== '';
 }
 
@@ -23,16 +22,16 @@ function login(username, password) {
     xhr.onload = function() {
         if (xhr.status === 200) {
             try {
+                console.log('Response received:', xhr.responseText); // Log the response
                 const response = JSON.parse(xhr.responseText);
                 if (response.success) {
-                    // Save username to localStorage
                     localStorage.setItem('username', username);
-                    // Redirect to the chat page with the username in the URL
                     window.location.href = '/chat.html?username=' + encodeURIComponent(username);
                 } else {
                     alert(response.message || 'Invalid username or password');
                 }
             } catch (e) {
+                console.error('Failed to parse JSON:', xhr.responseText); // Added logging
                 alert('An error occurred while processing the response');
             }
         } else {

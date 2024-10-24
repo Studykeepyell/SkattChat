@@ -3,6 +3,7 @@ const http = require('http');
 const socketIO = require('socket.io');
 const mongoose = require('mongoose');
 const path = require('path');
+const cors = require('cors'); // Added CORS support
 require('dotenv').config();
 
 const app = express();
@@ -10,6 +11,9 @@ const server = http.createServer(app);
 const io = socketIO(server);
 const User = require('../backend/models/User');
 const Message = require('../backend/models/Message');
+
+// Enable CORS for all requests
+app.use(cors());
 
 // Middleware to parse JSON and URL-encoded data
 app.use(express.json());
@@ -31,7 +35,6 @@ mongoose.connect(mongoURI, {
 .then(() => console.log('MongoDB Atlas connected'))
 .catch(err => console.log('MongoDB connection error:', err));
 
-
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, '../public', 'index.html'));
 });
@@ -47,6 +50,7 @@ app.get('/register', (req, res) => {
 // POST route for handling login requests
 app.post('/index', async (req, res) => {
     const { username, password } = req.body;
+    console.log('Login request received:', { username, password }); // Added logging
 
     try {
         // Find the user in the database
@@ -64,34 +68,7 @@ app.post('/index', async (req, res) => {
     }
 });
 
-// Registration route
-app.post('/register', async (req, res) => {
-    const { username, password } = req.body;
-
-    try {
-        // Validate the input
-        if (!username || !password) {
-            return res.json({ success: false, message: 'Username and password are required' });
-        }
-
-        // Check if the user already exists
-        const existingUser = await User.findOne({ username: username });
-        if (existingUser) {
-            return res.json({ success: false, message: 'Username already taken' });
-        }
-
-        // Create a new user
-        const newUser = new User({ username, password });
-        await newUser.save();
-
-        res.json({ success: true, message: 'User registered successfully' });
-    } catch (err) {
-        console.log('Error during registration:', err);
-        res.json({ success: false, message: 'An error occurred during registration' });
-    }
-});
-
-// Socket.IO handling
+// Socket.IO handling for real-time chat functionality
 io.on('connection', (socket) => {
     console.log('A user connected');
 
@@ -146,7 +123,7 @@ io.on('connection', (socket) => {
     });
 });
 
-// Place the 404 handler at the end, after all routes
+// 404 handler
 app.use((req, res) => {
     res.status(404).send('Page not found');
 });
