@@ -13,11 +13,7 @@ document.getElementById('login-form').addEventListener('submit', function(event)
 
 function validateInput(username, password) {
     // Basic validation: Check if username and password are not empty
-    if (!username || !password) {
-        return false;
-    }
-    // Add additional checks if needed (e.g., regex for format)
-    return true;
+    return username !== '' && password !== '';
 }
 
 function login(username, password) {

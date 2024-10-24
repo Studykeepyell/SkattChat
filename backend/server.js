@@ -1,21 +1,19 @@
 const express = require('express');
 const http = require('http');
 const socketIO = require('socket.io');
-const bodyParser = require('body-parser');
 const mongoose = require('mongoose');
 const path = require('path');
 require('dotenv').config();
+
 const app = express();
 const server = http.createServer(app);
 const io = socketIO(server);
 const User = require('../backend/models/User');
 const Message = require('../backend/models/Message');
 
-
-
-
-// Middleware to parse request bodies
-app.use(bodyParser.urlencoded({ extended: true }));
+// Middleware to parse JSON and URL-encoded data
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
 // Serve static files from the 'public' directory
 app.use(express.static(path.join(__dirname, '../public')));
@@ -33,8 +31,6 @@ app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, '../public', 'index.html'));
 });
 
-
-  
 app.get('/chat.html', (req, res) => {
     res.sendFile(path.join(__dirname, '../public', 'chat.html'));
 });
@@ -43,11 +39,7 @@ app.get('/register', (req, res) => {
     res.sendFile(path.join(__dirname, '../public', 'register.html'));
 });
 
-app.use((req, res, next) => {
-    res.status(404).send('Page not found');
-});
-
-// Login route
+// POST route for handling login requests
 app.post('/index', async (req, res) => {
     const { username, password } = req.body;
 
@@ -59,11 +51,11 @@ app.post('/index', async (req, res) => {
         if (user && await user.comparePassword(password)) {
             res.json({ success: true });
         } else {
-            res.json({ success: false, message: 'Invalid username or password' });
+            res.status(401).json({ success: false, message: 'Invalid username or password' });
         }
     } catch (err) {
-        console.log('Error during login:', err);
-        res.json({ success: false, message: 'An error occurred during login' });
+        console.error('Error during login:', err);
+        res.status(500).json({ success: false, message: 'An error occurred during login' });
     }
 });
 
@@ -94,7 +86,6 @@ app.post('/register', async (req, res) => {
     }
 });
 
-
 // Socket.IO handling
 io.on('connection', (socket) => {
     console.log('A user connected');
@@ -109,42 +100,40 @@ io.on('connection', (socket) => {
         });
 
     // Handle incoming chat messages
-// Handle incoming chat messages
-socket.on('chat message', (data) => {
-    console.log(`Message from ${data.username}: ${data.message}`);
-    
-    // Save the message to the database
-    const newMessage = new Message({
-        username: data.username,
-        message: data.message,
-        timestamp: data.timestamp
+    socket.on('chat message', (data) => {
+        console.log(`Message from ${data.username}: ${data.message}`);
+        
+        // Save the message to the database
+        const newMessage = new Message({
+            username: data.username,
+            message: data.message,
+            timestamp: data.timestamp
+        });
+
+        newMessage.save()
+            .then(() => {
+                console.log('Message saved successfully');
+                // Broadcast the message to all connected clients
+                io.emit('chat message', data);
+            })
+            .catch(err => {
+                console.log('Error saving message:', err);
+            });
     });
 
-    newMessage.save()
-        .then(() => {
-            console.log('Message saved successfully'); // Debug log
-            // Broadcast the message to all connected clients
-            io.emit('chat message', data); // Emit the message event
-        })
-        .catch(err => {
-            console.log('Error saving message:', err);
-        });
-});
-
-// Handle the 'clear messages' event
-socket.on('clear messages', () => {
-    // Delete all messages from the database
-    Message.deleteMany({})
-        .then(() => {
-            console.log('All messages deleted');
-            // Broadcast the 'clear messages' event to all clients
-            io.emit('clear messages');
-        })
-        .catch(err => {
-            console.log('Error deleting messages:', err);
-        });
-});
-
+    // Handle the 'clear messages' event
+    socket.on('clear messages', () => {
+        // Delete all messages from the database
+        Message.deleteMany({})
+            .then(() => {
+                console.log('All messages deleted');
+                // Broadcast the 'clear messages' event to all clients
+                io.emit('clear messages');
+            })
+            .catch(err => {
+                console.log('Error deleting messages:', err);
+            });
+    });
 
     // Handle user disconnection
     socket.on('disconnect', () => {
@@ -152,6 +141,12 @@ socket.on('clear messages', () => {
     });
 });
 
+// 404 handler
+app.use((req, res) => {
+    res.status(404).send('Page not found');
+});
+
+// Start the server
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
     console.log(`Server running on http://localhost:${PORT}`);
