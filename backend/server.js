@@ -73,6 +73,30 @@ app.post('/login', async (req, res) => {
     }
 });
 
+
+app.post('/register', async (req, res) => {
+    const { username, password } = req.body;
+    console.log('Registration request received:', { username });
+
+    try {
+        // Check if the user already exists
+        const existingUser = await User.findOne({ username: username });
+        if (existingUser) {
+            return res.status(409).json({ success: false, message: 'Username already taken' });
+        }
+
+        // Create a new user
+        const newUser = new User({ username, password });
+        await newUser.save();
+
+        res.json({ success: true, message: 'User registered successfully' });
+    } catch (err) {
+        console.error('Error during registration:', err);
+        res.status(500).json({ success: false, message: 'An error occurred during registration' });
+    }
+});
+
+
 // Socket.IO handling for real-time chat functionality
 io.on('connection', (socket) => {
     console.log('A user connected');
