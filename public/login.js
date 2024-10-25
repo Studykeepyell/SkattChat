@@ -1,3 +1,6 @@
+const backendApiUrl = process.env.BACKEND_API_URL || 'http://localhost:3000';
+
+
 document.getElementById('login-form').addEventListener('submit', function(event) {
     event.preventDefault();
     const username = document.getElementById('username').value.trim();
@@ -17,7 +20,7 @@ function validateInput(username, password) {
 
 function login(username, password) {
     const xhr = new XMLHttpRequest();
-    xhr.open('POST', '/index', true);
+    xhr.open('POST', '${backendApiUrl}/index', true);
     xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
     xhr.onload = function() {
         if (xhr.status === 200) {

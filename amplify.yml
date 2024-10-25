@@ -1,18 +1,19 @@
-version: 1
-applications:
-  - frontend:
-      phases:
-        preBuild:
-          commands:
-            - nvm install 20
-            - npm install
-        build:
-          commands:
-            - npm run build
-      artifacts:
-        baseDirectory: public
-        files:
-          - '**/*'
-      cache:
-        paths:
-          - node_modules/**/*
+frontend:
+  phases:
+    preBuild:
+      commands:
+        - cd public
+        - npm install
+    build:
+      commands:
+        - npm run build
+  artifacts:
+    baseDirectory: /public/dist
+    files:
+      - '**/*'
+  cache:
+    paths:
+      - public/node_modules/**/*
+environment:
+  variables:
+    BACKEND_API_URL: "http://35.182.207.166:3000"

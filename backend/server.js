@@ -5,7 +5,7 @@ const mongoose = require('mongoose');
 const path = require('path');
 const cors = require('cors'); // Added CORS support
 require('dotenv').config();
-
+const cors = require('cors');
 const app = express();
 const server = http.createServer(app);
 const io = socketIO(server);
@@ -23,6 +23,12 @@ app.use((req, res, next) => {
     console.log(`Serving request for: ${req.url}`);
     next();
 });
+
+app.use(cors({
+    origin: 'https://main.d1efczyuwp5l5u.amplifyapp.com', // Replace with your actual Amplify app domain
+    methods: 'GET,POST,PUT,DELETE',
+    credentials: true
+}));
 
 // Serve static files from the 'public' directory
 app.use(express.static(path.join(__dirname, '../public')));

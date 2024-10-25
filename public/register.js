@@ -26,7 +26,7 @@ function validateInput(username, password) {
 
 function register(username, password) {
     const xhr = new XMLHttpRequest();
-    xhr.open('POST', '/register', true);
+    xhr.open('POST', '${backendApiUrl}/register', true);
     xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
     xhr.onload = function() {
         if (xhr.status === 200) {
