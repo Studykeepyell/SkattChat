@@ -20,7 +20,7 @@ function validateInput(username, password) {
 
 function login(username, password) {
     const xhr = new XMLHttpRequest();
-    xhr.open('POST', '${backendApiUrl}/index', true);
+    xhr.open('POST', `${backendApiUrl}/index`, true);
     xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
     xhr.onload = function() {
         if (xhr.status === 200) {
