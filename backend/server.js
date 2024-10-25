@@ -58,21 +58,25 @@ app.get('/register', (req, res) => {
 });
 
 app.post('/index', async (req, res) => {
-       const { username, password } = req.body;
-       console.log('Login request received:', { username, password });
+    const { username, password } = req.body;
+    console.log('Login request received:', { username, password });
 
-       try {
-           const user = await User.findOne({ username: username });
-           if (user && await user.comparePassword(password)) {
-               res.json({ success: true });
-           } else {
-               res.status(401).json({ success: false, message: 'Invalid username or password' });
-           }
-       } catch (err) {
-           console.error('Error during login:', err);
-           res.status(500).json({ success: false, message: 'An error occurred during login' });
-       }
-   })
+    try {
+        // Find the user in the database
+        const user = await User.findOne({ username: username });
+
+        // Check if the user exists and the password matches
+        if (user && await user.comparePassword(password)) {
+            res.json({ success: true });
+        } else {
+            res.status(401).json({ success: false, message: 'Invalid username or password' });
+        }
+    } catch (err) {
+        console.error('Error during login:', err);
+        res.status(500).json({ success: false, message: 'An error occurred during login' });
+    }
+});
+
     const { username, password } = req.body;
     console.log('Login request received:', { username, password });
 
