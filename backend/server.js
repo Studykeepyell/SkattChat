@@ -5,7 +5,6 @@ const mongoose = require('mongoose');
 const path = require('path');
 const cors = require('cors'); // Added CORS support
 require('dotenv').config();
-const cors = require('cors');
 const app = express();
 const server = http.createServer(app);
 const io = socketIO(server);

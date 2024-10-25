@@ -2,8 +2,7 @@ frontend:
   phases:
     preBuild:
       commands:
-        - cd public
-        - npm install
+        - npm install # Run npm install from the root directory
     build:
       commands:
         - npm run build
@@ -13,7 +12,7 @@ frontend:
       - '**/*'
   cache:
     paths:
-      - public/node_modules/**/*
-environment:
-  variables:
-    BACKEND_API_URL: "http://35.182.207.166:3000"
+      - node_modules/**/*
+  environment:
+    variables:
+      BACKEND_API_URL: "http://35.182.207.166:3000"
