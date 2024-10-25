@@ -5,12 +5,15 @@ const mongoose = require('mongoose');
 const path = require('path');
 const cors = require('cors'); // Added CORS support
 require('dotenv').config();
+
 const app = express();
 const server = http.createServer(app);
 const io = socketIO(server);
 const User = require('../backend/models/User');
 const Message = require('../backend/models/Message');
 
+// Enable CORS for all requests
+app.use(cors());
 
 // Middleware to parse JSON and URL-encoded data
 app.use(express.json());
@@ -21,13 +24,12 @@ app.use((req, res, next) => {
     next();
 });
 
-app.use(cors({
-    origin: 'https://main.d1efczyuwp5l5u.amplifyapp.com', // Replace with your actual Amplify app domain
-    methods: 'GET,POST,PUT,DELETE',
-    credentials: true
-}));
-
 // Serve static files from the 'public' directory
+
+app.get('/index', (req, res) => {
+    res.sendFile(path.join(__dirname, '../public', 'index.html'));
+});
+
 app.use(express.static(path.join(__dirname, '../public')));
 
 // MongoDB connection
@@ -51,7 +53,7 @@ app.get('/register', (req, res) => {
 });
 
 // POST route for handling login requests
-app.post('/index', async (req, res) => {
+app.post('/login', async (req, res) => {
     const { username, password } = req.body;
     console.log('Login request received:', { username, password }); // Added logging
 
@@ -135,27 +137,4 @@ app.use((req, res) => {
 const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
     console.log(`Server running on http://localhost:${PORT}`);
-});
-
-
-app.post('/register', async (req, res) => {
-    const { username, password } = req.body;
-    console.log('Registration request received:', { username });
-
-    try {
-        // Check if the user already exists
-        const existingUser = await User.findOne({ username: username });
-        if (existingUser) {
-            return res.status(409).json({ success: false, message: 'Username already taken' });
-        }
-
-        // Create a new user
-        const newUser = new User({ username, password });
-        await newUser.save();
-
-        res.json({ success: true, message: 'User registered successfully' });
-    } catch (err) {
-        console.error('Error during registration:', err);
-        res.status(500).json({ success: false, message: 'An error occurred during registration' });
-    }
 });
