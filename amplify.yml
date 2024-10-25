@@ -2,12 +2,12 @@ frontend:
   phases:
     preBuild:
       commands:
-        - npm install # Run npm install from the root directory
+        - npm install
     build:
       commands:
         - npm run build
   artifacts:
-    baseDirectory: /public/dist
+    baseDirectory: /public # Update to point to the public folder
     files:
       - '**/*'
   cache:
