@@ -25,6 +25,25 @@ function login(username, password) {
     xhr.onload = function() {
         if (xhr.status === 200) {
             try {
+                console.log('Response received:', xhr.responseText);
+                const response = JSON.parse(xhr.responseText);
+                if (response.success) {
+                    localStorage.setItem('username', username);
+                    window.location.href = '/chat.html?username=' + encodeURIComponent(username);
+                } else {
+                    alert(response.message || 'Invalid username or password');
+                }
+            } catch (e) {
+                console.error('Failed to parse JSON:', xhr.responseText);
+                alert('An error occurred while processing the response');
+            }
+        } else {
+            console.error('Login failed:', xhr.status, xhr.responseText);
+            alert('An error occurred during login. Please try again later.');
+        }
+    }
+        if (xhr.status === 200) {
+            try {
                 console.log('Response received:', xhr.responseText); // Log the response
                 const response = JSON.parse(xhr.responseText);
                 if (response.success) {
@@ -45,4 +64,4 @@ function login(username, password) {
         alert('A network error occurred. Please check your connection.');
     };
     xhr.send('username=' + encodeURIComponent(username) + '&password=' + encodeURIComponent(password));
-}
+

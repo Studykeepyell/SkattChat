@@ -13,7 +13,12 @@ const User = require('../backend/models/User');
 const Message = require('../backend/models/Message');
 
 // Enable CORS for all requests
-app.use(cors());
+app.use(cors({
+    origin: 'https://skattchat.online',
+    methods: 'GET,POST,PUT,DELETE',
+    credentials: true
+}));
+
 
 // Middleware to parse JSON and URL-encoded data
 app.use(express.json());
@@ -53,6 +58,21 @@ app.get('/register', (req, res) => {
 });
 
 app.post('/index', async (req, res) => {
+       const { username, password } = req.body;
+       console.log('Login request received:', { username, password });
+
+       try {
+           const user = await User.findOne({ username: username });
+           if (user && await user.comparePassword(password)) {
+               res.json({ success: true });
+           } else {
+               res.status(401).json({ success: false, message: 'Invalid username or password' });
+           }
+       } catch (err) {
+           console.error('Error during login:', err);
+           res.status(500).json({ success: false, message: 'An error occurred during login' });
+       }
+   })
     const { username, password } = req.body;
     console.log('Login request received:', { username, password });
 
@@ -68,7 +88,6 @@ app.post('/index', async (req, res) => {
         console.error('Error during login:', err);
         res.status(500).json({ success: false, message: 'An error occurred during login' });
     }
-});
 
 
 
