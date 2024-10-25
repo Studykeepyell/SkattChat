@@ -77,21 +77,7 @@ app.post('/index', async (req, res) => {
     }
 });
 
-    const { username, password } = req.body;
-    console.log('Login request received:', { username, password });
 
-    try {
-        // Authenticate user logic here
-        const user = await User.findOne({ username: username });
-        if (user && await user.comparePassword(password)) {
-            res.json({ success: true });
-        } else {
-            res.status(401).json({ success: false, message: 'Invalid username or password' });
-        }
-    } catch (err) {
-        console.error('Error during login:', err);
-        res.status(500).json({ success: false, message: 'An error occurred during login' });
-    }
 
 
 
