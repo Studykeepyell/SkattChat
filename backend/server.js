@@ -28,7 +28,7 @@ app.use((req, res, next) => {
 app.use(express.static(path.join(__dirname, '../public')));
 
 // MongoDB connection
-const mongoURI = process.env.MONGO_URI || 'fallback-mongo-connection-string';
+const mongoURI = process.env.MONGO_URI || 'mongodb+srv://Sky:Sky090726@cluster1.ripon.mongodb.net/?retryWrites=true&w=majority&appName=Cluster1';
 mongoose.connect(mongoURI, {
     serverSelectionTimeoutMS: 30000 // 30 seconds timeout
 })
