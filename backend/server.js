@@ -52,16 +52,13 @@ app.get('/register', (req, res) => {
     res.sendFile(path.join(__dirname, '../public', 'register.html'));
 });
 
-// POST route for handling login requests
-app.post('/login', async (req, res) => {
+app.post('/index', async (req, res) => {
     const { username, password } = req.body;
-    console.log('Login request received:', { username, password }); // Added logging
+    console.log('Login request received:', { username, password });
 
     try {
-        // Find the user in the database
+        // Authenticate user logic here
         const user = await User.findOne({ username: username });
-
-        // Check if the user exists and the password matches
         if (user && await user.comparePassword(password)) {
             res.json({ success: true });
         } else {
@@ -72,6 +69,7 @@ app.post('/login', async (req, res) => {
         res.status(500).json({ success: false, message: 'An error occurred during login' });
     }
 });
+
 
 
 app.post('/register', async (req, res) => {
