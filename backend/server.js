@@ -11,8 +11,6 @@ const io = socketIO(server);
 const User = require('../backend/models/User');
 const Message = require('../backend/models/Message');
 
-// Enable CORS for all requests
-app.use(cors());
 
 // Middleware to parse JSON and URL-encoded data
 app.use(express.json());

@@ -1,3 +1,6 @@
+const backendApiUrl = process.env.BACKEND_API_URL || 'http://localhost:3000';
+
+
 document.addEventListener('DOMContentLoaded', function() {
     const registerForm = document.getElementById('register-form');
     if (registerForm) {
