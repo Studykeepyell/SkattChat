@@ -7,7 +7,6 @@
   <link rel="stylesheet" href="styles.css">
   <script src="/socket.io/socket.io.js"></script>
   <script src="/bundle.js"></script>
-
 </head>
 <body>
   <ul id="welcomeMessage"></ul>
@@ -19,20 +18,9 @@
 
   <button id="deleteAllMessages" style="margin-top: 10px;">Delete All Messages</button>
 
-  <div class="message-container" id="message-container">
-    <div class="character-picture" id="character-picture"></div>
-    <div class="bubble-wrapper" id="bubble-wrapper">
-        <div class="speech-bubble" id="speech-bubble">
-            <!-- Each message should be appended here dynamically -->
-            <div class="message">
-                <span class="username">[username]: </span><span class="message-content">[message content]</span>
-            </div>
-        </div>
-    </div>
-    <div class="lower-text">[Formatted timestamp]</div>
-</div>
+  <!-- New container for chat messages -->
+  <div id="messages"></div>
 
-
-  <script src="./client.js"></script>
+  <script src="client.js"></script>
 </body>
 </html>
