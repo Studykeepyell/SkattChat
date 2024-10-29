@@ -68,6 +68,11 @@
             roomID = room;
             playerSymbol = player;
             isMyTurn = isFirstTurn;
+    
+            // Debug logs to check symbol and turn assignment
+            console.log(`Player Symbol: ${playerSymbol}`);
+            console.log(`Is My Turn Initially: ${isMyTurn}`);
+    
             updateTurnIndicator();
     
             socket.on('moveMade', ({ row, col, player }) => {
@@ -112,6 +117,7 @@
         }
     
         function updateTurnIndicator() {
+            console.log(`Updating Turn Indicator: ${isMyTurn ? "Your Turn" : "Waiting for Opponent..."}`);
             turnIndicator.textContent = isMyTurn ? "Your Turn" : "Waiting for Opponent...";
         }
     
@@ -122,6 +128,7 @@
             updateTurnIndicator();
         }
     </script>
+    
     
     
     

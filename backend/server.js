@@ -172,37 +172,31 @@ io.on('connection', (socket) => {
    
     socket.on('findTictactoeOpponent', () => {
         if (waitingPlayer) {
-            // Create a unique room ID and initialize the game state
             const roomID = `game-${waitingPlayer.id}-${socket.id}`;
-            const firstPlayerSymbol = Math.random() < 0.5 ? 'X' : 'O'; // Randomly choose the first player
-            const secondPlayerSymbol = firstPlayerSymbol === 'X' ? 'O' : 'X';
+            const firstPlayer = Math.random() < 0.5 ? waitingPlayer : socket; // Randomly choose the first player
+            const secondPlayer = firstPlayer === waitingPlayer ? socket : waitingPlayer;
 
-            // Initialize the game state for the room
+            // Log the assigned symbols and first turn
+            console.log(`Assigning ${firstPlayer.id} as X and ${secondPlayer.id} as O`);
+            console.log(`${firstPlayer.id} will go first`);
+
             games[roomID] = {
                 board: Array(3).fill(null).map(() => Array(3).fill(null)),
-                currentPlayer: firstPlayerSymbol,
+                currentPlayer: 'X',
             };
 
-            // Join both players to the room
+            // Join both players to a room
             socket.join(roomID);
             waitingPlayer.join(roomID);
 
-            // Notify both players of their symbols and starting turn
-            io.to(socket.id).emit('startTictactoeGame', {
-                roomID,
-                playerSymbol: secondPlayerSymbol,
-                isFirstTurn: secondPlayerSymbol === firstPlayerSymbol,
-            });
-            io.to(waitingPlayer.id).emit('startTictactoeGame', {
-                roomID,
-                playerSymbol: firstPlayerSymbol,
-                isFirstTurn: firstPlayerSymbol === firstPlayerSymbol,
-            });
+            // Notify both clients of their symbol and who goes first
+            io.to(firstPlayer.id).emit('startTictactoeGame', { roomID, playerSymbol: 'X', isFirstTurn: true });
+            io.to(secondPlayer.id).emit('startTictactoeGame', { roomID, playerSymbol: 'O', isFirstTurn: false });
 
-            console.log(`Game started in room ${roomID}, ${firstPlayerSymbol} goes first`);
             waitingPlayer = null; // Reset the waiting player
         } else {
             waitingPlayer = socket;
+            console.log(`User ${socket.id} is waiting for an opponent.`);
         }
     });
 
