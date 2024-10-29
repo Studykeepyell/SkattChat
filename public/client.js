@@ -57,7 +57,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
         console.log('Starting Tic-Tac-Toe game with data:', gameData);
 
-        const ticTacToeWindow = window.open('tic_tac_toe.html', 'Tic-Tac-Toe Game', 'width=400,height=400');
+        const ticTacToeWindow = window.open('tictactoe.html', 'Tic-Tac-Toe Game', 'width=400,height=400');
         ticTacToeWindow.focus();
     });
 
