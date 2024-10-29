@@ -167,33 +167,44 @@ io.on('connection', (socket) => {
 
 
 
+   
     socket.on('findTictactoeOpponent', () => {
+        console.log(`User ${socket.id} clicked to find a Tic-Tac-Toe opponent.`);
+
         if (waitingPlayer) {
-            // If there's a player waiting, start a game
+            console.log(`Pairing ${waitingPlayer.id} with ${socket.id}`);
             const gameData = { player1: waitingPlayer.id, player2: socket.id };
+
+            // Emit 'startTictactoeGame' to both players
             waitingPlayer.emit('startTictactoeGame', gameData);
             socket.emit('startTictactoeGame', gameData);
-            waitingPlayer = null; // Clear the waiting player
+
+            // Clear the waiting player
+            waitingPlayer = null;
+            console.log('Game started, waitingPlayer reset to null');
         } else {
-            // No player waiting, set the current player as the waiting player
+            console.log(`No waiting player, setting ${socket.id} as waitingPlayer`);
             waitingPlayer = socket;
 
-            // Optional timeout to reset waiting status after 30 seconds
+            // Set a timeout in case no opponent is found
             const waitTimeout = setTimeout(() => {
                 if (waitingPlayer === socket) {
-                    socket.emit('TictactoeWaitTimeout');
+                    socket.emit('tictactoeWaitTimeout');
                     waitingPlayer = null;
+                    console.log(`Timeout for ${socket.id}, waitingPlayer reset to null`);
                 }
-            }, 30000); // 30 seconds timeout
+            }, 30000); // 30-second timeout
         }
     });
 
     socket.on('disconnect', () => {
-        console.log('A user disconnected');
+        console.log(`User disconnected: ${socket.id}`);
         if (waitingPlayer === socket) {
-            waitingPlayer = null; // Clear waiting player if they disconnect
+            waitingPlayer = null;
+            console.log(`Disconnected waiting player ${socket.id}, reset waitingPlayer to null`);
         }
     });
+
 
 
 });
