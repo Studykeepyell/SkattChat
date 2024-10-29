@@ -1,20 +1,18 @@
 document.addEventListener('DOMContentLoaded', () => {
     const socket = io();
 
-    // Function to add a new chat message to the messages container (existing code)
+    // Function to add a new chat message to the messages container
     function addChatMessage(data) {
-        console.log('Adding chat message:', data); 
+        console.log('Adding chat message:', data);
 
-        // Create the main message container
         const messageContainer = document.createElement('div');
         messageContainer.className = 'message-container';
 
-        // Create character picture, bubble wrapper, speech bubble, etc.
         const characterPicture = document.createElement('div');
         characterPicture.className = 'character-picture';
 
         const bubbleWrapper = document.createElement('div');
-        bubbleWrapper.className = 'buble-wrapper';
+        bubbleWrapper.className = 'bubble-wrapper';
 
         const speechBubble = document.createElement('div');
         speechBubble.className = 'speech-bubble';
@@ -24,7 +22,7 @@ document.addEventListener('DOMContentLoaded', () => {
         messageContent.textContent = `${data.username}: ${data.message}`;
 
         const lowerText = document.createElement('div');
-        lowerText.className = 'lower-tex';
+        lowerText.className = 'lower-text';
         lowerText.textContent = formatTimestamp(data.timestamp);
 
         speechBubble.appendChild(messageContent);
@@ -42,7 +40,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // Add Gomoku button event listener
+    // Add Tic-Tac-Toe button event listener
     const playTictactoeButton = document.getElementById('playTictactoe');
     if (playTictactoeButton) {
         playTictactoeButton.addEventListener('click', () => {
@@ -52,28 +50,23 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Handle server's response to start Gomoku game
+    // Handle server's response to start Tic-Tac-Toe game
     socket.on('startTictactoeGame', (gameData) => {
-        playGomokuButton.disabled = false;
-        playGomokuButton.textContent = 'Play TicTacToe';
+        playTictactoeButton.disabled = false;
+        playTictactoeButton.textContent = 'Play Tic-Tac-Toe';
 
-        console.log('Starting TictacToe game with data:', gameData);
-        // (Initialize the Gomoku game here if needed)
+        console.log('Starting Tic-Tac-Toe game with data:', gameData);
 
         const ticTacToeWindow = window.open('tic_tac_toe.html', 'Tic-Tac-Toe Game', 'width=400,height=400');
         ticTacToeWindow.focus();
     });
 
     // Handle no opponent found (timeout)
-    socket.on('TictactoeWaitTimeout', () => {
-        playGomokuButton.disabled = false;
-        playGomokuButton.textContent = 'Play TicTacToe';
+    socket.on('tictactoeWaitTimeout', () => {
+        playTictactoeButton.disabled = false;
+        playTictactoeButton.textContent = 'Play Tic-Tac-Toe';
         alert('No opponents found. Try again later.');
     });
-
-
-
-
 
     // Utility function to format the timestamp
     function formatTimestamp(timestamp) {
@@ -133,5 +126,4 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         }
     });
-
 });
