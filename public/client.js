@@ -65,13 +65,13 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     // Handle no opponent found (timeout)
-    socket.on('gomokuWaitTimeout', () => {
+    socket.on('TictactoeWaitTimeout', () => {
         playGomokuButton.disabled = false;
         playGomokuButton.textContent = 'Play TicTacToe';
         alert('No opponents found. Try again later.');
     });
 
-});
+
 
 
 
@@ -134,3 +134,4 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
+});
