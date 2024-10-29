@@ -56,7 +56,7 @@ document.addEventListener('DOMContentLoaded', () => {
         playTictactoeButton.disabled = false;
         playTictactoeButton.textContent = 'Play Tic-Tac-Toe';
 
-        const ticTacToeWindow = window.open('tic_tac_toe.html', 'Tic-Tac-Toe Game', 'width=400,height=400');
+        const ticTacToeWindow = window.open('tictactoe.html', 'Tic-Tac-Toe Game', 'width=400,height=400');
         ticTacToeWindow.onload = () => {
             ticTacToeWindow.initGame(socket, roomID, currentPlayer);
         };
