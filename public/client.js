@@ -50,12 +50,22 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    socket.on('startTictactoeGame', ({ roomID, playerSymbol, isFirstTurn }) => {
-        console.log(`Received startTictactoeGame event with playerSymbol: ${playerSymbol} and isFirstTurn: ${isFirstTurn}`);
-        
-        // Assuming `initGame` is available globally or adjust accordingly
-        initGame(socket, roomID, playerSymbol, isFirstTurn);
+    socket.on('startTictactoeGame', (data) => {
+        roomID = data.roomID;
+        const playerSymbol = data.playerSymbol;     // Extract playerSymbol
+        const isFirstTurn = data.isFirstTurn;       // Extract isFirstTurn
+    
+        playTictactoeButton.disabled = false;
+        playTictactoeButton.textContent = 'Play Tic-Tac-Toe';
+    
+        // Open the Tic-Tac-Toe game in a new window and initialize it with correct parameters
+        const ticTacToeWindow = window.open('tictactoe.html', 'Tic-Tac-Toe Game', 'width=400,height=400');
+        ticTacToeWindow.onload = () => {
+            // Pass socket, roomID, playerSymbol, and isFirstTurn to initGame
+            ticTacToeWindow.initGame(socket, roomID, playerSymbol, isFirstTurn);
+        };
     });
+    
 
     socket.on('moveMade', ({ row, col, player }) => {
         const cell = document.getElementById(`cell-${row}-${col}`);
