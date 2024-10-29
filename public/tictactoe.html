@@ -46,7 +46,6 @@
         let playerSymbol;
         let isMyTurn = false;
     
-        // Create the Tic-Tac-Toe board
         const boardSize = 3;
         const board = Array.from(Array(boardSize), () => Array(boardSize).fill(null));
         const ticTacToeBoard = document.getElementById('tic-tac-toe-board');
@@ -71,18 +70,16 @@
             isMyTurn = isFirstTurn;
             updateTurnIndicator();
     
-            // Listen for moves made by the opponent
             socket.on('moveMade', ({ row, col, player }) => {
                 const cell = document.getElementById(`cell-${row}-${col}`);
                 if (cell && !cell.textContent) {
                     cell.textContent = player;
                     board[row][col] = player;
-                    isMyTurn = player !== playerSymbol; // Switch turns after move
+                    isMyTurn = player !== playerSymbol;
                     updateTurnIndicator();
                 }
             });
     
-            // Handle game over events (win or tie)
             socket.on('gameOver', (result) => {
                 if (result === 'tie') {
                     alert("It's a tie!");
@@ -92,13 +89,11 @@
                 resetBoard();
             });
     
-            // Update turn information from the server
             socket.on('updateTurn', (currentPlayer) => {
                 isMyTurn = currentPlayer === playerSymbol;
                 updateTurnIndicator();
             });
     
-            // Handle opponent disconnection
             socket.on('opponentDisconnected', () => {
                 alert("Your opponent disconnected. Game over.");
                 resetBoard();
@@ -112,7 +107,7 @@
             document.getElementById(`cell-${row}-${col}`).textContent = playerSymbol;
     
             socket.emit('makeMove', { row, col, roomID, player: playerSymbol });
-            isMyTurn = false; // After making a move, wait for server update
+            isMyTurn = false;
             updateTurnIndicator();
         }
     
@@ -123,10 +118,11 @@
         function resetBoard() {
             board.forEach((row, rIndex) => row.forEach((_, cIndex) => (board[rIndex][cIndex] = null)));
             Array.from(ticTacToeBoard.children).forEach(cell => (cell.textContent = ''));
-            isMyTurn = playerSymbol === 'X'; // Reset for a new game
+            isMyTurn = playerSymbol === 'X'; // Reset based on symbol
             updateTurnIndicator();
         }
     </script>
+    
     
     
     
