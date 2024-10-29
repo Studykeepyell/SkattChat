@@ -174,52 +174,50 @@ io.on('connection', (socket) => {
         console.log(`User ${socket.id} clicked to find a Tic-Tac-Toe opponent.`);
 
         if (waitingPlayer) {
+            // Create a unique room ID and initialize the game state
             const roomID = `game-${waitingPlayer.id}-${socket.id}`;
+            const firstPlayer = Math.random() < 0.5 ? 'X' : 'O'; // Randomly choose the first player
+            const secondPlayer = firstPlayer === 'X' ? 'O' : 'X';
+
             games[roomID] = {
-                board: Array(3).fill(null).map(() => Array(3).fill(null)), // 3x3 board
-                currentPlayer: 'X',
+                board: Array(3).fill(null).map(() => Array(3).fill(null)),
+                currentPlayer: firstPlayer,
             };
 
-            // Join both players to a room
+            // Join both players to a room and notify them of their roles
             socket.join(roomID);
             waitingPlayer.join(roomID);
 
-            // Notify players to start the game and provide the room ID
-            io.to(roomID).emit('startTictactoeGame', { roomID, currentPlayer: 'X' });
-            console.log(`Game started in room ${roomID}`);
+            // Notify both clients of their symbol and who goes first
+            io.to(socket.id).emit('startTictactoeGame', { roomID, playerSymbol: secondPlayer, isFirstTurn: secondPlayer === firstPlayer });
+            io.to(waitingPlayer.id).emit('startTictactoeGame', { roomID, playerSymbol: firstPlayer, isFirstTurn: firstPlayer === firstPlayer });
 
+            console.log(`Game started in room ${roomID}, ${firstPlayer} goes first`);
             waitingPlayer = null; // Reset the waiting player
         } else {
             waitingPlayer = socket;
-            console.log(`${socket.id} is waiting for an opponent...`);
-
-            // Set a timeout if no opponent joins
-            setTimeout(() => {
-                if (waitingPlayer === socket) {
-                    socket.emit('tictactoeWaitTimeout');
-                    waitingPlayer = null;
-                    console.log(`Timeout for ${socket.id}, waitingPlayer reset`);
-                }
-            }, 30000); // 30-second timeout
         }
     });
 
-    socket.on('makeMove', ({ row, col, roomID }) => {
+    socket.on('makeMove', ({ row, col, roomID, player }) => {
         const game = games[roomID];
-        if (game && game.board[row][col] === null) {
-            game.board[row][col] = game.currentPlayer;
+        if (game && game.board[row][col] === null && game.currentPlayer === player) {
+            // Update board and broadcast move
+            game.board[row][col] = player;
+            io.to(roomID).emit('moveMade', { row, col, player });
 
-            // Broadcast the move to both players in the room
-            io.to(roomID).emit('moveMade', {
-                row,
-                col,
-                player: game.currentPlayer,
-            });
-
-            // Switch to the other player
-            game.currentPlayer = game.currentPlayer === 'X' ? 'O' : 'X';
-
-            // Check for win or tie conditions (add your win-check logic here if needed)
+            // Check for game over conditions
+            if (checkWin(game.board, player)) {
+                io.to(roomID).emit('gameOver', player);
+                delete games[roomID];
+            } else if (isBoardFull(game.board)) {
+                io.to(roomID).emit('gameOver', 'tie');
+                delete games[roomID];
+            } else {
+                // Switch turns and notify players of the updated turn
+                game.currentPlayer = game.currentPlayer === 'X' ? 'O' : 'X';
+                io.to(roomID).emit('updateTurn', game.currentPlayer);
+            }
         }
     });
 
@@ -242,6 +240,18 @@ io.on('connection', (socket) => {
 
 
 });
+
+function checkWin(board, player) {
+    for (let i = 0; i < 3; i++) {
+        if (board[i].every(cell => cell === player) || board.every(row => row[i] === player)) return true;
+    }
+    return (board[0][0] === player && board[1][1] === player && board[2][2] === player) ||
+           (board[0][2] === player && board[1][1] === player && board[2][0] === player);
+}
+
+function isBoardFull(board) {
+    return board.every(row => row.every(cell => cell !== null));
+}
 
 // 404 handler
 app.use((req, res) => {

@@ -41,18 +41,19 @@
     <div id="tic-tac-toe-board"></div>
 
     <script>
-        // Initialize variables for socket communication, room ID, and player symbol
         let socket;
         let roomID;
         let playerSymbol;
         let isMyTurn = false;
     
-        // Game board size and initial setup
+        // Create the Tic-Tac-Toe board
         const boardSize = 3;
         const board = Array.from(Array(boardSize), () => Array(boardSize).fill(null));
         const ticTacToeBoard = document.getElementById('tic-tac-toe-board');
+        const turnIndicator = document.createElement('div');
+        turnIndicator.id = 'turn-indicator';
+        document.body.appendChild(turnIndicator);
     
-        // Create cells and attach click handlers
         for (let row = 0; row < boardSize; row++) {
             for (let col = 0; col < boardSize; col++) {
                 const cell = document.createElement('div');
@@ -63,24 +64,23 @@
             }
         }
     
-        // Initialize the game
-        function initGame(socketInstance, room, player) {
+        function initGame(socketInstance, room, player, isFirstTurn) {
             socket = socketInstance;
             roomID = room;
             playerSymbol = player;
-            isMyTurn = playerSymbol === 'X'; // X always starts
+            isMyTurn = isFirstTurn;
+            updateTurnIndicator();
     
-            // Handle incoming moves from the opponent
+            // Listen for moves made by the opponent
             socket.on('moveMade', ({ row, col, player }) => {
                 const cell = document.getElementById(`cell-${row}-${col}`);
                 if (cell && !cell.textContent) {
                     cell.textContent = player;
                     board[row][col] = player;
-                    isMyTurn = player !== playerSymbol; // Switch turns
                 }
             });
     
-            // Handle game over scenarios (win or tie)
+            // Handle game over events (win or tie)
             socket.on('gameOver', (result) => {
                 if (result === 'tie') {
                     alert("It's a tie!");
@@ -90,36 +90,42 @@
                 resetBoard();
             });
     
-            // Notify if the opponent disconnects
+            // Update turn information from the server
+            socket.on('updateTurn', (currentPlayer) => {
+                isMyTurn = currentPlayer === playerSymbol;
+                updateTurnIndicator();
+            });
+    
+            // Handle opponent disconnection
             socket.on('opponentDisconnected', () => {
                 alert("Your opponent disconnected. Game over.");
                 resetBoard();
             });
         }
     
-        // Attempt to make a move
         function makeMove(row, col) {
-            // Only proceed if it's the player's turn and the cell is empty
             if (board[row][col] || !isMyTurn) return;
-            
-            // Update the local board and UI
+    
             board[row][col] = playerSymbol;
             document.getElementById(`cell-${row}-${col}`).textContent = playerSymbol;
     
-            // Emit the move to the server for syncing
             socket.emit('makeMove', { row, col, roomID, player: playerSymbol });
-    
-            // Switch turn to the opponent
-            isMyTurn = false;
+            isMyTurn = false; // After making a move, wait for server update
+            updateTurnIndicator();
         }
     
-        // Reset the board for a new game
+        function updateTurnIndicator() {
+            turnIndicator.textContent = isMyTurn ? "Your Turn" : "Waiting for Opponent...";
+        }
+    
         function resetBoard() {
             board.forEach((row, rIndex) => row.forEach((_, cIndex) => (board[rIndex][cIndex] = null)));
             Array.from(ticTacToeBoard.children).forEach(cell => (cell.textContent = ''));
-            isMyTurn = playerSymbol === 'X'; // X always starts in a new game
+            isMyTurn = playerSymbol === 'X'; // Reset for a new game
+            updateTurnIndicator();
         }
     </script>
+    
     
     
 </body>
