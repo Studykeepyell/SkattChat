@@ -50,16 +50,11 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    socket.on('startTictactoeGame', (data) => {
-        roomID = data.roomID;
-        currentPlayer = data.currentPlayer;
-        playTictactoeButton.disabled = false;
-        playTictactoeButton.textContent = 'Play Tic-Tac-Toe';
-
-        const ticTacToeWindow = window.open('tictactoe.html', 'Tic-Tac-Toe Game', 'width=400,height=400');
-        ticTacToeWindow.onload = () => {
-            ticTacToeWindow.initGame(socket, roomID, currentPlayer);
-        };
+    socket.on('startTictactoeGame', ({ roomID, playerSymbol, isFirstTurn }) => {
+        console.log(`Received startTictactoeGame event with playerSymbol: ${playerSymbol} and isFirstTurn: ${isFirstTurn}`);
+        
+        // Assuming `initGame` is available globally or adjust accordingly
+        initGame(socket, roomID, playerSymbol, isFirstTurn);
     });
 
     socket.on('moveMade', ({ row, col, player }) => {
