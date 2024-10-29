@@ -5,10 +5,10 @@
   margin: 20px auto;
   display: flex;
   flex-direction: column;
-  border: 1px solid #ccc;
+  border: 1px solid gray;
   border-radius: 8px;
   padding: 10px;
-  background-color: #f9f9f9;
+  background-color: white;
 }
 
 /* Messages list */
@@ -17,8 +17,9 @@
   flex-direction: column;
   gap: 10px;
   overflow-y: auto;
-  max-height: 400px;
+  max-height: calc(100vh - 200px); 
   padding: 5px;
+  margin-bottom: 60px; 
 }
 
 /* Message container */
@@ -27,7 +28,7 @@
   align-items: flex-start;
   gap: 10px;
   padding: 8px;
-  background-color: #e0e0e0;
+  background-color: white;
   border-radius: 8px;
 }
 
@@ -64,11 +65,33 @@
   font-size: 12px;
 }
 
+/* Fixed position for the input container at the bottom */
+.message-input-container {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  max-width: 600px;
+  background-color: #f8f9fa;
+  border-top: 1px solid #ddd;
+  padding: 10px;
+  display: flex;
+  align-items: center;
+  box-shadow: 0 -2px 4px rgba(0, 0, 0, 0.1);
+  z-index: 10;
+  margin: 0 auto;
+}
+
 /* Form input styling */
 #messageForm {
   padding: 10px;
-  width: calc(100% - 80px);
+  flex: 1;
+  font-size: 16px;
+  border: 1px solid #ccc;
+  border-radius: 20px;
+  outline: none;
   margin-right: 5px;
+  transition: border-color 0.3s ease;
 }
 
 /* Send button styling */
@@ -77,8 +100,14 @@ button {
   background-color: #4CAF50;
   color: white;
   border: none;
-  border-radius: 5px;
+  border-radius: 20px;
   cursor: pointer;
+  transition: background-color 0.3s ease;
+}
+
+/* Send button hover effect */
+button:hover {
+  background-color: #45a049;
 }
 
 /* Styling for the delete button */
@@ -91,4 +120,7 @@ button {
   margin-top: 10px;
 }
 
-
+/* Input focus style */
+#messageForm:focus {
+  border-color: #4CAF50;
+}

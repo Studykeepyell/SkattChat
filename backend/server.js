@@ -12,6 +12,9 @@ const io = socketIO(server);
 const User = require('../backend/models/User');
 const Message = require('../backend/models/Message');
 
+let waitingPlayer = null;
+const games = {};
+
 // Enable CORS for all requests
 app.use(cors({
     origin: 'https://skattchat.online',
@@ -105,9 +108,11 @@ app.post('/register', async (req, res) => {
 });
 
 
+
+
 // Socket.IO handling for real-time chat functionality
 io.on('connection', (socket) => {
-    console.log('A user connected');
+    console.log('A user connected'+socket.id);
 
     // Load chat history from the database and send it to the client
     Message.find().sort({ timestamp: 1 }).limit(100)
@@ -140,6 +145,8 @@ io.on('connection', (socket) => {
             });
     });
 
+
+
     // Handle the 'clear messages' event
     socket.on('clear messages', () => {
         // Delete all messages from the database
@@ -154,11 +161,97 @@ io.on('connection', (socket) => {
             });
     });
 
+
+
     // Handle user disconnection
     socket.on('disconnect', () => {
         console.log('A user disconnected');
     });
+
+
+
+   
+    socket.on('findTictactoeOpponent', () => {
+        if (waitingPlayer) {
+            const roomID = `game-${waitingPlayer.id}-${socket.id}`;
+            const firstPlayer = Math.random() < 0.5 ? waitingPlayer : socket; // Randomly choose the first player
+            const secondPlayer = firstPlayer === waitingPlayer ? socket : waitingPlayer;
+
+            // Log the assigned symbols and first turn
+            console.log(`Assigning ${firstPlayer.id} as X and ${secondPlayer.id} as O`);
+            console.log(`${firstPlayer.id} will go first`);
+
+            games[roomID] = {
+                board: Array(3).fill(null).map(() => Array(3).fill(null)),
+                currentPlayer: 'X',
+            };
+
+            // Join both players to a room
+            socket.join(roomID);
+            waitingPlayer.join(roomID);
+
+            // Notify both clients of their symbol and who goes first
+            io.to(firstPlayer.id).emit('startTictactoeGame', { roomID, playerSymbol: 'X', isFirstTurn: true });
+            io.to(secondPlayer.id).emit('startTictactoeGame', { roomID, playerSymbol: 'O', isFirstTurn: false });
+
+            waitingPlayer = null; // Reset the waiting player
+        } else {
+            waitingPlayer = socket;
+            console.log(`User ${socket.id} is waiting for an opponent.`);
+        }
+    });
+
+    socket.on('makeMove', ({ row, col, roomID, player }) => {
+        const game = games[roomID];
+        if (game && game.board[row][col] === null && game.currentPlayer === player) {
+            // Update board and broadcast move
+            game.board[row][col] = player;
+            io.to(roomID).emit('moveMade', { row, col, player });
+
+            // Check for game over conditions
+            if (checkWin(game.board, player)) {
+                io.to(roomID).emit('gameOver', player);
+                delete games[roomID];
+            } else if (isBoardFull(game.board)) {
+                io.to(roomID).emit('gameOver', 'tie');
+                delete games[roomID];
+            } else {
+                // Switch turns and notify players of the updated turn
+                game.currentPlayer = game.currentPlayer === 'X' ? 'O' : 'X';
+                io.to(roomID).emit('updateTurn', game.currentPlayer);
+            }
+        }
+    });
+
+    socket.on('disconnect', () => {
+        if (waitingPlayer === socket) {
+            waitingPlayer = null;
+        }
+
+        for (const roomID in games) {
+            if (roomID.includes(socket.id)) {
+                io.to(roomID).emit('opponentDisconnected');
+                delete games[roomID];
+                break;
+            }
+        }
+    });
+
+
+
 });
+
+function checkWin(board, player) {
+    for (let i = 0; i < 3; i++) {
+        if (board[i].every(cell => cell === player) || board.every(row => row[i] === player)) return true;
+    }
+    return (board[0][0] === player && board[1][1] === player && board[2][2] === player) ||
+           (board[0][2] === player && board[1][1] === player && board[2][0] === player);
+}
+
+function isBoardFull(board) {
+    return board.every(row => row.every(cell => cell !== null));
+}
 
 // 404 handler
 app.use((req, res) => {

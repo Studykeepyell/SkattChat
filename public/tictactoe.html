@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tic-Tac-Toe Game</title>
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: white;
+            font-family: Arial, sans-serif;
+        }
+        #tic-tac-toe-board {
+            display: grid;
+            grid-template-columns: repeat(3, 100px);
+            grid-template-rows: repeat(3, 100px);
+            gap: 5px;
+            background-color: #333;
+            padding: 5px;
+            border-radius: 8px;
+        }
+        .cell {
+            width: 100px;
+            height: 100px;
+            background-color: white;
+            border-radius: 4px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 36px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <div id="tic-tac-toe-board"></div>
+
+    <script>
+        let socket;
+        let roomID;
+        let playerSymbol;
+        let isMyTurn = false;
+    
+        const boardSize = 3;
+        const board = Array.from(Array(boardSize), () => Array(boardSize).fill(null));
+        const ticTacToeBoard = document.getElementById('tic-tac-toe-board');
+        const turnIndicator = document.createElement('div');
+        turnIndicator.id = 'turn-indicator';
+        document.body.appendChild(turnIndicator);
+    
+        for (let row = 0; row < boardSize; row++) {
+            for (let col = 0; col < boardSize; col++) {
+                const cell = document.createElement('div');
+                cell.classList.add('cell');
+                cell.id = `cell-${row}-${col}`;
+                cell.addEventListener('click', () => makeMove(row, col));
+                ticTacToeBoard.appendChild(cell);
+            }
+        }
+    
+        function initGame(socketInstance, room, player, isFirstTurn) {
+            socket = socketInstance;
+            roomID = room;
+            playerSymbol = player;
+            isMyTurn = isFirstTurn;
+    
+            // Debug logs to check symbol and turn assignment
+            console.log(`Player Symbol: ${playerSymbol}`);
+            console.log(`Is My Turn Initially: ${isMyTurn}`);
+    
+            updateTurnIndicator();
+    
+            socket.on('moveMade', ({ row, col, player }) => {
+                const cell = document.getElementById(`cell-${row}-${col}`);
+                if (cell && !cell.textContent) {
+                    cell.textContent = player;
+                    board[row][col] = player;
+                    isMyTurn = player !== playerSymbol;
+                    updateTurnIndicator();
+                }
+            });
+    
+            socket.on('gameOver', (result) => {
+                if (result === 'tie') {
+                    alert("It's a tie!");
+                } else {
+                    alert(`${result} wins!`);
+                }
+                resetBoard();
+            });
+    
+            socket.on('updateTurn', (currentPlayer) => {
+                isMyTurn = currentPlayer === playerSymbol;
+                updateTurnIndicator();
+            });
+    
+            socket.on('opponentDisconnected', () => {
+                alert("Your opponent disconnected. Game over.");
+                resetBoard();
+            });
+        }
+    
+        function makeMove(row, col) {
+            if (board[row][col] || !isMyTurn) return;
+    
+            board[row][col] = playerSymbol;
+            document.getElementById(`cell-${row}-${col}`).textContent = playerSymbol;
+    
+            socket.emit('makeMove', { row, col, roomID, player: playerSymbol });
+            isMyTurn = false;
+            updateTurnIndicator();
+        }
+    
+        function updateTurnIndicator() {
+            console.log(`Updating Turn Indicator: ${isMyTurn ? "Your Turn" : "Waiting for Opponent..."}`);
+            turnIndicator.textContent = isMyTurn ? "Your Turn" : "Waiting for Opponent...";
+        }
+    
+        function resetBoard() {
+            board.forEach((row, rIndex) => row.forEach((_, cIndex) => (board[rIndex][cIndex] = null)));
+            Array.from(ticTacToeBoard.children).forEach(cell => (cell.textContent = ''));
+            isMyTurn = playerSymbol === 'X'; // Reset based on symbol
+            updateTurnIndicator();
+        }
+    </script>
+    
+    
+    
+    
+    
+    
+</body>
+</html>

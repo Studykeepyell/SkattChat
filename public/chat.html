@@ -7,29 +7,25 @@
   <link rel="stylesheet" href="styles.css">
   <script src="/socket.io/socket.io.js"></script>
   <script src="/bundle.js"></script>
-
 </head>
 <body>
   <ul id="welcomeMessage"></ul>
 
-  <form id="chat-form">
-    <input id="messageForm" autocomplete="off" placeholder="Type a message" />
-    <button type="submit">Send</button>
-  </form>
-
+  <!-- Buttons for extra actions above the message area -->
   <button id="deleteAllMessages" style="margin-top: 10px;">Delete All Messages</button>
+  <button id="playTictactoe" style="margin-top: 10px;">TTT</button>
 
-  <div class="message-container" id="message-container">
-    <div class="character-picture" id="character-picture"></div>
-    <div class="buble-wrapper"id= "buble-wrapper">
-        <div class="speech-bubble"id="speech-bubble">
-            <div id="messages" class="messages">[username]: [message content]</div>
-        </div>
-    </div>
-    <div class="lower-tex">[Formatted timestamp]</div>
-</div>
+  <!-- Message display area -->
+  <div id="messages"></div>
 
+  <!-- Input container at the bottom -->
+  <div class="message-input-container">
+    <form id="chat-form" style="display: flex; width: 100%;">
+      <input id="messageForm" type="text" placeholder="Type a message" autocomplete="off" />
+      <button type="submit">Send</button>
+    </form>
+  </div>
 
-  <script src="./client.js"></script>
+  <script src="client.js"></script>
 </body>
 </html>
