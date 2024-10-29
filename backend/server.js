@@ -12,6 +12,7 @@ const io = socketIO(server);
 const User = require('../backend/models/User');
 const Message = require('../backend/models/Message');
 
+let waitinguser = null;
 // Enable CORS for all requests
 app.use(cors({
     origin: 'https://skattchat.online',
@@ -104,9 +105,11 @@ app.post('/register', async (req, res) => {
 });
 
 
+
+
 // Socket.IO handling for real-time chat functionality
 io.on('connection', (socket) => {
-    console.log('A user connected');
+    console.log('A user connected'+socket.id);
 
     // Load chat history from the database and send it to the client
     Message.find().sort({ timestamp: 1 }).limit(100)
@@ -139,6 +142,8 @@ io.on('connection', (socket) => {
             });
     });
 
+
+
     // Handle the 'clear messages' event
     socket.on('clear messages', () => {
         // Delete all messages from the database
@@ -153,10 +158,44 @@ io.on('connection', (socket) => {
             });
     });
 
+
+
     // Handle user disconnection
     socket.on('disconnect', () => {
         console.log('A user disconnected');
     });
+
+
+
+    socket.on('findTictactoeOpponent', () => {
+        if (waitingPlayer) {
+            // If there's a player waiting, start a game
+            const gameData = { player1: waitingPlayer.id, player2: socket.id };
+            waitingPlayer.emit('startTictactoeGame', gameData);
+            socket.emit('startTictactoeGame', gameData);
+            waitingPlayer = null; // Clear the waiting player
+        } else {
+            // No player waiting, set the current player as the waiting player
+            waitingPlayer = socket;
+
+            // Optional timeout to reset waiting status after 30 seconds
+            const waitTimeout = setTimeout(() => {
+                if (waitingPlayer === socket) {
+                    socket.emit('TictactoeWaitTimeout');
+                    waitingPlayer = null;
+                }
+            }, 30000); // 30 seconds timeout
+        }
+    });
+
+    socket.on('disconnect', () => {
+        console.log('A user disconnected');
+        if (waitingPlayer === socket) {
+            waitingPlayer = null; // Clear waiting player if they disconnect
+        }
+    });
+
+
 });
 
 // 404 handler

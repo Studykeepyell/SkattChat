@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tic-Tac-Toe Game</title>
+    <style>
+        body {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #f0f0f0;
+            font-family: Arial, sans-serif;
+        }
+        #tic-tac-toe-board {
+            display: grid;
+            grid-template-columns: repeat(3, 100px);
+            grid-template-rows: repeat(3, 100px);
+            gap: 5px;
+            background-color: #333;
+            padding: 5px;
+            border-radius: 8px;
+        }
+        .cell {
+            width: 100px;
+            height: 100px;
+            background-color: #fff;
+            border-radius: 4px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 36px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <div id="tic-tac-toe-board"></div>
+
+    <script>
+        const boardSize = 3;
+        const board = Array.from(Array(boardSize), () => Array(boardSize).fill(null));
+        let currentPlayer = 'X';
+
+        const ticTacToeBoard = document.getElementById('tic-tac-toe-board');
+
+        // Create cells and attach click handlers
+        for (let row = 0; row < boardSize; row++) {
+            for (let col = 0; col < boardSize; col++) {
+                const cell = document.createElement('div');
+                cell.classList.add('cell');
+                cell.addEventListener('click', () => makeMove(row, col, cell));
+                ticTacToeBoard.appendChild(cell);
+            }
+        }
+
+        function makeMove(row, col, cell) {
+            if (board[row][col]) return; // Prevent changing an already marked cell
+            board[row][col] = currentPlayer;
+            cell.textContent = currentPlayer;
+            if (checkWin(row, col)) {
+                alert(`${currentPlayer} wins!`);
+                resetBoard();
+            } else if (isBoardFull()) {
+                alert("It's a tie!");
+                resetBoard();
+            }
+            currentPlayer = currentPlayer === 'X' ? 'O' : 'X'; // Switch player
+        }
+
+        function resetBoard() {
+            board.forEach((row, rIndex) => row.forEach((_, cIndex) => (board[rIndex][cIndex] = null)));
+            Array.from(ticTacToeBoard.children).forEach(cell => (cell.textContent = ''));
+            currentPlayer = 'X';
+        }
+
+        function checkWin(row, col) {
+            // Check rows, columns, and diagonals
+            return (
+                board[row].every(cell => cell === currentPlayer) || // Row
+                board.every(row => row[col] === currentPlayer) || // Column
+                (row === col && board.every((_, i) => board[i][i] === currentPlayer)) || // Diagonal
+                (row + col === boardSize - 1 && board.every((_, i) => board[i][boardSize - i - 1] === currentPlayer)) // Anti-diagonal
+            );
+        }
+
+        function isBoardFull() {
+            return board.every(row => row.every(cell => cell !== null));
+        }
+    </script>
+</body>
+</html>
