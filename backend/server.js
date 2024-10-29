@@ -29,6 +29,7 @@ app.use((req, res, next) => {
     next();
 });
 
+
 // Serve static files from the 'public' directory
 
 app.get('/index', (req, res) => {
