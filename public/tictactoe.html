@@ -77,6 +77,8 @@
                 if (cell && !cell.textContent) {
                     cell.textContent = player;
                     board[row][col] = player;
+                    isMyTurn = player !== playerSymbol; // Switch turns after move
+                    updateTurnIndicator();
                 }
             });
     
@@ -125,6 +127,7 @@
             updateTurnIndicator();
         }
     </script>
+    
     
     
     

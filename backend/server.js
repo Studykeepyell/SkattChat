@@ -171,10 +171,7 @@ io.on('connection', (socket) => {
 
    
     socket.on('findTictactoeOpponent', () => {
-        console.log(`User ${socket.id} clicked to find a Tic-Tac-Toe opponent.`);
-
         if (waitingPlayer) {
-            // Create a unique room ID and initialize the game state
             const roomID = `game-${waitingPlayer.id}-${socket.id}`;
             const firstPlayer = Math.random() < 0.5 ? 'X' : 'O'; // Randomly choose the first player
             const secondPlayer = firstPlayer === 'X' ? 'O' : 'X';
@@ -222,12 +219,10 @@ io.on('connection', (socket) => {
     });
 
     socket.on('disconnect', () => {
-        console.log(`User disconnected: ${socket.id}`);
         if (waitingPlayer === socket) {
             waitingPlayer = null;
         }
 
-        // Clean up any games that include the disconnected player
         for (const roomID in games) {
             if (roomID.includes(socket.id)) {
                 io.to(roomID).emit('opponentDisconnected');
