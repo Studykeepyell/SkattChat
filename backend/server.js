@@ -12,7 +12,7 @@ const io = socketIO(server);
 const User = require('../backend/models/User');
 const Message = require('../backend/models/Message');
 
-let waitinguser = null;
+let waitingPlayer = null;
 // Enable CORS for all requests
 app.use(cors({
     origin: 'https://skattchat.online',
