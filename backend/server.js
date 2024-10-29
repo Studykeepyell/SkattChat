@@ -13,6 +13,8 @@ const User = require('../backend/models/User');
 const Message = require('../backend/models/Message');
 
 let waitingPlayer = null;
+const games = {};
+
 // Enable CORS for all requests
 app.use(cors({
     origin: 'https://skattchat.online',
@@ -172,28 +174,52 @@ io.on('connection', (socket) => {
         console.log(`User ${socket.id} clicked to find a Tic-Tac-Toe opponent.`);
 
         if (waitingPlayer) {
-            console.log(`Pairing ${waitingPlayer.id} with ${socket.id}`);
-            const gameData = { player1: waitingPlayer.id, player2: socket.id };
+            const roomID = `game-${waitingPlayer.id}-${socket.id}`;
+            games[roomID] = {
+                board: Array(3).fill(null).map(() => Array(3).fill(null)), // 3x3 board
+                currentPlayer: 'X',
+            };
 
-            // Emit 'startTictactoeGame' to both players
-            waitingPlayer.emit('startTictactoeGame', gameData);
-            socket.emit('startTictactoeGame', gameData);
+            // Join both players to a room
+            socket.join(roomID);
+            waitingPlayer.join(roomID);
 
-            // Clear the waiting player
-            waitingPlayer = null;
-            console.log('Game started, waitingPlayer reset to null');
+            // Notify players to start the game and provide the room ID
+            io.to(roomID).emit('startTictactoeGame', { roomID, currentPlayer: 'X' });
+            console.log(`Game started in room ${roomID}`);
+
+            waitingPlayer = null; // Reset the waiting player
         } else {
-            console.log(`No waiting player, setting ${socket.id} as waitingPlayer`);
             waitingPlayer = socket;
+            console.log(`${socket.id} is waiting for an opponent...`);
 
-            // Set a timeout in case no opponent is found
-            const waitTimeout = setTimeout(() => {
+            // Set a timeout if no opponent joins
+            setTimeout(() => {
                 if (waitingPlayer === socket) {
                     socket.emit('tictactoeWaitTimeout');
                     waitingPlayer = null;
-                    console.log(`Timeout for ${socket.id}, waitingPlayer reset to null`);
+                    console.log(`Timeout for ${socket.id}, waitingPlayer reset`);
                 }
             }, 30000); // 30-second timeout
+        }
+    });
+
+    socket.on('makeMove', ({ row, col, roomID }) => {
+        const game = games[roomID];
+        if (game && game.board[row][col] === null) {
+            game.board[row][col] = game.currentPlayer;
+
+            // Broadcast the move to both players in the room
+            io.to(roomID).emit('moveMade', {
+                row,
+                col,
+                player: game.currentPlayer,
+            });
+
+            // Switch to the other player
+            game.currentPlayer = game.currentPlayer === 'X' ? 'O' : 'X';
+
+            // Check for win or tie conditions (add your win-check logic here if needed)
         }
     });
 
@@ -201,7 +227,15 @@ io.on('connection', (socket) => {
         console.log(`User disconnected: ${socket.id}`);
         if (waitingPlayer === socket) {
             waitingPlayer = null;
-            console.log(`Disconnected waiting player ${socket.id}, reset waitingPlayer to null`);
+        }
+
+        // Clean up any games that include the disconnected player
+        for (const roomID in games) {
+            if (roomID.includes(socket.id)) {
+                io.to(roomID).emit('opponentDisconnected');
+                delete games[roomID];
+                break;
+            }
         }
     });
 

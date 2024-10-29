@@ -50,22 +50,34 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    // Handle server's response to start Tic-Tac-Toe game
-    socket.on('startTictactoeGame', (gameData) => {
+    socket.on('startTictactoeGame', (data) => {
+        roomID = data.roomID;
+        currentPlayer = data.currentPlayer;
         playTictactoeButton.disabled = false;
         playTictactoeButton.textContent = 'Play Tic-Tac-Toe';
 
-        console.log('Starting Tic-Tac-Toe game with data:', gameData);
-
-        const ticTacToeWindow = window.open('tictactoe.html', 'Tic-Tac-Toe Game', 'width=400,height=400');
-        ticTacToeWindow.focus();
+        const ticTacToeWindow = window.open('tic_tac_toe.html', 'Tic-Tac-Toe Game', 'width=400,height=400');
+        ticTacToeWindow.onload = () => {
+            ticTacToeWindow.initGame(socket, roomID, currentPlayer);
+        };
     });
+
+    socket.on('moveMade', ({ row, col, player }) => {
+        const cell = document.getElementById(`cell-${row}-${col}`);
+        if (cell) cell.textContent = player;
+    });
+
 
     // Handle no opponent found (timeout)
     socket.on('tictactoeWaitTimeout', () => {
         playTictactoeButton.disabled = false;
         playTictactoeButton.textContent = 'Play Tic-Tac-Toe';
         alert('No opponents found. Try again later.');
+    });
+
+
+    socket.on('opponentDisconnected', () => {
+        alert("Your opponent disconnected. Game over.");
     });
 
     // Utility function to format the timestamp

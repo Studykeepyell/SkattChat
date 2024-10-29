@@ -11,7 +11,7 @@
             align-items: center;
             height: 100vh;
             margin: 0;
-            background-color: #f0f0f0;
+            background-color: white;
             font-family: Arial, sans-serif;
         }
         #tic-tac-toe-board {
@@ -26,7 +26,7 @@
         .cell {
             width: 100px;
             height: 100px;
-            background-color: #fff;
+            background-color: white;
             border-radius: 4px;
             display: flex;
             justify-content: center;
@@ -41,55 +41,77 @@
     <div id="tic-tac-toe-board"></div>
 
     <script>
+        // Variables initialized by the server for room and player information
+        let socket;
+        let roomID;
+        let currentPlayer;
+    
+        // Initialize the game board
         const boardSize = 3;
         const board = Array.from(Array(boardSize), () => Array(boardSize).fill(null));
-        let currentPlayer = 'X';
-
+    
         const ticTacToeBoard = document.getElementById('tic-tac-toe-board');
-
+    
         // Create cells and attach click handlers
         for (let row = 0; row < boardSize; row++) {
             for (let col = 0; col < boardSize; col++) {
                 const cell = document.createElement('div');
                 cell.classList.add('cell');
-                cell.addEventListener('click', () => makeMove(row, col, cell));
+                cell.id = `cell-${row}-${col}`;
+                cell.addEventListener('click', () => makeMove(row, col));
                 ticTacToeBoard.appendChild(cell);
             }
         }
-
-        function makeMove(row, col, cell) {
-            if (board[row][col]) return; // Prevent changing an already marked cell
-            board[row][col] = currentPlayer;
-            cell.textContent = currentPlayer;
-            if (checkWin(row, col)) {
-                alert(`${currentPlayer} wins!`);
+    
+        // Initialize the game when this script is loaded
+        function initGame(socketInstance, room, player) {
+            socket = socketInstance;
+            roomID = room;
+            currentPlayer = player;
+            
+            socket.on('moveMade', ({ row, col, player }) => {
+                const cell = document.getElementById(`cell-${row}-${col}`);
+                if (cell && !cell.textContent) {
+                    cell.textContent = player;
+                    board[row][col] = player;
+                }
+                currentPlayer = player === 'X' ? 'O' : 'X'; // Switch to the other player
+            });
+    
+            socket.on('gameOver', (result) => {
+                if (result === 'tie') {
+                    alert("It's a tie!");
+                } else {
+                    alert(`${result} wins!`);
+                }
                 resetBoard();
-            } else if (isBoardFull()) {
-                alert("It's a tie!");
+            });
+    
+            socket.on('opponentDisconnected', () => {
+                alert("Your opponent disconnected. Game over.");
                 resetBoard();
-            }
-            currentPlayer = currentPlayer === 'X' ? 'O' : 'X'; // Switch player
+            });
         }
-
+    
+        // Make a move if it's the current player's turn and the cell is empty
+        function makeMove(row, col) {
+            if (board[row][col] || currentPlayer !== socket.id) return;
+            board[row][col] = currentPlayer;
+            document.getElementById(`cell-${row}-${col}`).textContent = currentPlayer;
+    
+            // Emit the move to the server
+            socket.emit('makeMove', { row, col, roomID });
+    
+            // Switch to the next player
+            currentPlayer = currentPlayer === 'X' ? 'O' : 'X';
+        }
+    
         function resetBoard() {
             board.forEach((row, rIndex) => row.forEach((_, cIndex) => (board[rIndex][cIndex] = null)));
             Array.from(ticTacToeBoard.children).forEach(cell => (cell.textContent = ''));
             currentPlayer = 'X';
         }
-
-        function checkWin(row, col) {
-            // Check rows, columns, and diagonals
-            return (
-                board[row].every(cell => cell === currentPlayer) || // Row
-                board.every(row => row[col] === currentPlayer) || // Column
-                (row === col && board.every((_, i) => board[i][i] === currentPlayer)) || // Diagonal
-                (row + col === boardSize - 1 && board.every((_, i) => board[i][boardSize - i - 1] === currentPlayer)) // Anti-diagonal
-            );
-        }
-
-        function isBoardFull() {
-            return board.every(row => row.every(cell => cell !== null));
-        }
     </script>
+    
 </body>
 </html>
