@@ -11,17 +11,20 @@
 <body>
   <ul id="welcomeMessage"></ul>
 
-  <form id="chat-form">
-    <input id="messageForm" autocomplete="off" placeholder="Type a message" />
-    <button type="submit">Send</button>
-  </form>
-
+  <!-- Buttons for extra actions above the message area -->
   <button id="deleteAllMessages" style="margin-top: 10px;">Delete All Messages</button>
+  <button id="playTictactoe" style="margin-top: 10px;">TTT</button>
 
+  <!-- Message display area -->
   <div id="messages"></div>
 
-  <!-- New button to play Gomoku -->
-  <button id="playTictactoe" style="margin-top: 10px;">TTT</button>
+  <!-- Input container at the bottom -->
+  <div class="message-input-container">
+    <form id="chat-form" style="display: flex; width: 100%;">
+      <input id="messageForm" type="text" placeholder="Type a message" autocomplete="off" />
+      <button type="submit">Send</button>
+    </form>
+  </div>
 
   <script src="client.js"></script>
 </body>
