@@ -41,15 +41,15 @@
     <div id="tic-tac-toe-board"></div>
 
     <script>
-        // Variables initialized by the server for room and player information
+        // Initialize variables for socket communication, room ID, and player symbol
         let socket;
         let roomID;
-        let currentPlayer;
+        let playerSymbol;
+        let isMyTurn = false;
     
-        // Initialize the game board
+        // Game board size and initial setup
         const boardSize = 3;
         const board = Array.from(Array(boardSize), () => Array(boardSize).fill(null));
-    
         const ticTacToeBoard = document.getElementById('tic-tac-toe-board');
     
         // Create cells and attach click handlers
@@ -63,21 +63,24 @@
             }
         }
     
-        // Initialize the game when this script is loaded
+        // Initialize the game
         function initGame(socketInstance, room, player) {
             socket = socketInstance;
             roomID = room;
-            currentPlayer = player;
-            
+            playerSymbol = player;
+            isMyTurn = playerSymbol === 'X'; // X always starts
+    
+            // Handle incoming moves from the opponent
             socket.on('moveMade', ({ row, col, player }) => {
                 const cell = document.getElementById(`cell-${row}-${col}`);
                 if (cell && !cell.textContent) {
                     cell.textContent = player;
                     board[row][col] = player;
+                    isMyTurn = player !== playerSymbol; // Switch turns
                 }
-                currentPlayer = player === 'X' ? 'O' : 'X'; // Switch to the other player
             });
     
+            // Handle game over scenarios (win or tie)
             socket.on('gameOver', (result) => {
                 if (result === 'tie') {
                     alert("It's a tie!");
@@ -87,31 +90,37 @@
                 resetBoard();
             });
     
+            // Notify if the opponent disconnects
             socket.on('opponentDisconnected', () => {
                 alert("Your opponent disconnected. Game over.");
                 resetBoard();
             });
         }
     
-        // Make a move if it's the current player's turn and the cell is empty
+        // Attempt to make a move
         function makeMove(row, col) {
-            if (board[row][col] || currentPlayer !== socket.id) return;
-            board[row][col] = currentPlayer;
-            document.getElementById(`cell-${row}-${col}`).textContent = currentPlayer;
+            // Only proceed if it's the player's turn and the cell is empty
+            if (board[row][col] || !isMyTurn) return;
+            
+            // Update the local board and UI
+            board[row][col] = playerSymbol;
+            document.getElementById(`cell-${row}-${col}`).textContent = playerSymbol;
     
-            // Emit the move to the server
-            socket.emit('makeMove', { row, col, roomID });
+            // Emit the move to the server for syncing
+            socket.emit('makeMove', { row, col, roomID, player: playerSymbol });
     
-            // Switch to the next player
-            currentPlayer = currentPlayer === 'X' ? 'O' : 'X';
+            // Switch turn to the opponent
+            isMyTurn = false;
         }
     
+        // Reset the board for a new game
         function resetBoard() {
             board.forEach((row, rIndex) => row.forEach((_, cIndex) => (board[rIndex][cIndex] = null)));
             Array.from(ticTacToeBoard.children).forEach(cell => (cell.textContent = ''));
-            currentPlayer = 'X';
+            isMyTurn = playerSymbol === 'X'; // X always starts in a new game
         }
     </script>
+    
     
 </body>
 </html>
