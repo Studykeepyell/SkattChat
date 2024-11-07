@@ -1,7 +1,7 @@
-
+  const socket = io();
 
 document.addEventListener('DOMContentLoaded', () => {
-    const socket = io();
+  
 
     // Function to add a new chat message to the messages container
     function addChatMessage(data) {
