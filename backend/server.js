@@ -42,8 +42,6 @@ app.use('/api/users', userRoutes);
 
 // Serve static files
 app.use(express.static(path.join(__dirname, '../public')));
-app.use(express.static(path.join(__dirname, '../dist')));
-
 // Initialize Chat and Tic-Tac-Toe functionality
 chat(io);       // Initializes chat functionality
 ticTacToe(io);  // Initializes Tic-Tac-Toe functionality
