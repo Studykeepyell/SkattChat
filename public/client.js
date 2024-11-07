@@ -1,4 +1,4 @@
-
+const socket = io();
 
     // Add Tic-Tac-Toe button event listener
     const playTictactoeButton = document.getElementById('playTictactoe');
