@@ -1,11 +1,11 @@
 const express = require('express');
 const http = require('http');
 const socketIO = require('socket.io');
-const mongoose = require('mongoose');
+
 const path = require('path');
 const cors = require('cors'); // Added CORS support
 require('dotenv').config();
-
+const mongoose = require('mongoose');
 const app = express();
 const server = http.createServer(app);
 const io = socketIO(server);
@@ -43,7 +43,7 @@ app.use(express.static(path.join(__dirname, '../dist'))); // Add this line
 
 
 // MongoDB connection
-const mongoURI = process.env.MONGO_URI || 'mongodb+srv://Sky:Sky090726@cluster1.ripon.mongodb.net/?retryWrites=true&w=majority&appName=Cluster1';
+const mongoURI = process.env.MONGO_URI;
 mongoose.connect(mongoURI, {
     serverSelectionTimeoutMS: 30000 // 30 seconds timeout
 })
