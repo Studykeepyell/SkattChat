@@ -77,7 +77,6 @@
                     boardState[row][col] = player;
                     if (checkWinner(player)) {
                         statusDisplay.textContent = `Player ${player} wins!`;
-                        board.removeEventListener('click', onCellClick);
                     } else if (isBoardFull()) {
                         statusDisplay.textContent = "It's a tie!";
                     } else {
@@ -114,7 +113,6 @@
                 currentPlayer = 'X';
                 statusDisplay.textContent = "Player X's turn";
                 Array.from(board.children).forEach(cell => cell.textContent = '');
-                board.addEventListener('click', onCellClick);
             }
 
             socket.on('opponentDisconnected', () => {
