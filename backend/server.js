@@ -39,6 +39,8 @@ app.get('/index', (req, res) => {
 });
 
 app.use(express.static(path.join(__dirname, '../public')));
+app.use(express.static(path.join(__dirname, '../dist'))); // Add this line
+
 
 // MongoDB connection
 const mongoURI = process.env.MONGO_URI || 'mongodb+srv://Sky:Sky090726@cluster1.ripon.mongodb.net/?retryWrites=true&w=majority&appName=Cluster1';
