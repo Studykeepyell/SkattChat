@@ -1,1 +1,75 @@
-document.addEventListener("DOMContentLoaded",(function(){var e=io();function t(e){console.log("Adding chat message:",e);var t=document.createElement("div");t.className="message-container";var n=document.createElement("div");n.className="character-picture";var a=document.createElement("div");a.className="bubble-wrapper";var o=document.createElement("div");o.className="speech-bubble";var c=document.createElement("div");c.className="message",c.textContent="".concat(e.username,": ").concat(e.message);var i=document.createElement("div");i.className="lower-text",i.textContent=function(e){var t=new Date(e);if(isNaN(t))return"Invalid Date";var n={weekday:"long",hour:"2-digit",minute:"2-digit"};return t.toLocaleDateString(void 0,n)+", "+t.toLocaleTimeString(void 0,n)}(e.timestamp),o.appendChild(c),a.appendChild(o),t.appendChild(n),t.appendChild(a),t.appendChild(i);var s=document.getElementById("messages");s?(s.appendChild(t),console.log("Message successfully appended to messages list")):console.warn("Messages container not found.")}var n=document.getElementById("playTictactoe");n&&n.addEventListener("click",(function(){n.disabled=!0,n.textContent="Waiting for an opponent...",e.emit("findTictactoeOpponent")})),e.on("startTictactoeGame",(function(t){roomID=t.roomID;var a=t.playerSymbol,o=t.isFirstTurn;n.disabled=!1,n.textContent="Play Tic-Tac-Toe";var c=window.open("tictactoe.html","Tic-Tac-Toe Game","width=400,height=400");c.onload=function(){c.initGame(e,roomID,a,o)}})),e.on("moveMade",(function(e){var t=e.row,n=e.col,a=e.player,o=document.getElementById("cell-".concat(t,"-").concat(n));o&&(o.textContent=a)})),e.on("tictactoeWaitTimeout",(function(){n.disabled=!1,n.textContent="Play Tic-Tac-Toe",alert("No opponents found. Try again later.")})),e.on("opponentDisconnected",(function(){alert("Your opponent disconnected. Game over.")}));var a=document.getElementById("chat-form"),o=document.getElementById("messageForm"),c=document.getElementById("deleteAllMessages"),i=document.getElementById("messages");a&&a.addEventListener("submit",(function(t){t.preventDefault();var n=o.value.trim();n&&(e.emit("chat message",{username:localStorage.getItem("username"),message:n,timestamp:Date.now()}),o.value="")})),c&&c.addEventListener("click",(function(){i&&(i.innerHTML="",e.emit("clear messages"))})),e.on("chat message",(function(e){t(e)})),e.on("clear messages",(function(){i&&(i.innerHTML="")})),e.on("chat history",(function(e){i&&(i.innerHTML="",e.forEach((function(e){t(e)})))}))}));
+document.addEventListener("DOMContentLoaded", ( () => {
+    const e = io();
+    function t(e) {
+        console.log("Adding chat message:", e);
+        const t = document.createElement("div");
+        t.className = "message-container";
+        const n = document.createElement("div");
+        n.className = "character-picture";
+        const s = document.createElement("div");
+        s.className = "buble-wrapper";
+        const a = document.createElement("div");
+        a.className = "speech-bubble";
+        const o = document.createElement("div");
+        o.className = "message",
+        o.textContent = `${e.username}: ${e.message}`;
+        const c = document.createElement("div");
+        c.className = "lower-tex",
+        c.textContent = function(e) {
+            const t = new Date(e);
+            if (isNaN(t))
+                return "Invalid Date";
+            const n = {
+                weekday: "long",
+                hour: "2-digit",
+                minute: "2-digit"
+            };
+            return t.toLocaleDateString(void 0, n) + ", " + t.toLocaleTimeString(void 0, n)
+        }(e.timestamp),
+        a.appendChild(o),
+        s.appendChild(a),
+        t.appendChild(n),
+        t.appendChild(s),
+        t.appendChild(c);
+        const m = document.getElementById("messages");
+        m ? (m.appendChild(t),
+        console.log("Message successfully appended to messages list")) : console.warn("Messages container not found.")
+    }
+    const n = document.getElementById("chat-form")
+      , s = document.getElementById("messageForm")
+      , a = document.getElementById("deleteAllMessages")
+      , o = document.getElementById("messages");
+    n && n.addEventListener("submit", (function(t) {
+        t.preventDefault();
+        const n = s.value.trim();
+        n && (e.emit("chat message", {
+            username: localStorage.getItem("username"),
+            message: n,
+            timestamp: Date.now()
+        }),
+        s.value = "")
+    }
+    )),
+    a && a.addEventListener("click", (function() {
+        o && (o.innerHTML = "",
+        e.emit("clear messages"))
+    }
+    )),
+    e.on("chat message", (function(e) {
+        t(e)
+    }
+    )),
+    e.on("clear messages", (function() {
+        o && (o.innerHTML = "")
+    }
+    )),
+    e.on("chat history", (function(e) {
+        o && (o.innerHTML = "",
+        e.forEach((e => {
+            t(e)
+        }
+        )))
+    }
+    ))
+}
+));
