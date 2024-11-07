@@ -15,26 +15,27 @@ module.exports = (io) => {
       });
 
     // Handle incoming chat messages
-    socket.on('chat message', (data) => {
-      console.log(`Message from ${data.username}: ${data.message}`);
-      
-      // Save the message to the database
-      const newMessage = new Message({
+// chat.js
+socket.on('chat message', (data) => {
+    console.log(`Message from ${data.username}: ${data.message}`);
+    
+    const newMessage = new Message({
         username: data.username,
         message: data.message,
         timestamp: data.timestamp
-      });
+    });
 
-      newMessage.save()
+    newMessage.save()
         .then(() => {
-          console.log('Message saved successfully');
-          // Broadcast the message to all connected clients
-          io.emit('chat message', data);
+            console.log('Message saved successfully');
+            // Broadcast the message to all clients except the sender
+            socket.broadcast.emit('chat message', data);
         })
         .catch(err => {
-          console.log('Error saving message:', err);
+            console.log('Error saving message:', err);
         });
-    });
+});
+
 
     // Handle the 'clear messages' event
     socket.on('clear messages', () => {
