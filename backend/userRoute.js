@@ -22,18 +22,28 @@ router.post('/register', async (req, res) => {
 
 // User login route
 router.post('/login', async (req, res) => {
-  const { username, password } = req.body;
-  try {
-    const user = await User.findOne({ username });
-    if (user && await user.comparePassword(password)) {
-      res.json({ success: true });
-    } else {
-      res.status(401).json({ success: false, message: 'Invalid username or password' });
+    try {
+        const { username, password } = req.body;
+        console.log('Received login request:', { username, password }); // Debugging log
+
+        // Check for required fields
+        if (!username || !password) {
+            return res.status(400).json({ success: false, message: 'Username and password are required' });
+        }
+
+        // Perform your user verification logic here, for example:
+        const user = await User.findOne({ username });
+        if (!user || user.password !== password) { // Replace with proper password check
+            return res.status(401).json({ success: false, message: 'Invalid username or password' });
+        }
+
+        // Successful login response
+        res.json({ success: true, message: 'Login successful' });
+    } catch (error) {
+        console.error('Login error:', error); // Log the exact error
+        res.status(500).json({ success: false, message: 'An error occurred during login' });
     }
-  } catch (err) {
-    console.error('Error during login:', err);
-    res.status(500).json({ success: false, message: 'An error occurred during login' });
-  }
 });
+
 
 module.exports = router;

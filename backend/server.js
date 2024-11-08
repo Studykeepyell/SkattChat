@@ -1,5 +1,6 @@
 
-require('dotenv').config();
+require('dotenv').config({ path: './.env' });
+
 const express = require('express');
 const http = require('http');
 const socketIO = require('socket.io');
@@ -16,6 +17,8 @@ const io = socketIO(server);
 const userRoutes = require('./userRoute');
 const ticTacToe = require('./ticTacToe');
 const chat = require('./chat');  // Import chat module
+
+console.log('Test Variable:', process.env.TEST_VAR); // Check if TEST_VAR is defined
 
 // Middleware
 app.use(cors({ origin: 'https://skattchat.online', methods: 'GET,POST,PUT,DELETE', credentials: true }));
@@ -34,13 +37,17 @@ app.get('/index', (req, res) => {
     res.sendFile(path.join(__dirname, '../public', 'index.html'));
 });
 
-console.log('MongoDB URI:', process.env.MONGO_URI);
-mongoose.connect(process.env.MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true })
+console.log('MongoDB URI:', process.env.MONGO_URI); // Log the MongoDB URI for debugging
+
+mongoose.connect(process.env.MONGO_URI, {
+    useNewUrlParser: true,
+    useUnifiedTopology: true
+  })
   .then(() => console.log('Connected to MongoDB'))
   .catch(err => console.log('MongoDB connection error:', err));
 
 // Routes
-app.use('/api', userRoutes);
+app.use('/api/users', userRoutes);
 
 // Serve static files
 app.use(express.static(path.join(__dirname, '../public')));
