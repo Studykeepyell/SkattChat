@@ -11,7 +11,7 @@ const server = http.createServer(app);
 const io = socketIO(server);
 
 // Import routes and modules
-const userRoutes = require('./userRoutes');
+const userRoutes = require('./userRoute');
 const ticTacToe = require('./ticTacToe');
 const chat = require('./chat');  // Import chat module
 
@@ -33,7 +33,7 @@ app.get('/index', (req, res) => {
 });
 
 // MongoDB connection
-mongoose.connect(process.env.MONGO_URI, { serverSelectionTimeoutMS: 30000 })
+mongoose.connect(process.env.MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true })
   .then(() => console.log('MongoDB Atlas connected'))
   .catch(err => console.log('MongoDB connection error:', err));
 
