@@ -1,10 +1,11 @@
-//const backendApiUrl = process.env.BACKEND_API_URL || 'http://localhost:3000';
-
+// Define backend URL based on the environment
+const backendApiUrl = window.location.hostname === 'localhost'
+    ? 'http://localhost:3000'
+    : 'https://skattchat.online';
 
 document.addEventListener('DOMContentLoaded', function() {
     const registerForm = document.getElementById('register-form');
     if (registerForm) {
-        // If the form is found, add the event listener
         registerForm.addEventListener('submit', function(event) {
             event.preventDefault();
             const username = document.getElementById('username').value.trim();
@@ -18,7 +19,6 @@ document.addEventListener('DOMContentLoaded', function() {
             register(username, password);
         });
     } else {
-        // If the form is not found, log an error
         console.error('Register form not found.');
     }
 });
@@ -29,7 +29,7 @@ function validateInput(username, password) {
 
 function register(username, password) {
     const xhr = new XMLHttpRequest();
-    xhr.open('POST', `https://skattchat.online/register`, true);
+    xhr.open('POST', `${backendApiUrl}/api/users/register`, true); // Adjusted URL
     xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
     xhr.onload = function() {
         if (xhr.status === 200) {
