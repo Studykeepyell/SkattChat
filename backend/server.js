@@ -1,9 +1,11 @@
+
+require('dotenv').config();
 const express = require('express');
 const http = require('http');
 const socketIO = require('socket.io');
 const path = require('path');
 const cors = require('cors');
-require('dotenv').config();
+
 const mongoose = require('mongoose');
 
 const app = express();
@@ -32,12 +34,10 @@ app.get('/index', (req, res) => {
     res.sendFile(path.join(__dirname, '../public', 'index.html'));
 });
 
-mongoose.connect(process.env.MONGO_URI, {
-  useNewUrlParser: true,
-  useUnifiedTopology: true
-})
-.then(() => console.log('Connected to MongoDB'))
-.catch(err => console.log('MongoDB connection error:', err));
+console.log('MongoDB URI:', process.env.MONGO_URI);
+mongoose.connect(process.env.MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true })
+  .then(() => console.log('Connected to MongoDB'))
+  .catch(err => console.log('MongoDB connection error:', err));
 
 // Routes
 app.use('/api/users', userRoutes);
