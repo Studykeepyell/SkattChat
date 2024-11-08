@@ -18,13 +18,12 @@ function validateInput(username, password) {
 }
 
 function login(username, password) {
-    const xhr = new XMLHttpRequest(); // Make sure this line is placed at the start of the function
-    xhr.open('POST', `https://skattchat.online/index`, true);
+    const xhr = new XMLHttpRequest();
+    xhr.open('POST', `https://skattchat.online/api/login`, true);  // Updated URL to match /api/login
     xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
     xhr.onload = function() {
         if (xhr.status === 200) {
             try {
-                console.log('Response received:', xhr.responseText);
                 const response = JSON.parse(xhr.responseText);
                 if (response.success) {
                     localStorage.setItem('username', username);
