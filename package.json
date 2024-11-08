@@ -3,6 +3,8 @@
     "version": "1.0.0",
     "description": "A chat application with real-time messaging",
     "main": "server.js",
+    "proxy": "https://skattchat.online",
+
     "scripts": {
         "start": "node server.js",
         "dev": "nodemon server.js",

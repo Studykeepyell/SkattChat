@@ -1,4 +1,6 @@
-// const backendApiUrl = process.env.BACKEND_API_URL || 'http://localhost:3000';
+const backendApiUrl = process.env.NODE_ENV === 'production'
+    ? process.env.ONLINE_API_URL
+    : process.env.LOCAL_API_URL;
 
 document.getElementById('login-form').addEventListener('submit', function(event) {
     event.preventDefault();
@@ -19,7 +21,7 @@ function validateInput(username, password) {
 
 function login(username, password) {
     const xhr = new XMLHttpRequest();
-    xhr.open('POST', `https://skattchat.online/api/login`, true);  // Updated URL to match /api/login
+    xhr.open('POST', `${backendApiUrl}/api/users/login`, true);
     xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
     xhr.onload = function() {
         if (xhr.status === 200) {

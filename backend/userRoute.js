@@ -21,29 +21,31 @@ router.post('/register', async (req, res) => {
 });
 
 // User login route
+const bcrypt = require('bcrypt'); // Add this if not already in userRoute.js
+
 router.post('/login', async (req, res) => {
     try {
         const { username, password } = req.body;
-        console.log('Received login request:', { username, password }); // Debugging log
-
-        // Check for required fields
-        if (!username || !password) {
-            return res.status(400).json({ success: false, message: 'Username and password are required' });
-        }
-
-        // Perform your user verification logic here, for example:
         const user = await User.findOne({ username });
-        if (!user || user.password !== password) { // Replace with proper password check
+
+        if (!user) {
             return res.status(401).json({ success: false, message: 'Invalid username or password' });
         }
 
-        // Successful login response
+        // Compare hashed password
+        const isMatch = await bcrypt.compare(password, user.password);
+        if (!isMatch) {
+            return res.status(401).json({ success: false, message: 'Invalid username or password' });
+        }
+
+        // Successful login
         res.json({ success: true, message: 'Login successful' });
     } catch (error) {
-        console.error('Login error:', error); // Log the exact error
+        console.error('Login error:', error);
         res.status(500).json({ success: false, message: 'An error occurred during login' });
     }
 });
+
 
 
 module.exports = router;
