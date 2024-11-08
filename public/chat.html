@@ -11,22 +11,40 @@
 
 </head>
 <body>
-  <ul id="welcomeMessage"></ul>
+  <div class="container">
+    <div class="taskbar">
+      <button id="btn1">1</button>
+      <button id="btn2">2</button>
+      <button id="btn3">3</button>
+      <!-- Add more buttons as needed -->
+    </div>
+    <div class="friends-list">
+      <h3>Friends List</h3>
+      <ul>
+        <li>Friend 1</li>
+        <li>Friend 2</li>
+        <li>Friend 3</li>
+        <!-- Add more friends as needed -->
+      </ul>
+    </div>
+    <div class="content">
+      <ul id="welcomeMessage"></ul>
 
-  <!-- Buttons for extra actions above the message area -->
-  <button id="deleteAllMessages" style="margin-top: 10px;">Delete All Messages</button>
-  <button id="playTictactoe" style="margin-top: 10px;">TTT</button>
+      <!-- Buttons for extra actions above the message area -->
+      <button id="deleteAllMessages" style="margin-top: 10px;">Delete All Messages</button>
+      <button id="playTictactoe" style="margin-top: 10px;">TTT</button>
 
-  <!-- Message display area -->
-  <div id="messages"></div>
+      <!-- Message display area -->
+      <div id="messages"></div>
 
-  <!-- Input container at the bottom -->
-  <div class="message-input-container">
-    <form id="chat-form" style="display: flex; width: 100%;">
-      <input id="messageForm" type="text" placeholder="Type a message" autocomplete="off" />
-      <button type="submit">Send</button>
-    </form>
+      <!-- Input container at the bottom -->
+      <div class="message-input-container">
+        <form id="chat-form" style="display: flex; width: 100%;">
+          <input id="messageForm" type="text" placeholder="Type a message" autocomplete="off" />
+          <button type="submit">Send</button>
+        </form>
+      </div>
+    </div>
   </div>
-
 </body>
 </html>
