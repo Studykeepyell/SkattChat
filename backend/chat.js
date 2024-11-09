@@ -1,4 +1,3 @@
-// chat.js
 const Message = require('./models/Message'); // Adjust path if needed
 
 module.exports = (io) => {
@@ -15,27 +14,25 @@ module.exports = (io) => {
       });
 
     // Handle incoming chat messages
-// chat.js
-socket.on('chat message', (data) => {
-    console.log(`Message from ${data.username}: ${data.message}`);
-    
-    const newMessage = new Message({
-        username: data.username,
-        message: data.message,
-        timestamp: data.timestamp
-    });
+    socket.on('chat message', (data) => {
+      console.log(`Message from ${data.username}: ${data.message}`);
+      
+      const newMessage = new Message({
+          username: data.username,
+          message: data.message,
+          timestamp: data.timestamp
+      });
 
-    newMessage.save()
+      newMessage.save()
         .then(() => {
-            console.log('Message saved successfully');
-            // Broadcast the message to all clients except the sender
-            socket.broadcast.emit('chat message', data);
+          console.log('Message saved successfully');
+          // Broadcast the message to all clients, including the sender
+          io.emit('chat message', data);
         })
         .catch(err => {
-            console.log('Error saving message:', err);
+          console.log('Error saving message:', err);
         });
-});
-
+    });
 
     // Handle the 'clear messages' event
     socket.on('clear messages', () => {

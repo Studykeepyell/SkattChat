@@ -1,10 +1,11 @@
-//const backendApiUrl = process.env.BACKEND_API_URL || 'http://localhost:3000';
-
+// Define backend URL based on the environment
+const backendApiUrl = window.location.hostname === 'localhost'
+    ? 'http://localhost:3000/api/users'  // Added /api/users to match your route
+    : 'https://skattchat.online/api/users';  // Added /api/users to match your route
 
 document.addEventListener('DOMContentLoaded', function() {
     const registerForm = document.getElementById('register-form');
     if (registerForm) {
-        // If the form is found, add the event listener
         registerForm.addEventListener('submit', function(event) {
             event.preventDefault();
             const username = document.getElementById('username').value.trim();
@@ -18,34 +19,58 @@ document.addEventListener('DOMContentLoaded', function() {
             register(username, password);
         });
     } else {
-        // If the form is not found, log an error
         console.error('Register form not found.');
     }
 });
 
 function validateInput(username, password) {
-    return username && password;
+    if (!username || username.length < 3) {
+        alert('Username must be at least 3 characters long');
+        return false;
+    }
+    if (!password || password.length < 6) {
+        alert('Password must be at least 6 characters long');
+        return false;
+    }
+    return true;
 }
 
 function register(username, password) {
     const xhr = new XMLHttpRequest();
-    xhr.open('POST', `https://skattchat.online/register`, true);
-    xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+    xhr.open('POST', `${backendApiUrl}/register`, true);
+    xhr.setRequestHeader('Content-Type', 'application/json');
+
     xhr.onload = function() {
-        if (xhr.status === 200) {
+        try {
             const response = JSON.parse(xhr.responseText);
-            if (response.success) {
-                alert('Registration successful! You can now log in.');
-                window.location.href = '/'; // Redirect to the login page
+            
+            if (xhr.status === 201) {
+                alert('Registration successful! Please login.');
+                window.location.href = '/index.html';  // Redirect to login page
             } else {
-                alert(response.message);
+                alert(response.message || 'Registration failed');
+                console.error('Registration failed:', response);
             }
-        } else {
-            alert('An error occurred during registration. Please try again later.');
+        } catch (e) {
+            console.error('Failed to parse JSON:', xhr.responseText);
+            alert('An error occurred while processing the response');
         }
     };
+
     xhr.onerror = function() {
+        console.error('Network error occurred');
         alert('A network error occurred. Please check your connection.');
     };
-    xhr.send('username=' + encodeURIComponent(username) + '&password=' + encodeURIComponent(password));
+    
+    // Log the request data for debugging
+    console.log('Sending registration request:', {
+        url: `${backendApiUrl}/register`,
+        data: { username, password }
+    });
+
+    // Send as JSON
+    xhr.send(JSON.stringify({
+        username: username,
+        password: password
+    }));
 }

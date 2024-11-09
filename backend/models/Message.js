@@ -1,5 +1,3 @@
-// models/Message.js
-
 const mongoose = require('mongoose');
 
 // Define the Message schema

@@ -1,40 +1,52 @@
+require('dotenv').config({ path: './.env' });
+
 const express = require('express');
 const http = require('http');
 const socketIO = require('socket.io');
 const path = require('path');
-const cors = require('cors');
-require('dotenv').config();
 const mongoose = require('mongoose');
+const cors = require('cors');
 
 const app = express();
 const server = http.createServer(app);
 const io = socketIO(server);
 
 // Import routes and modules
-const userRoutes = require('userRoutes');
+const userRoutes = require('./userRoute');
 const ticTacToe = require('./ticTacToe');
 const chat = require('./chat');  // Import chat module
 
-// Middleware
-app.use(cors({ origin: 'https://skattchat.online', methods: 'GET,POST,PUT,DELETE', credentials: true }));
+console.log('Test Variable:', process.env.TEST_VAR); // Check if TEST_VAR is defined
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+// Middleware
+// Updated CORS configuration
+app.use(cors({
+  origin: ['http://localhost:3000', 'https://skattchat.online'], // Allow both localhost and the live app origin
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'], // Allow common HTTP methods
+  allowedHeaders: ['Content-Type', 'Authorization'], // Allow required headers
+}));
+
 
 app.use((req, res, next) => {
     console.log(`Serving request for: ${req.url}`);
     next();
 });
 
-
 // Serve static files from the 'public' directory
-
 app.get('/index', (req, res) => {
     res.sendFile(path.join(__dirname, '../public', 'index.html'));
 });
 
-// MongoDB connection
-mongoose.connect(process.env.MONGO_URI, { serverSelectionTimeoutMS: 30000 })
-  .then(() => console.log('MongoDB Atlas connected'))
+console.log('MongoDB URI:', process.env.MONGO_URI); // Log the MongoDB URI for debugging
+
+mongoose.connect(process.env.MONGO_URI, {
+    useNewUrlParser: true,
+    useUnifiedTopology: true
+  })
+  .then(() => console.log('Connected to MongoDB'))
   .catch(err => console.log('MongoDB connection error:', err));
 
 // Routes
