@@ -11,7 +11,7 @@ const server = http.createServer(app);
 const io = socketIO(server);
 
 // Import routes and modules
-const userRoutes = require('./userRoutes');
+const userRoutes = require('./userRoute');
 const ticTacToe = require('./ticTacToe');
 const chat = require('./chat');  // Import chat module
 

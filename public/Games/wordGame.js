@@ -24,17 +24,20 @@ function displayCharacters() {
     });
 }
 
-function checkIfWord(word) {
-    
-    return null;
+async function checkWord(word) {
+    const response = await fetch(`http://localhost:5000/check-word?word=${word}`);
+    const data = await response.json();
+    console.log(`${word} is ${data.isEnglishWord ? 'an English' : 'not an English'} word.`);
+    return response;
 }
+checkWord("hello"); 
 
 function handleSubmit() {
     const inputElement = document.getElementById("wordInput");
     const word = inputElement.value.trim();
 
     if (word) {
-        if (checkIfWord(word)) {
+        if (checkWord(word)) {
             alert(`${word} is a valid word!`);
         } else {
             alert(`${word} is not a valid word.`);
