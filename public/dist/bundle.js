@@ -1,37 +1,33 @@
 const socket = io();
 
 document.addEventListener('DOMContentLoaded', () => {
-  
 
-    // Function to add a new chat message to the messages container
     function addChatMessage(data) {
         console.log('Adding chat message:', data);
 
         const messageContainer = document.createElement('div');
         messageContainer.className = 'message-container';
 
-        const characterPicture = document.createElement('div');
-        characterPicture.className = 'character-picture';
+        const userInfoContainer = document.createElement('div');
+        userInfoContainer.className = 'user-info-container';
 
-        const bubbleWrapper = document.createElement('div');
-        bubbleWrapper.className = 'bubble-wrapper';
+        const username = document.createElement('h2');
+        username.className = 'username';
+        username.textContent = data.username;
 
-        const speechBubble = document.createElement('div');
-        speechBubble.className = 'speech-bubble';
+        const timeText = document.createElement('h4');
+        timeText.className = 'timestamp';
+        timeText.textContent = formatTimestamp(data.timestamp);
+
+        userInfoContainer.appendChild(username);
+        userInfoContainer.appendChild(timeText);
 
         const messageContent = document.createElement('div');
-        messageContent.className = 'message';
-        messageContent.textContent = `${data.username}: ${data.message}`;
+        messageContent.className = 'message-content';
+        messageContent.textContent = data.message;
 
-        const lowerText = document.createElement('div');
-        lowerText.className = 'lower-text';
-        lowerText.textContent = formatTimestamp(data.timestamp);
-
-        speechBubble.appendChild(messageContent);
-        bubbleWrapper.appendChild(speechBubble);
-        messageContainer.appendChild(characterPicture);
-        messageContainer.appendChild(bubbleWrapper);
-        messageContainer.appendChild(lowerText);
+        messageContainer.appendChild(userInfoContainer);
+        messageContainer.appendChild(messageContent);
 
         const messagesList = document.getElementById('messages');
         if (messagesList) {
@@ -93,8 +89,8 @@ document.addEventListener('DOMContentLoaded', () => {
         if (isNaN(date)) {
             return 'Invalid Date';
         }
-        const options = { weekday: 'long', hour: '2-digit', minute: '2-digit' };
-        return date.toLocaleDateString(undefined, options) + ', ' + date.toLocaleTimeString(undefined, options);
+        const options = { hour: 'numeric', minute: 'numeric', hour12: true };
+        return date.toLocaleTimeString(undefined, options);
     }
 
     // Event listeners and socket.io handling code go here
