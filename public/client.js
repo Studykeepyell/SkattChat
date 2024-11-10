@@ -7,32 +7,52 @@ document.addEventListener('DOMContentLoaded', () => {
     function addChatMessage(data) {
         console.log('Adding chat message:', data);
 
+        // Create message container
         const messageContainer = document.createElement('div');
         messageContainer.className = 'message-container';
+        messageContainer.style.display = 'flex'; // Make message container a flex container
 
+        // Create the button and add it to the left of the message
+        const actionButton = document.createElement('button');
+        console.log("button");
+        actionButton.className = 'action-button';
+        actionButton.textContent = 'Action'; // Change the button text as needed
+        actionButton.style.marginRight = '10px'; // Add spacing between button and message
+        actionButton.addEventListener('click', () => {
+            alert(`Action for ${data.username}: ${data.message}`);
+        });
+
+        // Character picture placeholder
         const characterPicture = document.createElement('div');
         characterPicture.className = 'character-picture';
 
+        // Bubble wrapper
         const bubbleWrapper = document.createElement('div');
         bubbleWrapper.className = 'bubble-wrapper';
 
+        // Speech bubble
         const speechBubble = document.createElement('div');
         speechBubble.className = 'speech-bubble';
 
+        // Message content
         const messageContent = document.createElement('div');
         messageContent.className = 'message';
         messageContent.textContent = `${data.username}: ${data.message}`;
 
+        // Lower text (timestamp)
         const lowerText = document.createElement('div');
         lowerText.className = 'lower-text';
         lowerText.textContent = formatTimestamp(data.timestamp);
 
+        // Append the elements together
         speechBubble.appendChild(messageContent);
         bubbleWrapper.appendChild(speechBubble);
+        messageContainer.appendChild(actionButton); // Append the button first
         messageContainer.appendChild(characterPicture);
         messageContainer.appendChild(bubbleWrapper);
         messageContainer.appendChild(lowerText);
 
+        // Append messageContainer to messages list
         const messagesList = document.getElementById('messages');
         if (messagesList) {
             messagesList.appendChild(messageContainer);
