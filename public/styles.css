@@ -190,3 +190,21 @@ body {
   box-shadow: 0 0.4% 0.8% rgba(0, 0, 0, 0.2);
   margin: 1%;
 }
+
+/* Enhanced Submit button styling */
+#chat-form button {
+  padding: 0.5rem 1rem; 
+  background-color: #FF5733; 
+  color: #fff;
+  font-size: 1rem;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  transition: background-color 0.3s ease, transform 0.3s ease, box-shadow 0.3s ease;
+  margin-left: 0.5rem; 
+}
+
+#chat-form button:hover {
+  background-color: #C70039; 
+  transform: scale(1.05); 
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); 
+}
