@@ -1,6 +1,6 @@
 document.addEventListener("DOMContentLoaded", () => {
     // Retrieve and display the final score
-    const finalScore = localStorage.getItem("finalScore") || 0;
+    const finalScore = localStorage.getItem("score") || 0;
     document.getElementById("finalScore").textContent = finalScore;
 });
 

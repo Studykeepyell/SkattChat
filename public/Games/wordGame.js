@@ -17,7 +17,7 @@ function createRandomCharacterArray(length) {
 function displayCharacters() {
     const lettersContainer = document.querySelector(".letters");
     lettersContainer.innerHTML = ""; // Clear previous characters
-    const characters = createRandomCharacterArray(3); // Adjust the number as needed
+    const characters = createRandomCharacterArray(2); // Adjust the number as needed
 
     characters.forEach(char => {
         const listItem = document.createElement("li");
@@ -32,7 +32,7 @@ async function checkWord(word) {
     const data = await ifWord.json();
     console.log(`${word} is ${data.isEnglishWord ? 'an English' : 'not an English'} word.`);
     response = data.isEnglishWord;
-    if(response = true){
+    if(response){
         const characters = localStorage.getItem("characters");
         const letters = word.split('');
         console.log(characters);
@@ -53,12 +53,14 @@ async function handleSubmit() {
         console.log(isValidWord);
         if (isValidWord) {
             points += word.length;
+            localStorage.setItem("score", points);
             updatePointsDisplay();
             displayCharacters();
         }
         else{
-            mes = "Invalid word, please enter a word only with the characters displayed";
+            mes = "Invalid word";
             updateMessage();
+            displayCharacters();
         }
     } else {
         mes = "Please enter a word";
@@ -122,9 +124,9 @@ function updateTimer() {
 }
 
 function endGame() {
-    alert(`Game over! Your final score is ${getPoints}`);
-    localStorage.setItem("finalScore", getPoints); // Store final score if needed
-    console.log("Score: " + getPoints);
+    alert(`Game over! Your final score is ${points}`);
+    localStorage.setItem("score", points); // Store final score if needed
+    console.log("Score: " + points);
     window.location.href = "\wordGameEnd.html"; 
 }
 
