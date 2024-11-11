@@ -10,6 +10,7 @@ const cors = require('cors');
 const app = express();
 const server = http.createServer(app);
 const io = socketIO(server);
+const axios = require('axios');
 
 // Import routes and modules
 const userRoutes = require('./userRoute');
@@ -19,6 +20,37 @@ const chat = require('./chat');  // Import chat module
 console.log('Test Variable:', process.env.TEST_VAR); // Check if TEST_VAR is defined
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+app.post('/api/get-opinion', async (req, res) => {
+  const { message } = req.body;
+  console.log('Received request at /api/get-opinion');
+
+  try {
+    const response = await axios.post(
+      'https://api.openai.com/v1/chat/completions',
+      {
+        model: 'gpt-4',
+        messages: [
+          { role: 'system', content: 'You are an assistant that gives opinions on messages.' },
+          { role: 'user', content: `What is your opinion on this message: "${message}"` }
+        ]
+      },
+      {
+        headers: {
+          'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`,
+          'Content-Type': 'application/json'
+        }
+      }
+    );
+
+    const opinion = response.data.choices[0].message.content;
+    res.json({ opinion });
+
+  } catch (error) {
+    console.error('Error fetching opinion from ChatGPT:', error);
+    res.status(500).json({ error: 'Error fetching opinion from ChatGPT' });
+  }
+});
 
 // Middleware
 // Updated CORS configuration
