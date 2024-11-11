@@ -29,6 +29,9 @@ document.addEventListener('DOMContentLoaded', () => {
         const userInfoContainer = document.createElement('div');
         userInfoContainer.className = 'user-info-container';
 
+        const characterPicture = document.createElement('div');
+        characterPicture.className = 'character-picture';
+
         const username = document.createElement('h2');
         username.className = 'username';
         username.textContent = data.username;
@@ -37,6 +40,7 @@ document.addEventListener('DOMContentLoaded', () => {
         timeText.className = 'timestamp';
         timeText.textContent = formatTimestamp(data.timestamp);
 
+        userInfoContainer.appendChild(characterPicture);
         userInfoContainer.appendChild(username);
         userInfoContainer.appendChild(timeText);
 
