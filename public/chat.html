@@ -10,26 +10,42 @@
 </head>
 <body>
   <div class="chatContainer">
+    <ul id="welcomeMessage"></ul>
 
-  
-  <ul id="welcomeMessage"></ul>
+    <!-- Buttons for extra actions above the message area -->
+    <div class="button-container">
+      <button id="deleteAllMessages">Delete All Messages</button>
+      <button id="playTictactoe">TTT</button>
+      <button id="logoutButton">Logout</button> <!-- New Logout Button -->
+    </div>
 
-  <!-- Buttons for extra actions above the message area -->
-  <div class="button-container">
-    <button id="deleteAllMessages">Delete All Messages</button>
-    <button id="playTictactoe">TTT</button>
+    <!-- Message display area -->
+    <div id="messages" class="message-display"></div>
+
+    <!-- Input container at the bottom -->
+    <div class="message-input-container">
+      <form id="chat-form">
+        <input id="messageForm" type="text" placeholder="Type a message" autocomplete="off" />
+        <button type="submit">Send</button>
+      </form>
+    </div>
   </div>
 
-  <!-- Message display area -->
-  <div id="messages" class="message-display"></div>
-
-  <!-- Input container at the bottom -->
-  <div class="message-input-container">
-    <form id="chat-form">
-      <input id="messageForm" type="text" placeholder="Type a message" autocomplete="off" />
-      <button type="submit">Send</button>
-    </form>
-  </div>
-</div>
+  <script>
+    document.getElementById('logoutButton').addEventListener('click', () => {
+      fetch('/api/users/logout', {
+          method: 'POST',
+          credentials: 'include'  // Necessary if using cookies
+      })
+      .then(response => {
+          if (response.ok) {
+              window.location.href = './index.html';  // Redirect to login page
+          } else {
+              console.error('Logout failed');
+          }
+      })
+      .catch(error => console.error('Logout error:', error));
+    });
+  </script>
 </body>
 </html>
