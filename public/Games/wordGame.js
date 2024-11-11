@@ -9,7 +9,6 @@ function createRandomCharacterArray(length) {
         result.push(charsVowels.charAt(Math.floor(Math.random() * charsVowels.length)));
         result.push(charsConsonants.charAt(Math.floor(Math.random() * charsConsonants.length)));
         result.push(charsConsonants.charAt(Math.floor(Math.random() * charsConsonants.length)));
-
     }
     localStorage.setItem("characters", result);
     return result;
@@ -86,6 +85,60 @@ document.getElementById("wordInput").addEventListener("keydown", function(event)
     }
 });
 
+document.addEventListener("DOMContentLoaded", () => {
+    document.getElementById("startGame").addEventListener("click", () => {
+        const gameDuration = 60; // Game duration in seconds
+        const startTime = Date.now();
+        
+        // Store the start time and duration in localStorage
+        localStorage.setItem("gameStartTime", startTime);
+        localStorage.setItem("gameDuration", gameDuration);
+
+        // Reset score
+        localStorage.setItem("score", 0);
+
+        // Navigate to the game page
+        window.location.href = "public/Games/wordGame.html"; 
+    });
+});
+
+let getPoints = parseInt(localStorage.getItem("score")) || 0;
+
+function updateTimer() {
+    const startTime = parseInt(localStorage.getItem("gameStartTime"));
+    const duration = parseInt(localStorage.getItem("gameDuration"));
+    const currentTime = Date.now();
+    const timeElapsed = Math.floor((currentTime - startTime) / 1000);
+    const timeLeft = duration - timeElapsed;
+
+    if (timeLeft > 0) {
+        document.getElementById("timer").textContent = `Time left: ${timeLeft}s`;
+    } else {
+        // End game if time runs out
+        clearInterval(timerInterval);
+        document.getElementById("timer").textContent = "Time's up!";
+        endGame();
+    }
+}
+
+function endGame() {
+    alert(`Game over! Your final score is ${getPoints}`);
+    localStorage.setItem("finalScore", getPoints); // Store final score if needed
+    console.log("Score: " + getPoints);
+    window.location.href = "\wordGameEnd.html"; 
+}
+
+function addPoints(wordLength) {
+    getPoints += wordLength;
+    localStorage.setItem("score", getPoints); // Update score in localStorage
+    updategetPointsDisplay();
+}
+
+// Start the timer
+const timerInterval = setInterval(updateTimer, 1000);
+
+// Call display characters and update display functions as needed
 displayCharacters();
 updatePointsDisplay();
 updateMessage();
+updateTimer();

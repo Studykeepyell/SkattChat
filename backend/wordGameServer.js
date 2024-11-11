@@ -1,6 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 const isWord = require('is-word');
+const path = require('path');
 
 const app = express();
 const englishWords = isWord('american-english');
@@ -12,6 +13,8 @@ app.get('/check-word', (req, res) => {
     const isEnglishWord = englishWords.check(word.toLowerCase());
     res.json({ word, isEnglishWord });
 });
+
+app.use(express.static(path.join(__dirname, '\public\Games')));
 
 // Start the server
 const PORT = 5000;
