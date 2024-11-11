@@ -1,56 +1,54 @@
-const Message = require('./models/Message'); // Adjust path if needed
+// chat.js
+const Message = require('./models/Message'); // Make sure Message model is correctly configured
 
-module.exports = (io) => {
-  io.on('connection', (socket) => {
-    console.log('A user connected to the chat:', socket.id);
+function setupChat(io) {
+    io.on('connection', (socket) => {
+        console.log('User connected:', socket.id);
 
-    // Load chat history from the database and send it to the client
-    Message.find().sort({ timestamp: 1 }).limit(100)
-      .then(messages => {
-        socket.emit('chat history', messages);
-      })
-      .catch(err => {
-        console.log('Error fetching messages:', err);
-      });
+        // Join a specific chat room
+        socket.on('joinRoom', (roomId) => {
+            socket.join(roomId);
+            console.log(`User ${socket.id} joined room: ${roomId}`);
 
-    // Handle incoming chat messages
-    socket.on('chat message', (data) => {
-      console.log(`Message from ${data.username}: ${data.message}`);
-      
-      const newMessage = new Message({
-          username: data.username,
-          message: data.message,
-          timestamp: data.timestamp
-      });
+            // Send the chat history for this room to the newly joined user
+            Message.find({ roomId })
+                .sort({ timestamp: 1 }) // Sort messages by timestamp
+                .then((messages) => {
+                    socket.emit('loadMessages', messages); // Send previous messages to the client
+                })
+                .catch((err) => console.error('Error loading messages:', err));
+        });
 
-      newMessage.save()
-        .then(() => {
-          console.log('Message saved successfully');
-          // Broadcast the message to all clients, including the sender
-          io.emit('chat message', data);
-        })
-        .catch(err => {
-          console.log('Error saving message:', err);
+        // Handle sending a new message in the room
+        socket.on('chatMessage', async (data) => {
+            const { roomId, senderId, content } = data;
+            
+            try {
+                // Create and save the new message to the database
+                const message = new Message({ roomId, senderId, content });
+                await message.save();
+
+                // Broadcast the message to all users in the room
+                io.to(roomId).emit('newMessage', message);
+            } catch (err) {
+                console.error('Error saving message:', err);
+            }
+        });
+
+        // Handle clearing chat history in a room
+        socket.on('clearMessages', async (roomId) => {
+            try {
+                await Message.deleteMany({ roomId });
+                io.to(roomId).emit('messagesCleared');
+            } catch (err) {
+                console.error('Error clearing messages:', err);
+            }
+        });
+
+        // Disconnecting the user
+        socket.on('disconnect', () => {
+            console.log('User disconnected:', socket.id);
         });
     });
-
-    // Handle the 'clear messages' event
-    socket.on('clear messages', () => {
-      // Delete all messages from the database
-      Message.deleteMany({})
-        .then(() => {
-          console.log('All messages deleted');
-          // Broadcast the 'clear messages' event to all clients
-          io.emit('clear messages');
-        })
-        .catch(err => {
-          console.log('Error deleting messages:', err);
-        });
-    });
-
-    // Handle user disconnection
-    socket.on('disconnect', () => {
-      console.log('A user disconnected from the chat:', socket.id);
-    });
-  });
-};
+}
+module.exports = setupChat;

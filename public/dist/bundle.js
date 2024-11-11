@@ -1,46 +1,10 @@
 const socket = io();
 
 document.addEventListener('DOMContentLoaded', () => {
-  
+ let currentRoom = 'general';
 
     // Function to add a new chat message to the messages container
-    function addChatMessage(data) {
-        console.log('Adding chat message:', data);
-
-        const messageContainer = document.createElement('div');
-        messageContainer.className = 'message-container';
-
-        const characterPicture = document.createElement('div');
-        characterPicture.className = 'character-picture';
-
-        const bubbleWrapper = document.createElement('div');
-        bubbleWrapper.className = 'bubble-wrapper';
-
-        const speechBubble = document.createElement('div');
-        speechBubble.className = 'speech-bubble';
-
-        const messageContent = document.createElement('div');
-        messageContent.className = 'message';
-        messageContent.textContent = `${data.username}: ${data.message}`;
-
-        const lowerText = document.createElement('div');
-        lowerText.className = 'lower-text';
-        lowerText.textContent = formatTimestamp(data.timestamp);
-
-        speechBubble.appendChild(messageContent);
-        bubbleWrapper.appendChild(speechBubble);
-        messageContainer.appendChild(characterPicture);
-        messageContainer.appendChild(bubbleWrapper);
-        messageContainer.appendChild(lowerText);
-
-        const messagesList = document.getElementById('messages');
-        if (messagesList) {
-            messagesList.appendChild(messageContainer);
-            console.log('Message successfully appended to messages list');
-        } else {
-            console.warn('Messages container not found.');
-        }
-    }
+   
 
     // Add Tic-Tac-Toe button event listener
     const playTictactoeButton = document.getElementById('playTictactoe');
@@ -102,6 +66,8 @@ document.addEventListener('DOMContentLoaded', () => {
     const messageInput = document.getElementById('messageForm');
     const deleteAllMessagesButton = document.getElementById('deleteAllMessages');
     const messagesList = document.getElementById('messages');
+    const roomSelect = document.getElementById('room-select'); // Add a dropdown or input to select the room
+
 
     if (chatForm) {
         chatForm.addEventListener('submit', function(event) {
@@ -117,6 +83,18 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
     }
+
+
+    function joinRoom(room) {
+        currentRoom = room;
+        socket.emit('joinRoom', room);
+    }
+
+    if (roomSelect) {roomSelect.addEventListener('change', (e) => {
+        joinRoom(e.target.value);
+    });}
+
+
 
     if (deleteAllMessagesButton) {
         deleteAllMessagesButton.addEventListener('click', function() {
@@ -145,4 +123,44 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         }
     });
+
+     function addChatMessage(data) {
+        console.log('Adding chat message:', data);
+
+        const messageContainer = document.createElement('div');
+        messageContainer.className = 'message-container';
+
+        const characterPicture = document.createElement('div');
+        characterPicture.className = 'character-picture';
+
+        const bubbleWrapper = document.createElement('div');
+        bubbleWrapper.className = 'bubble-wrapper';
+
+        const speechBubble = document.createElement('div');
+        speechBubble.className = 'speech-bubble';
+
+        const messageContent = document.createElement('div');
+        messageContent.className = 'message';
+        messageContent.textContent = `${data.username}: ${data.message}`;
+
+        const lowerText = document.createElement('div');
+        lowerText.className = 'lower-text';
+        lowerText.textContent = formatTimestamp(data.timestamp);
+
+        speechBubble.appendChild(messageContent);
+        bubbleWrapper.appendChild(speechBubble);
+        messageContainer.appendChild(characterPicture);
+        messageContainer.appendChild(bubbleWrapper);
+        messageContainer.appendChild(lowerText);
+
+        const messagesList = document.getElementById('messages');
+        if (messagesList) {
+            messagesList.appendChild(messageContainer);
+            console.log('Message successfully appended to messages list');
+        } else {
+            console.warn('Messages container not found.');
+        }
+    }
+
+    joinRoom(currentRoom);
 });

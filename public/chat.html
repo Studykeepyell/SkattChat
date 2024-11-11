@@ -6,27 +6,38 @@
   <title>Chat Room</title>
   <link rel="stylesheet" href="styles.css">
   <script src="/socket.io/socket.io.js"></script>
-  <script src="/dist/bundle.js"></script>
-
-
+  <script src="client.js"></script> <!-- Your main client script -->
 </head>
 <body>
-  <ul id="welcomeMessage"></ul>
+  <div class="container">
+    <h1>Chat Application</h1>
+    
+    <!-- Room Selection -->
+    <div class="room-select">
+      <label for="room-select">Select a Room:</label>
+      <select id="room-select">
+        <option value="general">General</option>
+        <option value="sports">Sports</option>
+        <option value="tech">Tech</option>
+        <option value="music">Music</option>
+        <!-- Add more rooms as needed -->
+      </select>
+    </div>
 
-  <!-- Buttons for extra actions above the message area -->
-  <button id="deleteAllMessages" style="margin-top: 10px;">Delete All Messages</button>
-  <button id="playTictactoe" style="margin-top: 10px;">TTT</button>
+    <!-- Buttons for extra actions above the message area -->
+    <button id="deleteAllMessages">Delete All Messages</button>
+    <button id="playTictactoe">TTT</button>
 
-  <!-- Message display area -->
-  <div id="messages"></div>
+    <!-- Messages Display Area -->
+    <div id="messages" class="messages"></div>
 
-  <!-- Input container at the bottom -->
-  <div class="message-input-container">
-    <form id="chat-form" style="display: flex; width: 100%;">
-      <input id="messageForm" type="text" placeholder="Type a message" autocomplete="off" />
-      <button type="submit">Send</button>
-    </form>
+    <!-- Input Form at the Bottom -->
+    <div class="message-input-container">
+      <form id="chat-form" style="display: flex; width: 100%;">
+        <input id="messageForm" type="text" placeholder="Type a message" autocomplete="off" />
+        <button type="submit">Send</button>
+      </form>
+    </div>
   </div>
-
 </body>
 </html>

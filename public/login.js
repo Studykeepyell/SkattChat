@@ -22,7 +22,7 @@ function validateInput(username, password) {
 function login(username, password) {
     const xhr = new XMLHttpRequest();
     xhr.open('POST', `${backendApiUrl}/login`, true);
-    xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+    xhr.setRequestHeader('Content-Type', 'application/json'); // Set Content-Type to JSON
     xhr.onload = function() {
         if (xhr.status === 200) {
             try {
@@ -45,5 +45,5 @@ function login(username, password) {
     xhr.onerror = function() {
         alert('A network error occurred. Please check your connection.');
     };
-    xhr.send('username=' + encodeURIComponent(username) + '&password=' + encodeURIComponent(password));
+    xhr.send(JSON.stringify({ username, password })); // Send JSON string
 }
