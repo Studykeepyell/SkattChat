@@ -25,7 +25,7 @@ body {
 .taskbar {
   background-color: #333;
   width: 6%;
-  padding: 1rem 0; /* Remove left and right padding */
+  padding: 1rem 0;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -33,17 +33,30 @@ body {
 }
 
 .taskbar button {
-  width: 80%; /* Increased width for visibility */
-  height: 40px; /* Fixed height for better visibility */
+  width: 80%;
+  height: 40px;
   background-color: #4A90E2;
   color: white;
   border: none;
-  border-radius: 0.5rem; /* More pronounced border curve */
+  border-radius: 0.5rem;
   cursor: pointer;
+  transition: background-color 0.3s ease, transform 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.taskbar button img {
+  width: 24px;
+  height: 24px;
+  fill: white;
+  vertical-align: middle;
+  margin-right: 10px; /* Space between icon and text */
 }
 
 .taskbar button:hover {
   background-color: #145DA0;
+  transform: scale(1.1);
 }
 
 /* Friends list styling */
@@ -82,7 +95,7 @@ body {
   align-items: center;
   justify-content: space-between;
   padding: 1%;
-  position: relative; /* For absolute positioning of buttons */
+  position: relative;
 }
 
 /* Tic-Tac-Toe button styling */

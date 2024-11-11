@@ -5,38 +5,36 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Chat Room</title>
   <link rel="stylesheet" href="styles.css">
-  <script src="/socket.io/socket.io.js"></script>
-  <script src="/dist/bundle.js"></script>
-<!-- test -->
-
+  <script src="scripts.js" defer></script>
 </head>
 <body>
   <div class="container">
     <div class="taskbar">
-      <button id="btn1">1</button>
-      <button id="btn2">2</button>
-      <button id="btn3">3</button>
-      <!-- Add more buttons as needed -->
+      <button data-target="add-friend.html">
+        <img src="add-friend.svg" class="button-icon" alt="Icon 1"> 
+      </button>
+      <button data-target="text.html">
+        <img src="chat.svg" class="button-icon" alt="Icon 2"> 
+      </button>
+      <button data-target="navigate.html">
+        <img src="icon3.svg" class="button-icon" alt="Icon 3">
+      </button>
     </div>
+    
     <div class="friends-list">
       <h3>Friends List</h3>
       <ul>
         <li>Friend 1</li>
         <li>Friend 2</li>
         <li>Friend 3</li>
-        <!-- Add more friends as needed -->
       </ul>
     </div>
     <div class="content">
       <button id="playTictactoe" class="styled-button">Play Tic-Tac-Toe</button>
       <ul id="welcomeMessage"></ul>
-
-      <!-- Message display area -->
       <div id="messages">
         <button id="deleteAllMessages" class="delete-button">Delete All Messages</button>
       </div>
-
-      <!-- Input container at the bottom -->
       <div class="message-input-container">
         <form id="chat-form" style="display: flex; width: 100%;">
           <input id="messageForm" type="text" placeholder="Type a message" autocomplete="off" />
