@@ -132,7 +132,7 @@ button:hover {
 }
 
 .action-button {
-  background-color: darkblue;
+  background-color: gold;
   border: none;
   padding: 5px 10px;
   cursor: pointer;
@@ -140,5 +140,5 @@ button:hover {
 }
 
 .action-button:hover {
-  background-color: lightskyblue;
+  background-color: goldenrod;
 }
