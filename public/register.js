@@ -12,7 +12,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const password = document.getElementById('password').value.trim();
 
             if (!validateInput(username, password)) {
-                alert('Please enter a valid username and password');
+                alert('Please enter a valid username and a strong password');
                 return;
             }
 
@@ -28,10 +28,38 @@ function validateInput(username, password) {
         alert('Username must be at least 3 characters long');
         return false;
     }
-    if (!password || password.length < 6) {
-        alert('Password must be at least 6 characters long');
+
+    if (!isPasswordStrong(password)) {
         return false;
     }
+
+    return true;
+}
+
+function isPasswordStrong(password) {
+    const minLength = 8;
+    const errors = [];
+    if (password.length < minLength) {
+        errors.push(`at least ${minLength} characters`);
+    }
+    if (!/[A-Z]/.test(password)) {
+        errors.push('one uppercase letter');
+    }
+    if (!/[a-z]/.test(password)) {
+        errors.push('one lowercase letter');
+    }
+    if (!/[0-9]/.test(password)) {
+        errors.push('one number');
+    }
+    if (!/[!@#$%^&*(),.?":{}|<>]/.test(password)) {
+        errors.push('one special character');
+    }
+
+    if (errors.length > 0) {
+        alert(`Password must contain: ${errors.join(', ')}`);
+        return false;
+    }
+
     return true;
 }
 
