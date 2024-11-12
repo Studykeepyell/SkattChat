@@ -5,23 +5,135 @@
 }
 
 body {
-    background-color: white;
-    font-family: Arial, sans-serif;
-    margin: 0;
-    padding: 0;
-    display: flex; 
-    justify-content: center; 
-    align-items: center;
+  font-family: Arial, sans-serif;
+  height: 100vh;
+  color: #333;
+  display: flex;
+  background-color: white;
+  overflow: hidden; /* Prevents horizontal scrolling */
+  align-items: center;
+
 }
 
-.searchBox-container {
-     display: flex; 
-     align-items: center; 
-     justify-content: center; 
-     margin-top: 20px; 
-     border-bottom: 2px solid #ccc; 
-     width: 500px; 
+
+.taskbar {
+  background-color: #145DA0;
+  width: 100%;
+  padding: 1rem 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1%;
+  height: 100vh;
 }
+
+.account-button {
+  margin-bottom: 3rem;
+  width: 100%;
+  height: 20%;
+}
+
+.taskbar button {
+  width: 80%;
+  height: 10%;
+  background-color: transparent;
+  color: white;
+  border: none;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  transition: background-color 0.3s ease, transform 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.taskbar button img {
+  width: 60%;
+  height: 60%;
+  fill: white;
+  vertical-align: middle;
+  margin-right: 1%;
+}
+
+.taskbar button:hover {
+  background-color: #4A90E2;
+  transform: scale(1.1);
+}
+
+.hamburger-icon {
+  width: 3rem;
+  height: 3rem;
+  background: none;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: auto;
+  position: relative;
+}
+
+.hamburger-icon .bar {
+  width: 2rem;
+  height: 0.25rem;
+  background-color: white;
+  border-radius: 0.25rem;
+  transition: all 0.3s ease;
+}
+
+.bubble-menu {
+  display: none;
+  position: fixed;
+  bottom: 10%; /* Adjust this value to position the menu at the bottom center */
+  left: 50%;
+  transform: translateX(-50%);
+  width: 200px;
+  background-color: #333;
+  color: white;
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  padding: 1rem;
+  z-index: 1000;
+}
+
+.bubble-menu.active {
+  display: block;
+}
+
+.bubble-menu ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.bubble-menu ul li {
+  padding: 0.5rem 0;
+  text-align: center;
+}
+
+.bubble-menu ul li a {
+  color: white;
+  text-decoration: none;
+  font-size: 1rem;
+}
+
+.bubble-menu ul li a:hover {
+  background-color: #444;
+  border-radius: 4px;
+}  
+.searchBox-container {
+  display: flex; 
+  align-items: center; 
+  justify-content: center; 
+  position: absolute;  
+  right: 325px;  
+  top: 20px;  
+  border-bottom: 2px solid #ccc; 
+  width: 500px; 
+}
+
 .searchBox-container input[type="text"] {
     width: 500px;
     padding: 10px;
@@ -45,4 +157,18 @@ body {
 
 .magnifyGlass ion-icon:hover {
     transform: scale(1.5); /* Enlarges the icon to 1.5 times its original size */
+}
+
+#container { 
+    width: 80%; 
+    max-width: 600px; 
+    margin-top: 20px; 
+} 
+
+.box { 
+    background-color: #fff; 
+    border: 1px solid #ddd; 
+    padding: 20px; 
+    margin-bottom: 10px; 
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
