@@ -10,6 +10,7 @@ body {
   background: linear-gradient(135deg, #4A90E2, #145DA0);
   color: #333;
   display: flex;
+  overflow: hidden; /* Prevents horizontal scrolling */
 }
 
 .container {
@@ -37,7 +38,7 @@ body {
 .taskbar button {
   width: 80%;
   height: 10%;
-  background-color: transparent; /* Assuming you want it transparent */
+  background-color: transparent;
   color: white;
   border: none;
   border-radius: 0.5rem;
@@ -60,6 +61,71 @@ body {
   background-color: #4A90E2;
   transform: scale(1.1);
 }
+
+.hamburger-icon {
+  width: 3rem;
+  height: 3rem;
+  background: none;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: auto;
+  position: relative;
+}
+
+.hamburger-icon .bar {
+  width: 2rem;
+  height: 0.25rem;
+  background-color: white;
+  border-radius: 0.25rem;
+  transition: all 0.3s ease;
+}
+
+.bubble-menu {
+  display: none;
+  position: fixed;
+  bottom: 10%; /* Adjust this value to position the menu at the bottom center */
+  left: 50%;
+  transform: translateX(-50%);
+  width: 200px;
+  background-color: #333;
+  color: white;
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  padding: 1rem;
+  z-index: 1000;
+}
+
+.bubble-menu.active {
+  display: block;
+}
+
+.bubble-menu ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.bubble-menu ul li {
+  padding: 0.5rem 0;
+  text-align: center;
+}
+
+.bubble-menu ul li a {
+  color: white;
+  text-decoration: none;
+  font-size: 1rem;
+}
+
+.bubble-menu ul li a:hover {
+  background-color: #444;
+  border-radius: 4px;
+}
+
 
 .friends-list {
   background-color: #fff;
@@ -187,24 +253,30 @@ body {
   margin: 1%;
 }
 
-.hamburger-icon {
-  width: 3rem;
-  height: 3rem;
-  background: none;
-  border: none;
+.back-to-home {
+  padding: 0.5rem 1rem;
+  background-color: #145DA0;
+  color: #fff;
+  font-size: 0.875rem;
+  border-radius: 0.5rem;
   cursor: pointer;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  gap: 0.5rem;
-  margin-top: auto; /* Ensure it sticks to the bottom of the taskbar */
+  transition: background-color 0.3s ease, transform 0.3s ease;
+  margin-top: 1rem;
+  border: none;
+  position: absolute;
+  top: 1rem;
+  left: 1rem;
 }
 
-.hamburger-icon .bar {
-  width: 2rem;
-  height: 0.25rem;
-  background-color: rgb(0, 0, 0);
-  border-radius: 0.25rem;
-  transition: all 0.3s ease;
+.back-to-home:hover {
+  background-color: #4A90E2;
+  transform: scale(1.05);
+}
+
+.profile-info {
+  position: relative;
+  padding: 2rem;
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
