@@ -1,4 +1,4 @@
-const Message = require('./models/Message'); // Ensure Message model is correctly configured
+const Message = require('./models/Message');
 
 function setupChat(io) {
     io.on('connection', (socket) => {
@@ -20,18 +20,18 @@ function setupChat(io) {
 
         // Handle message emission with validation
         socket.on('chat message', async (data) => {
-            const { room, username, message, timestamp } = data;
+            const { room, username, userId, message, timestamp } = data;
 
             // Validate that required fields are not empty
-            if (!message || !room) {
-                console.error("Error: Missing required fields 'message' or 'room'");
+            if (!message || !room || !userId || !username) {
+                console.error("Error: Missing required fields 'message', 'room', 'userId', or 'username'");
                 return;
             }
 
             const newMessage = {
                 room,
                 username,
-                message, // Use `message` if the schema expects this field
+                message,
                 timestamp
             };
 
@@ -41,6 +41,18 @@ function setupChat(io) {
                 io.to(room).emit('chat message', newMessage); // Broadcast within room only
             } catch (err) {
                 console.error('Error saving message:', err);
+            }
+        });
+
+        // Handle clearing all messages in a room
+        socket.on('clear messages', async (room) => {
+            try {
+                // Clear messages for the specified room in the database
+                await Message.deleteMany({ room });
+                io.to(room).emit('clear messages'); // Notify all clients in the room to clear the chat display
+                console.log(`Cleared all messages in room: ${room}`);
+            } catch (err) {
+                console.error('Error clearing messages:', err);
             }
         });
     });

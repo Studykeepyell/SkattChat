@@ -38,6 +38,22 @@
         <button type="submit">Send</button>
       </form>
     </div>
+
+    <div id="friendRequests">
+      <h3>Pending Friend Requests</h3>
+      <!-- Loop through friend requests and display here -->
+      <div>
+          <p>Friend Request from User123</p>
+          <button onclick="acceptFriendRequest('user123Id')">Accept</button>
+          <button onclick="declineFriendRequest('user123Id')">Decline</button>
+      </div>
+  </div>
+  
+  <div id="friendsList">
+      <h3>Your Friends</h3>
+      <!-- List friends here -->
+  </div>
+  
   </div>
 </body>
 </html>

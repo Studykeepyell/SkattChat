@@ -32,6 +32,18 @@ document.addEventListener('DOMContentLoaded', () => {
         messageContainer.appendChild(bubbleWrapper);
         messageContainer.appendChild(lowerText);
 
+    // Add "Send Friend Request" button
+    if (data.username !== localStorage.getItem('username')) { // Don't show for own messages
+        const friendRequestButton = document.createElement('button');
+        friendRequestButton.className = 'friend-request-button';
+        friendRequestButton.textContent = 'Add Friend';
+        friendRequestButton.onclick = () => sendFriendRequest(data.userId); // Pass the sender's userId
+
+        messageContainer.appendChild(friendRequestButton);
+    }
+
+
+
         const messagesList = document.getElementById('messages');
         if (messagesList) {
             messagesList.appendChild(messageContainer);
@@ -40,7 +52,6 @@ document.addEventListener('DOMContentLoaded', () => {
             console.warn('Messages container not found.');
         }
     }
-
     // Utility function to format the timestamp
     function formatTimestamp(timestamp) {
         const date = new Date(timestamp);
@@ -57,22 +68,43 @@ document.addEventListener('DOMContentLoaded', () => {
     const messagesList = document.getElementById('messages');
     const roomSelect = document.getElementById('room-select');
 
-    // Emit chat message with room information
+
     if (chatForm) {
         chatForm.addEventListener('submit', function(event) {
-            event.preventDefault();
-            const message = messageInput.value.trim();
-            if (message) {
+
+            if (message && username) {
+                console.log("Emitting message:", { username, message, timestamp, room: currentRoom });
                 socket.emit('chat message', {
-                    username: localStorage.getItem('username'),
-                    message: message,
-                    timestamp: Date.now(),
-                    room: currentRoom // Include room info
+                    username,
+                    message,
+                    timestamp,
+                    room: currentRoom
+                });
+                messageInput.value = ''; // Clear the input field after sending
+            } else {
+                console.warn("Missing data: message, username, or userId");
+            }
+                    event.preventDefault();
+            const message = messageInput.value.trim();
+            const username = localStorage.getItem('username');
+            const room = currentRoom;
+            const timestamp = Date.now();
+    
+            if (message && username && room) {
+                socket.emit('chat message', {
+                    username,
+                    message,
+                    timestamp,
+                    room
                 });
                 messageInput.value = '';
             }
         });
     }
+    else{
+        console.warn('Chat form not found.');}
+    
+    
 
     // Handle room joining
     function joinRoom(room) {
@@ -126,6 +158,50 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         }
     });
+
+
+
+// Send Friend Request
+function sendFriendRequest(friendId) {
+    fetch('/api/sendFriendRequest', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ senderId: localStorage.getItem('userId'), recipientId: friendId })
+    })
+    .then(response => response.json())
+    .then(data => alert(data.message));
+}
+
+// Accept Friend Request
+function acceptFriendRequest(friendId) {
+    fetch('/api/acceptFriendRequest', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: localStorage.getItem('userId'), friendId })
+    })
+    .then(response => response.json())
+    .then(data => alert(data.message));
+}
+
+// Decline Friend Request
+function declineFriendRequest(friendId) {
+    fetch('/api/declineFriendRequest', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: localStorage.getItem('userId'), friendId })
+    })
+    .then(response => response.json())
+    .then(data => alert(data.message));
+}
+
+
+
+
+
+
+
+
+
 
     // Join the default room on load
     joinRoom(currentRoom);

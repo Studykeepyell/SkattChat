@@ -124,3 +124,18 @@ button:hover {
 #messageForm:focus {
   border-color: #4CAF50;
 }
+
+.friend-request-button {
+  background-color: #0084ff;
+  color: white;
+  border: none;
+  padding: 5px 10px;
+  margin-left: 10px;
+  cursor: pointer;
+  border-radius: 5px;
+  font-size: 0.9em;
+}
+
+.friend-request-button:hover {
+  background-color: #005bb5;
+}

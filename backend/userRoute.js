@@ -53,4 +53,54 @@ router.post('/login', async (req, res) => {
     }
 });
 
+
+
+// Send Friend Request
+router.post('/sendFriendRequest', async (req, res) => {
+    const { senderId, recipientId } = req.body;
+    try {
+        const recipient = await User.findById(recipientId);
+        if (recipient.friendRequests.includes(senderId)) {
+            return res.status(400).json({ message: 'Friend request already sent' });
+        }
+        recipient.friendRequests.push(senderId);
+        await recipient.save();
+        res.json({ success: true, message: 'Friend request sent' });
+    } catch (error) {
+        res.status(500).json({ success: false, message: 'Server error' });
+    }
+});
+
+// Accept Friend Request
+router.post('/acceptFriendRequest', async (req, res) => {
+    const { userId, friendId } = req.body;
+    try {
+        const user = await User.findById(userId);
+        const friend = await User.findById(friendId);
+
+        // Remove from friend requests and add to friends
+        user.friendRequests = user.friendRequests.filter(id => id.toString() !== friendId);
+        user.friends.push(friendId);
+        friend.friends.push(userId);
+
+        await user.save();
+        await friend.save();
+        res.json({ success: true, message: 'Friend request accepted' });
+    } catch (error) {
+        res.status(500).json({ success: false, message: 'Server error' });
+    }
+});
+
+// Decline Friend Request
+router.post('/declineFriendRequest', async (req, res) => {
+    const { userId, friendId } = req.body;
+    try {
+        const user = await User.findById(userId);
+        user.friendRequests = user.friendRequests.filter(id => id.toString() !== friendId);
+        await user.save();
+        res.json({ success: true, message: 'Friend request declined' });
+    } catch (error) {
+        res.status(500).json({ success: false, message: 'Server error' });
+    }
+});
 module.exports = router;
