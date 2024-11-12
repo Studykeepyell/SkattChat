@@ -4,28 +4,13 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Game Over</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            text-align: center;
-        }
-        .score-container {
-            border: 1px solid #ccc;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.1);
-        }
-    </style>
+    <link rel="stylesheet" href="wordGame.css">
 </head>
 <body>
-    <div class="score-container">
-        <h1>Game Over!</h1>
-        <p>Your final score is: <span id="finalScore"></span></p>
-        <button onclick="startNewGame()">Play Again</button>
+    <div class="scoreContainer">
+        <h1 class="title">Game Over!</h1>
+        <p class="scoreText">Your final score is: <span id="finalScore">0</span></p>
+        <button class="playAgainButton" onclick="startNewGame()">Play Again</button>
     </div>
 
     <script src="wordGameEnd.js"></script>

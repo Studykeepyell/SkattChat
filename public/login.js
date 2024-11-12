@@ -19,7 +19,7 @@ function validateInput(username, password) {
 
 function login(username, password) {
     const xhr = new XMLHttpRequest(); // Make sure this line is placed at the start of the function
-    xhr.open('POST', `https://skattchat.online/index`, true);
+    xhr.open('POST', `https://skattchat.online/api/users/login`, true);
     xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
     xhr.onload = function() {
         if (xhr.status === 200) {

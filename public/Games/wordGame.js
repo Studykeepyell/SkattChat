@@ -56,6 +56,8 @@ async function handleSubmit() {
             localStorage.setItem("score", points);
             updatePointsDisplay();
             displayCharacters();
+            mes = "";
+            updateMessage();
         }
         else{
             mes = "Invalid word";
@@ -87,22 +89,22 @@ document.getElementById("wordInput").addEventListener("keydown", function(event)
     }
 });
 
-document.addEventListener("DOMContentLoaded", () => {
-    document.getElementById("startGame").addEventListener("click", () => {
-        const gameDuration = 60; // Game duration in seconds
-        const startTime = Date.now();
+// document.addEventListener("DOMContentLoaded", () => {
+//     document.getElementById("startGame").addEventListener("click", () => {
+//         const gameDuration = 60; // Game duration in seconds
+//         const startTime = Date.now();
         
-        // Store the start time and duration in localStorage
-        localStorage.setItem("gameStartTime", startTime);
-        localStorage.setItem("gameDuration", gameDuration);
+//         // Store the start time and duration in localStorage
+//         localStorage.setItem("gameStartTime", startTime);
+//         localStorage.setItem("gameDuration", gameDuration);
 
-        // Reset score
-        localStorage.setItem("score", 0);
+//         // Reset score
+//         localStorage.setItem("score", 0);
 
-        // Navigate to the game page
-        window.location.href = "public/Games/wordGame.html"; 
-    });
-});
+//         // Navigate to the game page
+//         window.location.href = "public/Games/wordGame.html"; 
+//     });
+// });
 
 let getPoints = parseInt(localStorage.getItem("score")) || 0;
 

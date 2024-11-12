@@ -15,8 +15,15 @@ const userRoutes = require('./userRoute');
 const ticTacToe = require('./ticTacToe');
 const chat = require('./chat');  // Import chat module
 
+const isWord = require('is-word');
+const englishWords = isWord('american-english');
+
 // Middleware
-app.use(cors({ origin: 'https://skattchat.online', methods: 'GET,POST,PUT,DELETE', credentials: true }));
+app.use(cors());
+// app.use(cors({ origin: ['http://127.0.0.1:5500', 'https://skattchat.online'], 
+//   methods: 'GET,POST,PUT,DELETE', 
+//   credentials: true, 
+// }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
@@ -50,6 +57,17 @@ ticTacToe(io);  // Initializes Tic-Tac-Toe functionality
 app.use((req, res) => {
   res.status(404).send('Page not found');
 });
+
+// app.use(cors());
+// Define an endpoint to check if a word is English
+app.get('/check-word', async (req, res) => {
+    const word = req.query.word;
+    const isEnglishWord = await englishWords.check(word.toLowerCase());
+    console.log('isEnglishhard:', isEnglishWord);
+    res.json({ word, isEnglishWord });
+});
+
+app.use(express.static(path.join(__dirname, '\public\Games')));
 
 // Start the server
 const PORT = process.env.PORT || 3000;
