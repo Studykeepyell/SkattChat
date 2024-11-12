@@ -5,13 +5,15 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Profile</title>
     <script src="addFriend.js" defer></script>
-    <script src="addFriend.css" defer></script>
+    <link rel="stylesheet" href="addFriend.css">
 </head>
 <body>
     <form id = "searchForm">
         <div class = "searchBox-container">
             <input type="text" placeholder="Search by username..">
-            <ion-icon name="search"></ion-icon>
+            <button type = "submit" class="magnifyGlass">
+                <ion-icon name="search"></ion-icon>
+            </button>
         </div>
         <!--dynamic user display-->
     </form>
