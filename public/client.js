@@ -1,4 +1,4 @@
-  const socket = io();
+const socket = io();
 
 document.addEventListener('DOMContentLoaded', () => {
   
@@ -7,19 +7,33 @@ document.addEventListener('DOMContentLoaded', () => {
     function addChatMessage(data) {
         console.log('Adding chat message:', data);
 
-        // Create message container
         const messageContainer = document.createElement('div');
         messageContainer.className = 'message-container';
-        messageContainer.style.display = 'flex'; // Make message container a flex container
-
-        // Create the button and add it to the left of the message
+    
         const actionButton = document.createElement('button');
-        console.log("button");
         actionButton.className = 'action-button';
-        actionButton.textContent = 'Action'; // Change the button text as needed
-        actionButton.style.marginRight = '10px'; // Add spacing between button and message
-        actionButton.addEventListener('click', () => {
-            alert(`Action for ${data.username}: ${data.message}`);
+        actionButton.textContent = '🖥️';
+        actionButton.style.marginRight = '10px';
+        
+        // Fetch ChatGPT's opinion when button is clicked
+        actionButton.addEventListener('click', async () => {
+            try {
+                console.log("Making request to:", '/api/get-opinion');
+                const response = await fetch('/api/get-opinion', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ message: data.message })
+                });
+                const result = await response.json();
+                // Add AI response as a new message
+                addChatMessage({
+                    username: "AttyAI",
+                    message: `response to ${data.username}: "${data.message}" - ${result.opinion}`,
+                    timestamp: Date.now()
+                }, true);
+            } catch (error) {
+                console.error('Error fetching ChatGPT opinion:', error);
+            }
         });
 
         // Character picture placeholder

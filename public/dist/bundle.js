@@ -25,7 +25,12 @@ document.addEventListener('DOMContentLoaded', () => {
                     body: JSON.stringify({ message: data.message })
                 });
                 const result = await response.json();
-                alert(`AI's opinion: ${result.opinion}`);
+                // Add AI response as a new message
+                addChatMessage({
+                    username: "AttyAI",
+                    message: `response to ${data.username}: "${data.message}" - ${result.opinion}`,
+                    timestamp: Date.now()
+                }, true);
             } catch (error) {
                 console.error('Error fetching ChatGPT opinion:', error);
             }

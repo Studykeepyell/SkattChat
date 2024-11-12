@@ -21,10 +21,12 @@ console.log('Test Variable:', process.env.TEST_VAR); // Check if TEST_VAR is def
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-app.post('/api/get-opinion', async (req, res) => {
-  const { message } = req.body;
-  console.log('Received request at /api/get-opinion');
+// Import the Message model
+const Message = require('./models/Message');
 
+app.post('/api/get-opinion', async (req, res) => {
+  const { message, username } = req.body;  // username should be passed from the client
+  console.log('Received request at /api/get-opinion');
   try {
     const response = await axios.post(
       'https://api.openai.com/v1/chat/completions',
@@ -44,8 +46,16 @@ app.post('/api/get-opinion', async (req, res) => {
     );
 
     const opinion = response.data.choices[0].message.content;
-    res.json({ opinion });
 
+    // Save AI response to the database
+    const aiMessage = new Message({
+      username: 'AttyAI',
+      message: `Response to ${username}: "${message}" - ${opinion}`,
+      timestamp: new Date()
+    });
+    await aiMessage.save();
+
+    res.json({ opinion });
   } catch (error) {
     console.error('Error fetching opinion from ChatGPT:', error);
     res.status(500).json({ error: 'Error fetching opinion from ChatGPT' });
