@@ -7,8 +7,8 @@
 body {
   font-family: Arial, sans-serif;
   height: 100vh;
-  background: linear-gradient(135deg, #4A90E2, #145DA0);
-  color: #333;
+  background: linear-gradient(135deg, #263238, #263238); /* Dark slate gray */
+  color: #ECEFF1; /* Off-white */
   display: flex;
   overflow: hidden; /* Prevents horizontal scrolling */
 }
@@ -20,7 +20,7 @@ body {
 }
 
 .taskbar {
-  background-color: #145DA0;
+  background-color: #37474F; /* Blue-gray */
   width: 6%;
   padding: 1rem 0;
   display: flex;
@@ -39,7 +39,7 @@ body {
   width: 80%;
   height: 10%;
   background-color: transparent;
-  color: white;
+  color: #ECEFF1; /* Off-white */
   border: none;
   border-radius: 0.5rem;
   cursor: pointer;
@@ -52,13 +52,13 @@ body {
 .taskbar button img {
   width: 60%;
   height: 60%;
-  fill: white;
+  border-radius: 50%; /* Ensure the image is displayed in a circle */
   vertical-align: middle;
   margin-right: 1%;
 }
 
 .taskbar button:hover {
-  background-color: #4A90E2;
+  background-color: #455A64; /* Charcoal */
   transform: scale(1.1);
 }
 
@@ -80,7 +80,7 @@ body {
 .hamburger-icon .bar {
   width: 2rem;
   height: 0.25rem;
-  background-color: white;
+  background-color: #ECEFF1; /* Off-white */
   border-radius: 0.25rem;
   transition: all 0.3s ease;
 }
@@ -88,12 +88,12 @@ body {
 .bubble-menu {
   display: none;
   position: fixed;
-  bottom: 10%; /* Adjust this value to position the menu at the bottom center */
+  bottom: 10%;
   left: 50%;
   transform: translateX(-50%);
   width: 200px;
-  background-color: #333;
-  color: white;
+  background-color: #37474F; /* Blue-gray */
+  color: #ECEFF1; /* Off-white */
   border-radius: 8px;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
   padding: 1rem;
@@ -116,22 +116,21 @@ body {
 }
 
 .bubble-menu ul li a {
-  color: white;
+  color: #ECEFF1; /* Off-white */
   text-decoration: none;
   font-size: 1rem;
 }
 
 .bubble-menu ul li a:hover {
-  background-color: #444;
+  background-color: #455A64; /* Charcoal */
   border-radius: 4px;
 }
 
-
 .friends-list {
-  background-color: #fff;
+  background-color: #FAFAFA; /* Very light gray */
   width: 20%;
   padding: 1%;
-  border-left: 0.1% solid #ccc;
+  border-left: 0.1% solid #CFD8DC; /* Light gray-blue */
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -139,7 +138,7 @@ body {
 
 .friends-list h3 {
   margin-bottom: 1%;
-  color: #145DA0;
+  color: #37474F; /* Blue-gray */
 }
 
 .friends-list ul {
@@ -150,8 +149,9 @@ body {
 
 .friends-list ul li {
   padding: 1%;
-  border-bottom: 0.1% solid #ccc;
+  border-bottom: 0.1% solid #CFD8DC; /* Light gray-blue */
   text-align: center;
+  background-color: #FFFFFF; /* White */
 }
 
 .content {
@@ -169,7 +169,7 @@ body {
   top: 1%;
   width: 15%;
   padding: 1%;
-  background-color: #e24a4a;
+  background-color: #00BCD4; /* Teal */
   color: white;
   font-size: 1.1rem;
   border: none;
@@ -179,12 +179,12 @@ body {
 }
 
 .styled-button:hover {
-  background-color: #a01414f4;
+  background-color: #0097A7; /* Darker teal */
   transform: scale(1.05);
 }
 
 #messages {
-  background: #fff;
+  background: #FAFAFA; /* Very light gray */
   padding: 2%;
   border-radius: 0.8%;
   box-shadow: 0 0.4% 0.8% rgba(0, 0, 0, 0.2);
@@ -200,7 +200,7 @@ body {
   top: 1%;
   left: 1%;
   padding: 1%;
-  background-color: #f44336;
+  background-color: #00BCD4; /* Teal */
   color: white;
   border: none;
   border-radius: 10px;
@@ -209,7 +209,7 @@ body {
 }
 
 .delete-button:hover {
-  background-color: #c62828;
+  background-color: #0097A7; /* Darker teal */
   transform: scale(1.05);
 }
 
@@ -222,32 +222,32 @@ body {
   width: 100%;
   padding: 1%;
   margin: 1% 0;
-  border: 0.1% solid #ccc;
+  border: 0.1% solid #CFD8DC; /* Light gray-blue */
   border-radius: 0.8%;
   font-size: 1rem;
 }
 
 #chat-form button {
-  padding: 0.5rem 1rem; 
-  background-color: #FF5733; 
+  padding: 0.5rem 1rem;
+  background-color: #00BCD4; /* Teal */
   color: #fff;
   font-size: 1rem;
   border-radius: 0.5rem;
   cursor: pointer;
   transition: background-color 0.3s ease, transform 0.3s ease, box-shadow 0.3s ease;
-  margin-left: 0.5rem; 
+  margin-left: 0.5rem;
 }
 
 #chat-form button:hover {
-  background-color: #C70039; 
-  transform: scale(1.05); 
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); 
+  background-color: #0097A7; /* Darker teal */
+  transform: scale(1.05);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
 }
 
 #welcomeMessage {
   list-style: none;
   padding: 1%;
-  background: #fff;
+  background: #FAFAFA; /* Very light gray */
   border-radius: 0.8%;
   box-shadow: 0 0.4% 0.8% rgba(0, 0, 0, 0.2);
   margin: 1%;
@@ -255,7 +255,7 @@ body {
 
 .back-to-home {
   padding: 0.5rem 1rem;
-  background-color: #145DA0;
+  background-color: #37474F; /* Blue-gray */
   color: #fff;
   font-size: 0.875rem;
   border-radius: 0.5rem;
@@ -269,14 +269,124 @@ body {
 }
 
 .back-to-home:hover {
-  background-color: #4A90E2;
+  background-color: #455A64; /* Charcoal */
   transform: scale(1.05);
 }
 
 .profile-info {
   position: relative;
   padding: 2rem;
-  background: #fff;
+  background: #FAFAFA; /* Very light gray */
   border-radius: 8px;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.profile-info .profile-picture {
+  width: 150px;
+  height: 150px;
+  border-radius: 50%; /* Ensure the image is displayed in a circle */
+  background-color: #CFD8DC; /* Light gray-blue */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-bottom: 10px;
+  cursor: pointer;
+  overflow: hidden;
+  position: relative;
+}
+
+.profile-info .profile-picture img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 50%; /* Ensure the image is displayed in a circle */
+}
+
+.profile-info .profile-details {
+  width: 100%;
+}
+
+.profile-info .input-group {
+  margin-bottom: 1rem;
+  width: 100%;
+}
+
+.profile-info .input-group label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: bold;
+  color: #37474F; /* Blue-gray */
+}
+
+.profile-info .input-group input {
+  width: 100%;
+  padding: 0.5rem;
+  border: 1px solid #CFD8DC; /* Light gray-blue */
+  border-radius: 4px;
+  background-color: #FAFAFA; /* Very light gray */
+  color: #37474F; /* Blue-gray */
+}
+
+#save-profile {
+  padding: 0.5rem 1rem;
+  background: #00BCD4; /* Teal */
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background 0.3s ease;
+}
+
+#save-profile:hover {
+  background: #0097A7; /* Darker teal */
+}
+
+.friend-list {
+  background: #FAFAFA; /* Very light gray */
+  width: 20%;
+  padding: 1%;
+  border-left: 0.1% solid #CFD8DC; /* Light gray-blue */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.friend-list h2 {
+  margin-bottom: 1rem;
+  color: #37474F; /* Blue-gray */
+}
+
+.friend-list ul {
+  list-style: none;
+  width: 100%;
+  padding: 0;
+  overflow-y: auto;
+}
+
+.friend-list ul li {
+  background: #FFFFFF; /* White */
+  border: 1px solid #CFD8DC; /* Light gray-blue */
+  padding: 0.5rem;
+  border-radius: 4px;
+  margin-bottom: 0.5rem;
+  text-align: center;
+}
+
+.footer {
+  text-align: center;
+  margin-top: 1rem;
+}
+
+#logout {
+  padding: 0.5rem 1rem;
+  background: #00BCD4; /* Teal */
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background 0.3s ease;
+}
+
+#logout:hover {
+  background: #0097A7; /* Darker teal */
 }

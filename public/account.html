@@ -13,10 +13,10 @@
         </header>
         
         <main>
-            <div class="button-container">
-                <button class="back-to-home" onclick="window.location.href='chat.html';">Back to Home</button>
-            </div>
             <section class="profile-info">
+                <div class="button-container">
+                    <button class="back-to-home" onclick="window.location.href='chat.html';">Back to Home</button>
+                </div>
                 <div class="profile-picture" onclick="document.getElementById('upload-img').click();">
                     <img src="account.svg" alt="Profile Picture" id="profile-img">
                     <input type="file" id="upload-img" accept="image/*" style="display: none;">
@@ -43,12 +43,6 @@
                     <li>Friend 2</li>
                     <li>Friend 3</li>
                     <li>Friend 4</li>
-                    <li>Friend 4</li>
-                    <li>Friend 4</li>
-                    <li>Friend 4</li>
-                    <li>Friend 4</li>
-                    <li>Friend 4</li>
-                    <li>Friend 4</li>
                     <!-- Add more friends as needed -->
                 </ul>
             </section>
@@ -59,12 +53,30 @@
         </footer>
     </div>
     <script>
-        document.getElementById('upload-img').onchange = function (event) {
+        let uploadedImage = '';
+
+        document.getElementById('upload-img').onchange = function(event) {
             var reader = new FileReader();
-            reader.onload = function () {
-                document.getElementById('profile-img').src = reader.result;
+            reader.onload = function() {
+                uploadedImage = reader.result;
+                document.getElementById('profile-img').src = uploadedImage;
             }
             reader.readAsDataURL(event.target.files[0]);
+        };
+
+        document.getElementById('save-profile').onclick = function() {
+            if (uploadedImage) {
+                sessionStorage.setItem('profileImage', uploadedImage); // Save image to session storage
+            }
+        };
+
+        // Load the saved profile image on page load
+        window.onload = function() {
+            const savedImage = sessionStorage.getItem('profileImage');
+            if (savedImage) {
+                document.getElementById('profile-img').src = savedImage;
+                document.getElementById('taskbar-profile-img').src = savedImage;
+            }
         };
     </script>
 </body>
