@@ -58,16 +58,6 @@ app.use((req, res) => {
   res.status(404).send('Page not found');
 });
 
-// app.use(cors());
-// Define an endpoint to check if a word is English
-app.get('/check-word', async (req, res) => {
-    const word = req.query.word;
-    const isEnglishWord = await englishWords.check(word.toLowerCase());
-    console.log('isEnglishhard:', isEnglishWord);
-    res.json({ word, isEnglishWord });
-});
-
-app.use(express.static(path.join(__dirname, '\public\Games')));
 
 // Start the server
 const PORT = process.env.PORT || 3000;
