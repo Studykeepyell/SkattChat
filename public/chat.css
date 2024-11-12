@@ -1,0 +1,162 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: Arial, sans-serif;
+  }
+  
+  body {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background-color: #f0f2f5;
+    height: 100vh;
+  }
+
+  .chatContainer {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
+    width: 100%;
+    padding: 2rem;
+    margin: 2rem;
+  }
+  
+  #welcomeMessage {
+    list-style: none;
+    margin-bottom: 20px;
+    font-size: 18px;
+    color: #555;
+    text-align: center;
+  }
+  
+  .button-container {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 15px;
+  }
+  
+  button {
+    padding: 10px 20px;
+    font-size: 16px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.3s;
+  }
+  
+  #deleteAllMessages {
+    background-color: #ff4d4d;
+    color: #fff;
+  }
+  
+  #playTictactoe {
+    background-color: #4caf50;
+    color: #fff;
+  }
+  
+  button:hover {
+    opacity: 0.9;
+  }
+  
+  .message-display {
+    width: 80%;
+    max-height: 60%;
+    background-color: #ffffff;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    padding: 2rem;
+    padding-top: 1rem;
+    padding-bottom: 1rem;
+    overflow-y: auto;
+    margin-bottom: 20px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  
+  .message-input-container {
+    width: 80%;
+  }
+  
+  #chat-form {
+    display: flex;
+    gap: 10px;
+  }
+  
+  #messageForm {
+    flex-grow: 1;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-size: 16px;
+  }
+  
+  #chat-form button {
+    background-color: #007bff;
+    color: white;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 4px;
+    font-size: 16px;
+  }
+  
+  #chat-form button:hover {
+    background-color: #0056b3;
+  }
+
+  /* Container for each chat message */
+.message-container {
+    width: 100%;
+    margin: 10px 0;
+
+    border-radius: 8px;
+    background-color: #f1f1f1;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    
+    padding: 1rem;
+}
+
+/* Container for username and timestamp */
+.user-info-container {
+    display: flex;
+    justify-content: start;
+    align-items: center;
+    font-weight: bold;
+    margin-bottom: 5px;
+}
+
+.character-picture{
+    width: 1.1em;
+    height: 1.1em;
+    border-radius: 50%;
+    background-color: #ff4d4d;
+    margin: 0;
+    padding:0;
+    margin-right: 5px;
+}
+/* Username styling */
+.username {
+    color: #333;
+    font-size: 1.1em;
+    margin: 0;
+    margin-right: 10px;
+}
+
+/* Timestamp styling */
+.timestamp {
+    color: #888;
+    font-size: 0.9em;
+    margin: 0;
+}
+
+/* Message text styling */
+.message-content {
+    font-size: 1em;
+    color: #444;
+    margin-top: 5px;
+    line-height: 1.4;
+}
