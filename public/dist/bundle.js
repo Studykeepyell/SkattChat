@@ -12,7 +12,6 @@ document.addEventListener('DOMContentLoaded', () => {
     
         const actionButton = document.createElement('button');
         actionButton.className = 'action-button';
-        actionButton.textContent = '🧠';
         actionButton.style.marginRight = '10px';
         
         // Fetch ChatGPT's opinion when button is clicked

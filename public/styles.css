@@ -131,14 +131,18 @@ button:hover {
   margin-bottom: 10px;
 }
 
+/* Set up the button styles */
 .action-button {
-  background-color: gold;
+  width: 50px; /* Adjust width as needed */
+  height: 50px; /* Adjust height as needed */
+  background-image: url('https://media.istockphoto.com/id/1360927961/photo/abstract-background-with-interweaving-of-colored-lines-and-dots-network-connection-structure.jpg?s=612x612&w=0&k=20&c=UTu0m3kCMm6f1kien9TNCrFtliESKUMrAeyKkI5s56I='); /* Initial static image */
+  background-size: cover;
+  background-repeat: no-repeat;
   border: none;
-  padding: 5px 10px;
   cursor: pointer;
-  border-radius: 4px;
 }
 
+/* Change background to GIF on hover */
 .action-button:hover {
-  background-color: goldenrod;
+  background-image: url('https://mir-s3-cdn-cf.behance.net/project_modules/max_632/c0d6ec104884591.5f6cab1f1a1c7.gif'); /* GIF image on hover */
 }
