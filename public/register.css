@@ -32,6 +32,12 @@ body {
     color: #4E4CB0;
 }
 
+.register-container p {
+    margin-top: 1rem;
+    font-size: 0.9rem;
+    color: #555;
+}
+
 /* Input fields */
 #register-form input[type="text"],
 #register-form input[type="password"] {
@@ -59,3 +65,5 @@ body {
 #register-form button:hover {
     background-color: #6A67CE;
 }
+
+
