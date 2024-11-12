@@ -1,11 +1,10 @@
 // Message.js
 const mongoose = require('mongoose');
 
-// Define the Message schema
 const messageSchema = new mongoose.Schema({
+    message: { type: String, required: true }, // Ensure `message` is required if using this field name
+    room: { type: String, required: true },
     username: { type: String, required: true },
-    room: { type: String, required: true }, // New field for room ID or name
-    message: { type: String, required: true },
     timestamp: { type: Date, default: Date.now }
 });
 

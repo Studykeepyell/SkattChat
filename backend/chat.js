@@ -1,54 +1,49 @@
-// chat.js
-const Message = require('./models/Message'); // Make sure Message model is correctly configured
+const Message = require('./models/Message'); // Ensure Message model is correctly configured
 
 function setupChat(io) {
     io.on('connection', (socket) => {
         console.log('User connected:', socket.id);
 
-        // Join a specific chat room
-        socket.on('joinRoom', (roomId) => {
-            socket.join(roomId);
-            console.log(`User ${socket.id} joined room: ${roomId}`);
-
-            // Send the chat history for this room to the newly joined user
-            Message.find({ roomId })
-                .sort({ timestamp: 1 }) // Sort messages by timestamp
-                .then((messages) => {
-                    socket.emit('loadMessages', messages); // Send previous messages to the client
+        // Join a room
+        socket.on('joinRoom', (room) => {
+            socket.join(room);
+            console.log(`User ${socket.id} joined room: ${room}`);
+            
+            // Emit chat history for the joined room
+            Message.find({ room })
+                .sort({ timestamp: 1 })
+                .then(messages => {
+                    socket.emit('chat history', messages);
                 })
-                .catch((err) => console.error('Error loading messages:', err));
+                .catch(err => console.error('Error loading messages:', err));
         });
 
-        // Handle sending a new message in the room
-        socket.on('chatMessage', async (data) => {
-            const { roomId, senderId, content } = data;
-            
-            try {
-                // Create and save the new message to the database
-                const message = new Message({ roomId, senderId, content });
-                await message.save();
+        // Handle message emission with validation
+        socket.on('chat message', async (data) => {
+            const { room, username, message, timestamp } = data;
 
-                // Broadcast the message to all users in the room
-                io.to(roomId).emit('newMessage', message);
+            // Validate that required fields are not empty
+            if (!message || !room) {
+                console.error("Error: Missing required fields 'message' or 'room'");
+                return;
+            }
+
+            const newMessage = {
+                room,
+                username,
+                message, // Use `message` if the schema expects this field
+                timestamp
+            };
+
+            try {
+                // Save message and broadcast within the room
+                await Message.create(newMessage);
+                io.to(room).emit('chat message', newMessage); // Broadcast within room only
             } catch (err) {
                 console.error('Error saving message:', err);
             }
         });
-
-        // Handle clearing chat history in a room
-        socket.on('clearMessages', async (roomId) => {
-            try {
-                await Message.deleteMany({ roomId });
-                io.to(roomId).emit('messagesCleared');
-            } catch (err) {
-                console.error('Error clearing messages:', err);
-            }
-        });
-
-        // Disconnecting the user
-        socket.on('disconnect', () => {
-            console.log('User disconnected:', socket.id);
-        });
     });
 }
+
 module.exports = setupChat;
