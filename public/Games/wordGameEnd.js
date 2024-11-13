@@ -11,3 +11,8 @@ function startNewGame() {
     // Redirect to the start page
     window.location.href = "wordGameStart.html"; // Adjust path as needed
 }
+
+function returnToChat() {
+    // Redirect to the chat page
+    window.location.href = "/public/chat.html"; // Adjust path as needed
+}

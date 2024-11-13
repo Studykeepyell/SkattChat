@@ -14,7 +14,7 @@ app.get('/check-word', (req, res) => {
     res.json({ word, isEnglishWord });
 });
 
-app.use(express.static(path.join(__dirname, '\public\Games')));
+app.use(express.static(path.join(__dirname, 'public')));
 
 // Start the server
 const PORT = 5000;

@@ -145,6 +145,7 @@ body {
 }
 
 /* End Screen Container */
+/* End Screen Container */
 .scoreContainer {
     display: flex;
     flex-direction: column;
@@ -175,8 +176,8 @@ body {
     margin: 1vh 0;
 }
 
-/* Play Again Button Styling */
-.playAgainButton {
+/* Button Styling (Play Again and Return to Chat) */
+.playAgainButton, .returnToChat {
     background-color: #0288d1;
     color: #ffffff;
     border: none;
@@ -186,8 +187,10 @@ body {
     cursor: pointer;
     transition: background-color 0.3s ease;
     box-shadow: 0 0.4em 0.8em rgba(0, 0, 0, 0.2);
+    margin: 0.5vh 0;
 }
 
-.playAgainButton:hover {
+/* Hover Effect for Buttons */
+.playAgainButton:hover, .returnToChat:hover {
     background-color: #0277bd;
 }
