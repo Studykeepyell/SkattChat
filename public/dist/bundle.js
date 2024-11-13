@@ -53,6 +53,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
         messagesList.appendChild(messageContainer);
         console.log('Message successfully appended to messages list');
+
+
     }
 
     function formatTimestamp(timestamp) {
@@ -102,4 +104,5 @@ document.addEventListener('DOMContentLoaded', () => {
             });
         }
     });
+
 });
