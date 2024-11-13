@@ -5,36 +5,35 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Chat Room</title>
   <link rel="stylesheet" href="chat.css">
-  <link rel="stylesheet" href="styles.css">
-  <script src="/socket.io/socket.io.js"></script>
+    <script src="/socket.io/socket.io.js"></script>
   <script src="/dist/bundle.js"></script>
 </head>
 
-
-
 <body>
   <div class="container">
-      <div class="taskbar">
-          <button data-target="account.html" class="account-button">
-              <img src="account.svg" class="button-icon" alt="Icon 1" id="taskbar-profile-img">
+      <!-- Taskbar Section -->
+      <nav class="taskbar" aria-label="Main navigation">
+          <button data-target="account.html" class="account-button" aria-label="Account">
+              <img src="account.svg" class="button-icon" alt="Account" id="taskbar-profile-img">
           </button>
-          <button data-target="add-friend.html">
-              <img src="add-friend.svg" class="button-icon" alt="Icon 2"> 
+          <button data-target="add-friend.html" aria-label="Add Friend">
+              <img src="add-friend.svg" class="button-icon" alt="Add Friend"> 
           </button>
-          <button data-target="text.html">
-              <img src="chat.svg" class="button-icon" alt="Icon 3"> 
+          <button data-target="text.html" aria-label="Chat">
+              <img src="chat.svg" class="button-icon" alt="Chat"> 
           </button>
-          <button data-target="navigate.html">
-              <img src="compass.svg" class="button-icon" alt="Icon 4">
+          <button data-target="navigate.html" aria-label="Navigate">
+              <img src="compass.svg" class="button-icon" alt="Navigate">
           </button>
-          <button class="hamburger-icon" id="hamburger-menu">
-              <div class="bar"></div>
-              <div class="bar"></div>
-              <div class="bar"></div>
+          <button class="hamburger-icon" id="hamburger-menu" aria-label="More options">
+              <span class="bar"></span>
+              <span class="bar"></span>
+              <span class="bar"></span>
           </button>
-      </div>
+      </nav>
 
-      <div class="bubble-menu" id="bubble-menu">
+      <!-- Bubble Menu Section -->
+      <div class="bubble-menu" id="bubble-menu" aria-hidden="true">
           <ul>
               <li><a href="settings.html">Settings</a></li>
               <li><a href="#">Log Out</a></li>
@@ -44,40 +43,84 @@
           </ul>
       </div>
 
-      <div class="friends-list">
-          <h3>Friends List</h3>
-          <ul>
-              <li>Friend 1</li>
-              <li>Friend 2</li>
-              <li>Friend 3</li>
-              <li>Friend 4</li>
-          </ul>
-      </div>
-
-      <div class="content">
-        <div class="chatContainer">
-          <ul id="welcomeMessage"></ul>
+      <div class="room-select">
+        <h3>Chats</h3>
       
-          <!-- Buttons for extra actions above the message area -->
-          <div class="button-container">
-            <button id="deleteAllMessages">Delete All Messages</button>
-            <button id="playTictactoe">TTT</button>
-            <button id="logoutButton">Logout</button> <!-- New Logout Button -->
+        <!-- Chat Rooms -->
+        <section class="chat-room-section" aria-labelledby="public-chats" id="room-buttons">
+          <div class="chat-room" id = "general-button">
+            <img src="general-icon.png" alt="General" class="room-icon">
+            <div class="room-info">
+              <span class="room-name">General</span>
+              <span class="room-time">10:11 AM</span>
+            </div>
           </div>
+          <div class="chat-room" id = "random-button">
+            <img src="random-icon.png" alt="Random" class="room-icon">
+            <div class="room-info">
+              <span class="room-name">Random</span>
+              <span class="room-time">Yesterday</span>
+            </div>
+          </div>
+          <div class="chat-room" id = "gaming-button">
+            <img src="gaming-icon.png" alt="Gaming" class="room-icon">
+            <div class="room-info">
+              <span class="room-name">Gaming</span>
+              <span class="room-time">24/4/1</span>
+            </div>
+          </div>
+          <div class="chat-room" id = "music-button">
+            <img src="music-icon.png" alt="Music" class="room-icon">
+            <div class="room-info">
+              <span class="room-name">Music</span>
+              <span class="room-time">24/11/9</span>
+            </div>
+          </div>
+        </section>
       
-          <!-- Message display area -->
-          <div id="messages" class="message-display"></div>
+        <!-- Friend Requests Section -->
+        <div id="friendRequests">
+          <h3>Pending Friend Requests</h3>
+          <ul id="friendRequestList">
+            <!-- Friend requests will be dynamically added here -->
+          </ul>
+        </div>
       
-          <!-- Input container at the bottom -->
+        <div id="friendsList">
+          <h3>Your Friends</h3>
+          <!-- Friends will be dynamically added here -->
+      </div>
+      
+      </div>
+      
+
+      <!-- Chat Content Section -->
+      <main class="content" aria-labelledby="chat-heading">
+        <div class="chatContainer">
+          <h2 id="chat-heading">Welcome to the Chat Room</h2>
+          <ul id="welcomeMessage"></ul>
+
+          <!-- Action Buttons -->
+          <div class="button-container">
+            <button id="deleteAllMessages" aria-label="Delete All Messages">Delete All Messages</button>
+            <button id="playTictactoe" aria-label="Play Tic Tac Toe">TTT</button>
+            <button id="logoutButton" aria-label="Logout">Logout</button>
+          </div>
+
+          <!-- Message Display Area -->
+          <div id="messages" class="message-display" aria-live="polite" aria-atomic="true"></div>
+
+          <!-- Input Form -->
           <div class="message-input-container">
-            <form id="chat-form">
-              <input id="messageForm" type="text" placeholder="Type a message" autocomplete="off" />
-              <button type="submit">Send</button>
+            <form id="chat-form" aria-label="Chat Form">
+              <input id="messageForm" type="text" placeholder="Type a message" autocomplete="off" aria-label="Message Input" />
+              <button type="submit" aria-label="Send Message">Send</button>
             </form>
           </div>
         </div>
-      </div>
+      </main>
   </div>
+
   <script>
       // Load the saved profile image on page load
       window.onload = function() {
@@ -86,6 +129,21 @@
               document.getElementById('taskbar-profile-img').src = savedImage;
           }
       };
+
+      // Toggle bubble menu visibility
+      document.getElementById('hamburger-menu').addEventListener('click', function() {
+          const bubbleMenu = document.getElementById('bubble-menu');
+          bubbleMenu.classList.toggle('active');
+          bubbleMenu.setAttribute('aria-hidden', !bubbleMenu.classList.contains('active'));
+      });
+
+      // Taskbar navigation
+      document.querySelectorAll('.taskbar button[data-target]').forEach(button => {
+          button.addEventListener('click', (e) => {
+              const target = e.currentTarget.getAttribute('data-target');
+              window.location.href = target;
+          });
+      });
   </script>
 </body>
 </html>

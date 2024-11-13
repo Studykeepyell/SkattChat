@@ -27,6 +27,15 @@ function login(username, password) {
                 console.log('Response received:', xhr.responseText);
                 const response = JSON.parse(xhr.responseText);
                 if (response.success) {
+
+
+                        if (response.userId) {
+                            localStorage.setItem('userId', response.userId);
+                            console.log('userId stored in localStorage:', localStorage.getItem('userId')); // Debugging line
+                        } else {
+                            console.warn('Warning: userId is missing in the response');
+                        }
+
                     localStorage.setItem('username', username);
                     window.location.href = '/chat.html?username=' + encodeURIComponent(username);
                 } else {
@@ -45,4 +54,5 @@ function login(username, password) {
         alert('A network error occurred. Please check your connection.');
     };
     xhr.send('username=' + encodeURIComponent(username) + '&password=' + encodeURIComponent(password));
+    xhr.send(JSON.stringify({ username, password })); // Send JSON string
 }

@@ -5,6 +5,25 @@
   font-family: Arial, sans-serif;
 }
 
+#messageForm:focus {
+  border-color: #4CAF50;
+}
+
+.friend-request-button {
+  background-color: #0084ff;
+  color: white;
+  border: none;
+  padding: 5px 10px;
+  margin-left: 10px;
+  cursor: pointer;
+  border-radius: 5px;
+  font-size: 0.9em;
+}
+
+.friend-request-button:hover {
+  background-color: #005bb5;
+}
+
 body {
   display: flex;
   flex-direction: column;
@@ -370,4 +389,52 @@ button:hover {
   border-radius: 0.5rem;
   cursor: pointer;
   transition: background-color 0.3s ease, transform 0.3s ease;
+}
+
+
+
+.room-select {
+  width: 100%;
+}
+
+.chat-room-section {
+  display: flex;
+  flex-direction: column;
+  padding: 0;
+}
+
+.chat-room {
+  display: flex;
+  align-items: center;
+  padding: 10px;
+  cursor: pointer;
+  border-bottom: 1px solid #e0e0e0;
+  transition: background-color 0.2s;
+}
+
+.chat-room:hover {
+  background-color: #f0f0f0;
+}
+
+.room-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  margin-right: 10px;
+}
+
+.room-info {
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
+}
+
+.room-name {
+  font-weight: bold;
+  font-size: 1em;
+}
+
+.room-time {
+  font-size: 0.8em;
+  color: #888;
 }

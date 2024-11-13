@@ -1,12 +1,17 @@
+// Message.js
 const mongoose = require('mongoose');
 
-// Define the Message schema
+
+
 const messageSchema = new mongoose.Schema({
+    message: { type: String, required: true }, // Ensure `message` is required if using this field name
+    room: { type: String, required: true },
     username: { type: String, required: true },
-    message: { type: String, required: true },
+
     timestamp: { type: Date, default: Date.now }
 });
 
-// Create and export the Message model
+
+
 const Message = mongoose.model('Message', messageSchema);
 module.exports = Message;
