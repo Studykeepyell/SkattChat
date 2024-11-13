@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const User = require('./models/User'); // Ensure the correct path
+const User = require('./models/user'); // Ensure the correct path
 
 // Search users endpoint
 router.get('/search', async (req, res) => {
@@ -15,13 +15,12 @@ router.get('/search', async (req, res) => {
 
         if (users.length === 0) {
             return res.status(404).json({ success: false, message: 'No users found' });
-            alert("No user found");
         }
 
         res.json(users);
     } catch (err) {
         console.error(err);
-        res.status(500).send('Server error');
+        res.status(500).json({ success: false, message: 'Server error' });
     }
 });
 
