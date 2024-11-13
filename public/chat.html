@@ -33,27 +33,24 @@
 
     <!-- Input Form at the Bottom -->
     <div class="message-input-container">
-      <form id="chat-form" style="display: flex; width: 100%;">
-        <input id="messageForm" type="text" placeholder="Type a message" autocomplete="off" />
+      <form id="message-form" style="display: flex; width: 100%;">
+        <input id="message-input" type="text" placeholder="Type a message" autocomplete="off" />
         <button type="submit">Send</button>
       </form>
     </div>
 
+    <!-- Friend Requests Section -->
     <div id="friendRequests">
       <h3>Pending Friend Requests</h3>
-      <!-- Loop through friend requests and display here -->
-      <div>
-          <p>Friend Request from User123</p>
-          <button onclick="acceptFriendRequest('user123Id')">Accept</button>
-          <button onclick="declineFriendRequest('user123Id')">Decline</button>
-      </div>
-  </div>
-  
-  <div id="friendsList">
+      <ul id="friendRequestList">
+        <!-- Friend requests will be dynamically added here -->
+      </ul>
+    </div>
+
+    <div id="friendsList">
       <h3>Your Friends</h3>
       <!-- List friends here -->
-  </div>
-  
+    </div>
   </div>
 </body>
 </html>

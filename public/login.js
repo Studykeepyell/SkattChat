@@ -28,9 +28,16 @@ function login(username, password) {
             try {
                 const response = JSON.parse(xhr.responseText);
                 if (response.success) {
+                    if (response.userId) {
+                        localStorage.setItem('userId', response.userId);
+                        console.log('userId stored in localStorage:', localStorage.getItem('userId')); // Debugging line
+                    } else {
+                        console.warn('Warning: userId is missing in the response');
+                    }
                     localStorage.setItem('username', username);
                     window.location.href = '/chat.html?username=' + encodeURIComponent(username);
-                } else {
+                }
+                 else {
                     alert(response.message || 'Invalid username or password');
                 }
             } catch (e) {

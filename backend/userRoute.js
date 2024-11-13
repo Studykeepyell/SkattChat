@@ -3,6 +3,9 @@ const express = require('express');
 const bcrypt = require('bcrypt');
 const User = require('./models/User'); // Adjust the path as needed
 const router = express.Router();
+const Room = require('./models/Room');
+
+
 
 // Registration route
 router.post('/register', async (req, res) => {
@@ -45,11 +48,28 @@ router.post('/login', async (req, res) => {
             return res.status(401).json({ success: false, message: "Invalid credentials" });
         }
 
-        // Successful login response
-        res.status(200).json({ success: true, message: "Login successful" });
+        // Successful login response with userId
+        res.status(200).json({
+            success: true,
+            message: "Login successful",
+            userId: user._id // Include userId in the response
+        });
     } catch (error) {
         console.error('Login error:', error); // Log full error details
         res.status(500).json({ success: false, message: "Server error" });
+    }
+});
+
+
+router.get('/getUserRooms/:userId', async (req, res) => {
+    const { userId } = req.params;
+
+    try {
+        // Find rooms where the user is a participant
+        const rooms = await Room.find({ participants: userId });
+        res.json(rooms);
+    } catch (error) {
+        res.status(500).json({ success: false, message: 'Server error while fetching rooms' });
     }
 });
 
@@ -78,7 +98,6 @@ router.post('/acceptFriendRequest', async (req, res) => {
         const user = await User.findById(userId);
         const friend = await User.findById(friendId);
 
-        // Remove from friend requests and add to friends
         user.friendRequests = user.friendRequests.filter(id => id.toString() !== friendId);
         user.friends.push(friendId);
         friend.friends.push(userId);

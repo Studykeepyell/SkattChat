@@ -18,31 +18,43 @@ function setupChat(io) {
                 .catch(err => console.error('Error loading messages:', err));
         });
 
-        // Handle message emission with validation
         socket.on('chat message', async (data) => {
-            const { room, username, userId, message, timestamp } = data;
+          const { room, username, userId, message, timestamp } = data;
+      
+          // Basic validation for required fields
+          if (!message || !room || !userId || !username) {
+              console.error("Error: Missing required fields 'message', 'room', 'userId', or 'username'");
+              return;
+          }
+      
+          const newMessage = {
+              room,
+              username,
+              userId,
+              message,
+              timestamp
+          };
+      
+          try {
+              // Save message and broadcast within the room
+              await Message.create(newMessage);
+              io.to(room).emit('chat message', newMessage); // Broadcast within room with userId included
+          } catch (err) {
+              console.error('Error saving message:', err);
+          }
+      });
+      
 
-            // Validate that required fields are not empty
-            if (!message || !room || !userId || !username) {
-                console.error("Error: Missing required fields 'message', 'room', 'userId', or 'username'");
-                return;
-            }
+      // chat.js or server.js - Listen for chat history requests
+socket.on('requestChatHistory', async (room) => {
+  try {
+      const messages = await Message.find({ room }).sort({ timestamp: 1 });
+      socket.emit('chat history', messages); // Emit history to the client
+  } catch (error) {
+      console.error(`Error fetching chat history for room ${room}:`, error);
+  }
+});
 
-            const newMessage = {
-                room,
-                username,
-                message,
-                timestamp
-            };
-
-            try {
-                // Save message and broadcast within the room
-                await Message.create(newMessage);
-                io.to(room).emit('chat message', newMessage); // Broadcast within room only
-            } catch (err) {
-                console.error('Error saving message:', err);
-            }
-        });
 
         // Handle clearing all messages in a room
         socket.on('clear messages', async (room) => {
