@@ -9,35 +9,45 @@
     <link rel="stylesheet" href="addFriend.css">
 </head>
 <body>
-    <div class="container">
-        <div class="taskbar">
-          <button data-target="account.html" class="account-button">
-            <img src="account.svg" class="button-icon" alt="Icon 1"> 
-          </button>
-          <button data-target="add-friend.html">
-            <img src="add-friend.svg" class="button-icon" alt="Icon 1"> 
-          </button>
-          <button data-target="text.html">
-            <img src="chat.svg" class="button-icon" alt="Icon 2"> 
-          </button>
-          <button data-target="navigate.html">
-            <img src="compass.svg" class="button-icon" alt="Icon 3">
-          </button>
-        </div>
-    </div>
-    <form id = "searchForm">
-        <div class = "searchBox-container">
-            <input type="text" placeholder="Search by username.." id="searchInput">
-            <button type = "submit" class="magnifyGlass">
-                <ion-icon name="search"></ion-icon>
-            </button>
-        </div>
-    </form>
-    <div id="resultsContainer" class="resultsContainer"></div>
+        
+    <!-- Taskbar Section -->
+    <nav class="taskbar">
+        <button data-target="account.html" class="taskbar-button">
+            <img src="account.svg" class="button-icon" alt="Account Icon"> 
+        </button>
+        <button data-target="add-friend.html" class="taskbar-button">
+            <img src="add-friend.svg" class="button-icon" alt="Add Friend Icon"> 
+        </button>
+        <button data-target="text.html" class="taskbar-button">
+            <img src="chat.svg" class="button-icon" alt="Chat Icon"> 
+        </button>
+        <button data-target="navigate.html" class="taskbar-button">
+            <img src="compass.svg" class="button-icon" alt="Navigate Icon">
+        </button>
+    </nav>
+    
+    <!-- Main Content Section -->
+    <div class="main-content">
+        <!-- Search Section -->
+        <section class="search-section">
+            <form id="searchForm" class="search-form">
+                <div class="search-box-container">
+                    <input type="text" placeholder="Search by username..." id="searchInput" class="search-input">
+                    <button type="submit" class="search-button">
+                        <ion-icon name="search"></ion-icon>
+                    </button>
+                </div>
+            </form>
 
-    <!--ionicon file-->
+            <!-- Results Section -->
+            <section id="resultsContainer" class="results-container">
+                <!-- Search results will be dynamically added here -->
+            </section>
+        </section>
+    </div>
+
+    <!-- Ionicon Scripts -->
     <script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
     <script nomodule src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js"></script>
 </body>
 </html>
-

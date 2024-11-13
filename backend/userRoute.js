@@ -2,7 +2,6 @@ const express = require('express');
 const bcrypt = require('bcrypt');
 const User = require('./models/User'); // Adjust the path as needed
 const router = express.Router();
-const User = require('./models/user'); // Ensure the correct path
 
 // Search users endpoint
 router.get('/search', async (req, res) => {

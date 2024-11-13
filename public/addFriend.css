@@ -1,187 +1,124 @@
+/* Reset some default styling */
 * {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html {
+  font-size: 16px; /* Base font size of 16px */
 }
 
 body {
   font-family: Arial, sans-serif;
-  height: 100vh;
-  color: #333;
+  background-color: #f0f0f0;
   display: flex;
-  background-color: white;
-  overflow: hidden; /* Prevents horizontal scrolling */
-  align-items: center;
-
+  justify-content: flex-start;
+  align-items: stretch;
+  height: 100vh;
+  width: 100vw;
 }
 
-
-.taskbar {
-  background-color: #145DA0;
+.container {
+  display: flex;
   width: 100%;
-  padding: 1rem 0;
+  height: 100%;
+}
+
+/* Taskbar Styling */
+.taskbar {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 1%;
-  height: 100vh;
+  background-color: #333;
+  padding: 2rem 1rem; /* Padding using rem for better scalability */
+  width: 12%; /* Taskbar takes up 12% of the screen width */
+  min-width: 100px; /* Minimum width for the taskbar */
+  height: 100%;
 }
 
-.account-button {
-  margin-bottom: 3rem;
-  width: 100%;
-  height: 20%;
-}
-
-.taskbar button {
-  width: 80%;
-  height: 10%;
-  background-color: transparent;
-  color: white;
+.taskbar-button {
+  background: none;
   border: none;
-  border-radius: 0.5rem;
+  outline: none;
   cursor: pointer;
-  transition: background-color 0.3s ease, transform 0.3s ease;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  margin: 1.5rem 0; /* Margin with rem for spacing */
+  transition: transform 0.2s ease;
 }
 
-.taskbar button img {
-  width: 60%;
-  height: 60%;
-  fill: white;
-  vertical-align: middle;
-  margin-right: 1%;
-}
-
-.taskbar button:hover {
-  background-color: #4A90E2;
+.taskbar-button:hover {
   transform: scale(1.1);
 }
 
-.hamburger-icon {
-  width: 3rem;
-  height: 3rem;
-  background: none;
-  border: none;
-  cursor: pointer;
+.button-icon {
+  width: 2rem; /* Set icon size using rem */
+  height: 2rem;
+  filter: invert(100%);
+}
+
+/* Main Content Section */
+.main-content {
+  flex-grow: 1; /* Allow the content area to take the remaining space */
+  padding: 2rem;
   display: flex;
   flex-direction: column;
-  justify-content: center;
+  justify-content: flex-start;
+  align-items: stretch;
+  height: 100%;
+  overflow: auto;
+}
+
+/* Search Section Styling */
+.search-section {
+  margin-bottom: 2rem;
+}
+
+.search-form {
+  display: flex;
   align-items: center;
-  gap: 0.5rem;
-  margin-top: auto;
-  position: relative;
+  gap: 1rem;
 }
 
-.hamburger-icon .bar {
-  width: 2rem;
-  height: 0.25rem;
-  background-color: white;
+.search-box-container {
+  display: flex;
+  flex-grow: 1;
+  border: 1px solid #ddd;
   border-radius: 0.25rem;
-  transition: all 0.3s ease;
+  overflow: hidden;
 }
 
-.bubble-menu {
-  display: none;
-  position: fixed;
-  bottom: 10%; /* Adjust this value to position the menu at the bottom center */
-  left: 50%;
-  transform: translateX(-50%);
-  width: 200px;
-  background-color: #333;
-  color: white;
-  border-radius: 8px;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-  padding: 1rem;
-  z-index: 1000;
-}
-
-.bubble-menu.active {
-  display: block;
-}
-
-.bubble-menu ul {
-  list-style: none;
-  padding: 0;
-  margin: 0;
-}
-
-.bubble-menu ul li {
-  padding: 0.5rem 0;
-  text-align: center;
-}
-
-.bubble-menu ul li a {
-  color: white;
-  text-decoration: none;
+.search-input {
+  flex-grow: 1;
+  padding: 0.5rem;
+  border: none;
+  outline: none;
   font-size: 1rem;
 }
 
-.bubble-menu ul li a:hover {
-  background-color: #444;
-  border-radius: 4px;
-}  
-.searchBox-container {
-  display: flex; 
-  align-items: center; 
-  justify-content: center; 
-  position: absolute;  
-  right: 325px;  
-  top: 20px;  
-  border-bottom: 2px solid #ccc; 
-  width: 500px; 
+.search-button {
+  background-color: #1e90ff;
+  color: white;
+  padding: 0.5rem 1rem;
+  border: none;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  font-size: 1rem;
 }
 
-.searchBox-container input[type="text"] {
-    width: 500px;
-    padding: 10px;
-    border: transparent;
-    font-size: 16px;
-    outline: none;
+.search-button:hover {
+  background-color: #1c7ed6;
 }
 
-.magnifyGlass {
-    background-color: transparent; 
-    border: none; 
-    cursor: pointer; 
-    padding: 0; 
+/* Results Container Styling */
+.results-container {
+  min-height: 200px;
+  margin-top: 2rem;
 }
 
-.magnifyGlass ion-icon {
-    margin-left: -30px;
-    color: #888;
-    transition: transform 0.2s ease-in-out; 
-}
-
-.magnifyGlass ion-icon:hover {
-    transform: scale(1.5); /* Enlarges the icon to 1.5 times its original size */
-}
-
-.resultsContainer { 
-  position: absolute;
-  width: 80%; 
-  max-width: 600px; 
-  height: 400px; /* Fixed height to enable scrolling */
-  left: 350px;
-  margin-top: 20px; 
-  background: #ADD8E6; /* Light blue background color */
-  padding: 20px; /* Add padding for inner spacing */
-  border-radius: 20px; /* Round corners */
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Optional: add a subtle shadow for depth */
-  overflow-y: auto; /* Enable vertical scrolling */
-  display: flex; /* Enable Flexbox */
-  flex-direction: column; /* Arrange items in a column */
-  align-items: center; /* Center items horizontally */
-}
-
-.box { 
-  background-color: #fff; 
-  border: 1px solid #ddd; 
-  padding: 20px; 
-  margin-bottom: 10px; 
-  width: 90%; /* Ensure box width is less than container width */
-  align-items: center;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+.results-container > * {
+  margin-bottom: 1.5rem;
+  padding: 1rem;
+  background-color: #f9f9f9;
+  border: 1px solid #ddd;
+  border-radius: 0.25rem;
 }
