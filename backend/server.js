@@ -13,7 +13,6 @@ const io = socketIO(server);
 
 // Import routes and modules
 const userRoutes = require('./userRoute');
-const userRoutes = require('./userRoute');
 const ticTacToe = require('./ticTacToe');
 const chat = require('./chat');  // Import chat module
 
@@ -41,13 +40,6 @@ app.get('/index', (req, res) => {
     res.sendFile(path.join(__dirname, '../public', 'index.html'));
 });
 
-console.log('MongoDB URI:', process.env.MONGO_URI); // Log the MongoDB URI for debugging
-
-mongoose.connect(process.env.MONGO_URI, {
-    useNewUrlParser: true,
-    useUnifiedTopology: true
-  })
-  .then(() => console.log('Connected to MongoDB'))
 console.log('MongoDB URI:', process.env.MONGO_URI); // Log the MongoDB URI for debugging
 
 mongoose.connect(process.env.MONGO_URI, {
