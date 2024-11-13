@@ -76,11 +76,13 @@ function updatePointsDisplay() {
     const pointsDisplay = document.getElementById("pointsDisplay");
     pointsDisplay.textContent = `Points: ${points}`;
 }
+
 function updateMessage(){
     const messageDisplay = document.getElementById("message");
     messageDisplay.textContent = `${mes}`;
 }
-// Set up event listeners
+
+// Set up event listeners correctly (no parentheses when adding event listener)
 document.getElementById("submit").addEventListener("click", handleSubmit);
 
 document.getElementById("wordInput").addEventListener("keydown", function(event) {
