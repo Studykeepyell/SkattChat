@@ -7,6 +7,7 @@ module.exports = {
         watch: false,
         env: {
           NODE_ENV: "production",
+          MONGO_URI: "mongodb+srv://Sky:Sky090726@cluster1.ripon.mongodb.net/?retryWrites=true&w=majority&appName=Cluster1",
           PORT: 3000
         }
       }

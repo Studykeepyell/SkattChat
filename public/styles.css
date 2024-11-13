@@ -1,126 +1,392 @@
-/* Container for the entire chat area */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: Arial, sans-serif;
+  height: 100vh;
+  background: linear-gradient(135deg, #263238, #263238); /* Dark slate gray */
+  color: #ECEFF1; /* Off-white */
+  display: flex;
+  overflow: hidden; /* Prevents horizontal scrolling */
+}
+
 .container {
+  display: flex;
   width: 100%;
-  max-width: 600px;
-  margin: 20px auto;
+  height: 100%;
+}
+
+.taskbar {
+  background-color: #37474F; /* Blue-gray */
+  width: 6%;
+  padding: 1rem 0;
   display: flex;
   flex-direction: column;
-  border: 1px solid gray;
-  border-radius: 8px;
-  padding: 10px;
-  background-color: white;
+  align-items: center;
+  gap: 1%;
 }
 
-/* Messages list */
-#messages {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  overflow-y: auto;
-  max-height: calc(100vh - 200px); 
-  padding: 5px;
-  margin-bottom: 60px; 
-}
-
-/* Message container */
-.message-container {
-  display: flex;
-  align-items: flex-start;
-  gap: 10px;
-  padding: 8px;
-  background-color: white;
-  border-radius: 8px;
-}
-
-/* Character picture styling */
-.character-picture {
-  width: 30px;
-  height: 30px;
-  background-color: aqua;
-  border-radius: 50%;
-}
-
-/* Message text styling */
-.message {
-  color: black;
-  font-size: 16px;
-  padding: 5px 10px;
-  border-radius: 12px;
-  background-color: #ddd;
-  max-width: 100%;
-  word-wrap: break-word;
-}
-
-/* Timestamp styling */
-.lower-tex {
-  color: #666;
-  font-size: 12px;
-  align-self: flex-end;
-  margin-left: auto;
-}
-
-/* Upper text for any extra information */
-.upper-text {
-  color: black;
-  font-size: 12px;
-}
-
-/* Fixed position for the input container at the bottom */
-.message-input-container {
-  position: fixed;
-  bottom: 0;
-  left: 0;
+.account-button {
+  margin-bottom: 3rem;
   width: 100%;
-  max-width: 600px;
-  background-color: #f8f9fa;
-  border-top: 1px solid #ddd;
-  padding: 10px;
+  height: 20%;
+}
+
+.taskbar button {
+  width: 80%;
+  height: 10%;
+  background-color: transparent;
+  color: #ECEFF1; /* Off-white */
+  border: none;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  transition: background-color 0.3s ease, transform 0.3s ease;
   display: flex;
   align-items: center;
-  box-shadow: 0 -2px 4px rgba(0, 0, 0, 0.1);
-  z-index: 10;
-  margin: 0 auto;
+  justify-content: center;
 }
 
-/* Form input styling */
+.taskbar button img {
+  width: 60%;
+  height: 60%;
+  border-radius: 50%; /* Ensure the image is displayed in a circle */
+  vertical-align: middle;
+  margin-right: 1%;
+}
+
+.taskbar button:hover {
+  background-color: #455A64; /* Charcoal */
+  transform: scale(1.1);
+}
+
+.hamburger-icon {
+  width: 3rem;
+  height: 3rem;
+  background: none;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 0.5rem;
+  margin-top: auto;
+  position: relative;
+}
+
+.hamburger-icon .bar {
+  width: 2rem;
+  height: 0.25rem;
+  background-color: #ECEFF1; /* Off-white */
+  border-radius: 0.25rem;
+  transition: all 0.3s ease;
+}
+
+.bubble-menu {
+  display: none;
+  position: fixed;
+  bottom: 10%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 200px;
+  background-color: #37474F; /* Blue-gray */
+  color: #ECEFF1; /* Off-white */
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  padding: 1rem;
+  z-index: 1000;
+}
+
+.bubble-menu.active {
+  display: block;
+}
+
+.bubble-menu ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.bubble-menu ul li {
+  padding: 0.5rem 0;
+  text-align: center;
+}
+
+.bubble-menu ul li a {
+  color: #ECEFF1; /* Off-white */
+  text-decoration: none;
+  font-size: 1rem;
+}
+
+.bubble-menu ul li a:hover {
+  background-color: #455A64; /* Charcoal */
+  border-radius: 4px;
+}
+
+.friends-list {
+  background-color: #FAFAFA; /* Very light gray */
+  width: 20%;
+  padding: 1%;
+  border-left: 0.1% solid #CFD8DC; /* Light gray-blue */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.friends-list h3 {
+  margin-bottom: 1%;
+  color: #37474F; /* Blue-gray */
+}
+
+.friends-list ul {
+  list-style: none;
+  width: 100%;
+  padding: 0;
+}
+
+.friends-list ul li {
+  padding: 1%;
+  border-bottom: 0.1% solid #CFD8DC; /* Light gray-blue */
+  text-align: center;
+  background-color: #FFFFFF; /* White */
+}
+
+.content {
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1%;
+  position: relative;
+}
+
+.styled-button {
+  position: absolute;
+  top: 1%;
+  width: 15%;
+  padding: 1%;
+  background-color: #00BCD4; /* Teal */
+  color: white;
+  font-size: 1.1rem;
+  border: none;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  transition: background-color 0.3s ease, transform 0.3s ease;
+}
+
+.styled-button:hover {
+  background-color: #0097A7; /* Darker teal */
+  transform: scale(1.05);
+}
+
+#messages {
+  background: #FAFAFA; /* Very light gray */
+  padding: 2%;
+  border-radius: 0.8%;
+  box-shadow: 0 0.4% 0.8% rgba(0, 0, 0, 0.2);
+  text-align: center;
+  width: 100%;
+  height: 100%;
+  overflow-y: auto;
+  position: relative;
+}
+
+.delete-button {
+  position: absolute;
+  top: 1%;
+  left: 1%;
+  padding: 1%;
+  background-color: #00BCD4; /* Teal */
+  color: white;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: background-color 0.3s ease, transform 0.3s ease;
+}
+
+.delete-button:hover {
+  background-color: #0097A7; /* Darker teal */
+  transform: scale(1.05);
+}
+
+.message-input-container {
+  width: 100%;
+  margin: 1%;
+}
+
 #messageForm {
-  padding: 10px;
-  flex: 1;
-  font-size: 16px;
-  border: 1px solid #ccc;
-  border-radius: 20px;
-  outline: none;
-  margin-right: 5px;
-  transition: border-color 0.3s ease;
+  width: 100%;
+  padding: 1%;
+  margin: 1% 0;
+  border: 0.1% solid #CFD8DC; /* Light gray-blue */
+  border-radius: 0.8%;
+  font-size: 1rem;
 }
 
-/* Send button styling */
-button {
-  padding: 10px;
-  background-color: #4CAF50;
+#chat-form button {
+  padding: 0.5rem 1rem;
+  background-color: #00BCD4; /* Teal */
+  color: #fff;
+  font-size: 1rem;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  transition: background-color 0.3s ease, transform 0.3s ease, box-shadow 0.3s ease;
+  margin-left: 0.5rem;
+}
+
+#chat-form button:hover {
+  background-color: #0097A7; /* Darker teal */
+  transform: scale(1.05);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+#welcomeMessage {
+  list-style: none;
+  padding: 1%;
+  background: #FAFAFA; /* Very light gray */
+  border-radius: 0.8%;
+  box-shadow: 0 0.4% 0.8% rgba(0, 0, 0, 0.2);
+  margin: 1%;
+}
+
+.back-to-home {
+  padding: 0.5rem 1rem;
+  background-color: #37474F; /* Blue-gray */
+  color: #fff;
+  font-size: 0.875rem;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  transition: background-color 0.3s ease, transform 0.3s ease;
+  margin-top: 1rem;
+  border: none;
+  position: absolute;
+  top: 1rem;
+  left: 1rem;
+}
+
+.back-to-home:hover {
+  background-color: #455A64; /* Charcoal */
+  transform: scale(1.05);
+}
+
+.profile-info {
+  position: relative;
+  padding: 2rem;
+  background: #FAFAFA; /* Very light gray */
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.profile-info .profile-picture {
+  width: 150px;
+  height: 150px;
+  border-radius: 50%; /* Ensure the image is displayed in a circle */
+  background-color: #CFD8DC; /* Light gray-blue */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-bottom: 10px;
+  cursor: pointer;
+  overflow: hidden;
+  position: relative;
+}
+
+.profile-info .profile-picture img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 50%; /* Ensure the image is displayed in a circle */
+}
+
+.profile-info .profile-details {
+  width: 100%;
+}
+
+.profile-info .input-group {
+  margin-bottom: 1rem;
+  width: 100%;
+}
+
+.profile-info .input-group label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: bold;
+  color: #37474F; /* Blue-gray */
+}
+
+.profile-info .input-group input {
+  width: 100%;
+  padding: 0.5rem;
+  border: 1px solid #CFD8DC; /* Light gray-blue */
+  border-radius: 4px;
+  background-color: #FAFAFA; /* Very light gray */
+  color: #37474F; /* Blue-gray */
+}
+
+#save-profile {
+  padding: 0.5rem 1rem;
+  background: #00BCD4; /* Teal */
   color: white;
   border: none;
-  border-radius: 20px;
+  border-radius: 4px;
   cursor: pointer;
-  transition: background-color 0.3s ease;
+  transition: background 0.3s ease;
 }
 
-/* Send button hover effect */
-button:hover {
-  background-color: #45a049;
+#save-profile:hover {
+  background: #0097A7; /* Darker teal */
 }
 
-/* Styling for the delete button */
-#deleteAllMessages {
-  background-color: #f44336;
+.friend-list {
+  background: #FAFAFA; /* Very light gray */
+  width: 20%;
+  padding: 1%;
+  border-left: 0.1% solid #CFD8DC; /* Light gray-blue */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.friend-list h2 {
+  margin-bottom: 1rem;
+  color: #37474F; /* Blue-gray */
+}
+
+.friend-list ul {
+  list-style: none;
+  width: 100%;
+  padding: 0;
+  overflow-y: auto;
+}
+
+.friend-list ul li {
+  background: #FFFFFF; /* White */
+  border: 1px solid #CFD8DC; /* Light gray-blue */
+  padding: 0.5rem;
+  border-radius: 4px;
+  margin-bottom: 0.5rem;
+  text-align: center;
+}
+
+.footer {
+  text-align: center;
+  margin-top: 1rem;
+}
+
+#logout {
+  padding: 0.5rem 1rem;
+  background: #00BCD4; /* Teal */
   color: white;
   border: none;
-  border-radius: 5px;
+  border-radius: 4px;
   cursor: pointer;
-  margin-top: 10px;
+  transition: background 0.3s ease;
 }
 
-/* Input focus style */
-#messageForm:focus {
-  border-color: #4CAF50;
+#logout:hover {
+  background: #0097A7; /* Darker teal */
 }

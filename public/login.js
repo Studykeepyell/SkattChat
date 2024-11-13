@@ -24,7 +24,6 @@ function login(username, password) {
     xhr.onload = function() {
         if (xhr.status === 200) {
             try {
-                console.log('Response received:', xhr.responseText);
                 const response = JSON.parse(xhr.responseText);
                 if (response.success) {
                     localStorage.setItem('username', username);

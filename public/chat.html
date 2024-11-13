@@ -4,48 +4,29 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Chat Room</title>
-  <link rel="stylesheet" href="chat.css">
+  <link rel="stylesheet" href="styles.css">
   <script src="/socket.io/socket.io.js"></script>
   <script src="/dist/bundle.js"></script>
+
+
 </head>
 <body>
-  <div class="chatContainer">
-    <ul id="welcomeMessage"></ul>
+  <ul id="welcomeMessage"></ul>
 
-    <!-- Buttons for extra actions above the message area -->
-    <div class="button-container">
-      <button id="deleteAllMessages">Delete All Messages</button>
-      <button id="playTictactoe">TTT</button>
-      <button id="logoutButton">Logout</button> <!-- New Logout Button -->
-    </div>
+  <!-- Buttons for extra actions above the message area -->
+  <button id="deleteAllMessages" style="margin-top: 10px;">Delete All Messages</button>
+  <button id="playTictactoe" style="margin-top: 10px;">TTT</button>
 
-    <!-- Message display area -->
-    <div id="messages" class="message-display"></div>
+  <!-- Message display area -->
+  <div id="messages"></div>
 
-    <!-- Input container at the bottom -->
-    <div class="message-input-container">
-      <form id="chat-form">
-        <input id="messageForm" type="text" placeholder="Type a message" autocomplete="off" />
-        <button type="submit">Send</button>
-      </form>
-    </div>
+  <!-- Input container at the bottom -->
+  <div class="message-input-container">
+    <form id="chat-form" style="display: flex; width: 100%;">
+      <input id="messageForm" type="text" placeholder="Type a message" autocomplete="off" />
+      <button type="submit">Send</button>
+    </form>
   </div>
 
-  <script>
-    document.getElementById('logoutButton').addEventListener('click', () => {
-      fetch('/api/users/logout', {
-          method: 'POST',
-          credentials: 'include'  // Necessary if using cookies
-      })
-      .then(response => {
-          if (response.ok) {
-              window.location.href = './index.html';  // Redirect to login page
-          } else {
-              console.error('Logout failed');
-          }
-      })
-      .catch(error => console.error('Logout error:', error));
-    });
-  </script>
 </body>
 </html>
