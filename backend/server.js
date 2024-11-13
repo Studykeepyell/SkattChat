@@ -10,6 +10,7 @@ const cors = require('cors');
 const app = express();
 const server = http.createServer(app);
 const io = socketIO(server);
+const axios = require('axios');
 
 // Import routes and modules
 const userRoutes = require('./userRoute');
@@ -19,6 +20,47 @@ const chat = require('./chat');  // Import chat module
 console.log('Test Variable:', process.env.TEST_VAR); // Check if TEST_VAR is defined
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+
+// Import the Message model
+const Message = require('./models/Message');
+
+app.post('/api/get-opinion', async (req, res) => {
+  const { message, username } = req.body;  // username should be passed from the client
+  console.log('Received request at /api/get-opinion');
+  try {
+    const response = await axios.post(
+      'https://api.openai.com/v1/chat/completions',
+      {
+        model: 'gpt-3.5-turbo',
+        messages: [
+          { role: 'system', content: 'You are an assistant that gives opinions on messages.' },
+          { role: 'user', content: `What is your opinion on this message: "${message}"` }
+        ]
+      },
+      {
+        headers: {
+          'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`,
+          'Content-Type': 'application/json'
+        }
+      }
+    );
+
+    const opinion = response.data.choices[0].message.content;
+
+    // Save AI response to the database
+    const aiMessage = new Message({
+      username: 'AttyAI',
+      message: `Response to ${username}: "${message}" - ${opinion}`,
+      timestamp: new Date()
+    });
+    await aiMessage.save();
+
+    res.json({ opinion });
+  } catch (error) {
+    console.error('Error fetching opinion from ChatGPT:', error);
+    res.status(500).json({ error: 'Error fetching opinion from ChatGPT' });
+  }
+});
 
 // Middleware
 // Updated CORS configuration

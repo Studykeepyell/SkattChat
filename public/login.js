@@ -1,4 +1,6 @@
-// const backendApiUrl = process.env.BACKEND_API_URL || 'http://localhost:3000';
+const backendApiUrl = window.location.hostname === 'localhost'
+    ? 'http://localhost:3000/api/users'
+    : 'https://skattchat.online/api/users';
 
 document.getElementById('login-form').addEventListener('submit', function(event) {
     event.preventDefault();
