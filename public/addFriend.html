@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Profile</title>
+    <script src="addFriend.js" defer></script>
+    <link rel="stylesheet" href="addFriend.css">
+</head>
+<body>
+    <div class="container">
+        <div class="taskbar">
+          <button data-target="account.html" class="account-button">
+            <img src="account.svg" class="button-icon" alt="Icon 1"> 
+          </button>
+          <button data-target="add-friend.html">
+            <img src="add-friend.svg" class="button-icon" alt="Icon 1"> 
+          </button>
+          <button data-target="text.html">
+            <img src="chat.svg" class="button-icon" alt="Icon 2"> 
+          </button>
+          <button data-target="navigate.html">
+            <img src="compass.svg" class="button-icon" alt="Icon 3">
+          </button>
+        </div>
+    </div>
+    <form id = "searchForm">
+        <div class = "searchBox-container">
+            <input type="text" placeholder="Search by username.." id="searchInput">
+            <button type = "submit" class="magnifyGlass">
+                <ion-icon name="search"></ion-icon>
+            </button>
+        </div>
+    </form>
+    <div id="result-container">
+        <!--dynamic user display-->
+    </div> 
+    <!--ionicon file-->
+    <script type="module" src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.esm.js"></script>
+    <script nomodule src="https://unpkg.com/ionicons@7.1.0/dist/ionicons/ionicons.js"></script>
+</body>
+</html>
+
