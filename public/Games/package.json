@@ -1,0 +1,11 @@
+{
+  "devDependencies": {
+    "path-browserify": "^1.0.1",
+    "process": "^0.11.10"
+  },
+  "dependencies": {
+    "express": "^4.21.1",
+    "is-word": "^1.0.4",
+    "words": "^0.2.1"
+  }
+}

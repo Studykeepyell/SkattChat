@@ -1,0 +1,196 @@
+
+/* Start Screen Container */
+.startScreenContainer {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 80vh; /* Centers content vertically within the viewport */
+    text-align: center;
+}
+
+/* Start Button Styling */
+#startGame {
+    background-color: #0288d1; /* Dark blue background */
+    color: #ffffff; /* White text */
+    border: none;
+    padding: 1em 2em; /* Scalable padding */
+    font-size: 1.5em; /* Slightly larger font size */
+    border-radius: 0.5em;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    box-shadow: 0 0.4em 0.8em rgba(0, 0, 0, 0.2);
+}
+
+#startGame:hover {
+    background-color: #0277bd; /* Darker blue on hover */
+}
+
+/* Title Styling for Consistency */
+.title {
+    font-size: 3em;
+    color: #0288d1;
+    margin-bottom: 3vh;
+}
+
+/* General Body Styling */
+body {
+    background-color: #e0f7fa; /* Light blue background */
+    font-family: Arial, sans-serif;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin: 0;
+    padding: 2vh;
+}
+
+/* Title Styling */
+.title {
+    font-size: 3em;
+    color: #0288d1;
+    margin-bottom: 2vh;
+}
+
+/* Word Game Container */
+.wordGameContainer {
+    background-color: #ffffff;
+    border: 0.2em solid #0288d1;
+    border-radius: 1em;
+    width: 90%;
+    max-width: 60%;
+    padding: 2vh;
+    text-align: center;
+    box-shadow: 0 0.5em 1em rgba(0, 0, 0, 0.1);
+    margin-bottom: 2vh;
+}
+
+/* Letter List */
+.letters {
+    list-style: none;
+    padding: 0;
+    display: flex;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.letters li {
+    background-color: #0288d1;
+    color: #ffffff;
+    font-size: 1.5em;
+    margin: 0.5vh;
+    padding: 1vh;
+    border-radius: 0.4em;
+    width: 3em;
+    text-align: center;
+}
+
+/* Points Display */
+#pointsDisplay {
+    font-size: 1.2em;
+    color: #0288d1;
+    margin-top: 1vh;
+}
+
+/* Message Display */
+#message {
+    color: #00796b;
+    font-size: 1em;
+    margin-top: 0.5vh;
+}
+
+/* Answer Container */
+.answerContainer {
+    background-color: #ffffff;
+    border: 0.2em solid #0288d1;
+    border-radius: 1em;
+    width: 90%;
+    max-width: 60%;
+    padding: 2vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    box-shadow: 0 0.5em 1em rgba(0, 0, 0, 0.1);
+}
+
+#wordInput {
+    padding: 1em;
+    font-size: 1em;
+    width: 80%;
+    max-width: 300px;
+    border: 0.2em solid #0288d1;
+    border-radius: 0.4em;
+    margin-bottom: 1vh;
+}
+
+#submit {
+    background-color: #0288d1;
+    color: #ffffff;
+    border: none;
+    padding: 0.5em 1.5em;
+    font-size: 1em;
+    border-radius: 0.4em;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+#submit:hover {
+    background-color: #0277bd;
+}
+
+/* Timer Display */
+#timer {
+    font-size: 1.2em;
+    color: #0288d1;
+    margin-top: 1vh;
+}
+
+/* End Screen Container */
+/* End Screen Container */
+.scoreContainer {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 80vh; /* Centers content within viewport */
+    background-color: #ffffff;
+    border: 0.2em solid #0288d1;
+    border-radius: 1em;
+    width: 90%;
+    max-width: 50%;
+    padding: 3vh;
+    box-shadow: 0 0.5em 1em rgba(0, 0, 0, 0.1);
+    text-align: center;
+}
+
+/* Game Over Title Styling */
+.title {
+    font-size: 2.5em;
+    color: #0288d1;
+    margin-bottom: 1vh;
+}
+
+/* Score Text Styling */
+.scoreText {
+    font-size: 1.5em;
+    color: #00796b;
+    margin: 1vh 0;
+}
+
+/* Button Styling (Play Again and Return to Chat) */
+.playAgainButton, .returnToChat {
+    background-color: #0288d1;
+    color: #ffffff;
+    border: none;
+    padding: 1em 2em;
+    font-size: 1.2em;
+    border-radius: 0.5em;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+    box-shadow: 0 0.4em 0.8em rgba(0, 0, 0, 0.2);
+    margin: 0.5vh 0;
+}
+
+/* Hover Effect for Buttons */
+.playAgainButton:hover, .returnToChat:hover {
+    background-color: #0277bd;
+}
