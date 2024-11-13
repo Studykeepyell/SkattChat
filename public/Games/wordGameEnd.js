@@ -13,6 +13,6 @@ function startNewGame() {
 }
 
 function returnToChat() {
-    // Redirect to the chat page
-    window.location.href = "/public/chat.html"; // Adjust path as needed
+    // Redirect to the chat page on the server
+    window.location.href = "/chat.html"; // Adjust path as needed
 }

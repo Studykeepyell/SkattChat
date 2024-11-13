@@ -20,10 +20,7 @@ const server = http.createServer(app);
 const io = socketIO(server);
 
 const userSocketMap = {}; // Map to track user IDs and their corresponding socket IDs
-// Import routes and modules
-const userRoutes = require('./userRoute');
-const ticTacToe = require('./ticTacToe');
-const chat = require('./chat');  // Import chat module
+
 
 const isWord = require('is-word');
 const englishWords = isWord('american-english');

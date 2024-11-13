@@ -1,6 +1,6 @@
 document.addEventListener("DOMContentLoaded", () => {
     document.getElementById("startGame").addEventListener("click", () => {
-        const gameDuration = 5; // Game duration in seconds
+        const gameDuration = 15; // Game duration in seconds
         const startTime = Date.now();
         
         // Store the start time and duration in localStorage
