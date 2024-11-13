@@ -64,14 +64,12 @@ app.post('/api/get-opinion', async (req, res) => {
 });
 
 // Middleware
-// Updated CORS configuration
 app.use(cors({
   origin: ['http://localhost:3000', 'https://skattchat.online'], // Allow both localhost and the live app origin
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'], // Allow common HTTP methods
   allowedHeaders: ['Content-Type', 'Authorization'], // Allow required headers
 }));
-
 
 app.use((req, res, next) => {
     console.log(`Serving request for: ${req.url}`);
@@ -127,12 +125,19 @@ console.log('MongoDB URI:', process.env.MONGO_URI); // Log the MongoDB URI for d
 mongoose.connect(process.env.MONGO_URI )
   .then(() => console.log('Connected to MongoDB'))
   .catch(err => console.log('MongoDB connection error:', err));
+mongoose.connect(process.env.MONGO_URI, {
+    useNewUrlParser: true,
+    useUnifiedTopology: true
+})
+.then(() => console.log('Connected to MongoDB'))
+.catch(err => console.log('MongoDB connection error:', err));
 
 // Routes
 app.use('/api/users', userRoutes);
 
 // Serve static files
 app.use(express.static(path.join(__dirname, '../public')));
+
 // Initialize Chat and Tic-Tac-Toe functionality
 ticTacToe(io);// Initializes Tic-Tac-Toe functionality
 setupChat(io);

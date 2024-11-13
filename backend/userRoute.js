@@ -2,6 +2,32 @@ const express = require('express');
 const bcrypt = require('bcrypt');
 const User = require('./models/User'); // Adjust the path as needed
 const router = express.Router();
+const User = require('./models/user'); // Ensure the correct path
+
+// Search users endpoint
+router.get('/search', async (req, res) => {
+    try {
+        const query = req.query.q;
+        const users = await User.find({
+            $or: [
+                { displayName: new RegExp(query, 'i') },
+                { username: new RegExp(query, 'i') }
+            ]
+        });
+
+        if (users.length === 0) {
+            return res.status(404).json({ success: false, message: 'No users found' });
+        }
+
+        res.json(users);
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ success: false, message: 'Server error' });
+    }
+});
+
+module.exports = router;
+
 const Room = require('./models/Room');
 
 

@@ -159,16 +159,29 @@ body {
     transform: scale(1.5); /* Enlarges the icon to 1.5 times its original size */
 }
 
-#container { 
-    width: 80%; 
-    max-width: 600px; 
-    margin-top: 20px; 
-} 
+.resultsContainer { 
+  position: absolute;
+  width: 80%; 
+  max-width: 600px; 
+  height: 400px; /* Fixed height to enable scrolling */
+  left: 350px;
+  margin-top: 20px; 
+  background: #ADD8E6; /* Light blue background color */
+  padding: 20px; /* Add padding for inner spacing */
+  border-radius: 20px; /* Round corners */
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); /* Optional: add a subtle shadow for depth */
+  overflow-y: auto; /* Enable vertical scrolling */
+  display: flex; /* Enable Flexbox */
+  flex-direction: column; /* Arrange items in a column */
+  align-items: center; /* Center items horizontally */
+}
 
 .box { 
-    background-color: #fff; 
-    border: 1px solid #ddd; 
-    padding: 20px; 
-    margin-bottom: 10px; 
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  background-color: #fff; 
+  border: 1px solid #ddd; 
+  padding: 20px; 
+  margin-bottom: 10px; 
+  width: 90%; /* Ensure box width is less than container width */
+  align-items: center;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }

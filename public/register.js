@@ -51,7 +51,7 @@ function isPasswordStrong(password) {
     if (!/[0-9]/.test(password)) {
         errors.push('one number');
     }
-    if (!/[!@#$%^&*(),.?":{}|<>]/.test(password)) {
+    if (!/[_-!@#$%^&*(),.?":{}|<>]/.test(password)) {
         errors.push('one special character');
     }
 

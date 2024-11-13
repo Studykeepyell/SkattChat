@@ -559,4 +559,5 @@ document.getElementById('chat-form').addEventListener('submit', function(event) 
             });
         }
     });
+
 });
