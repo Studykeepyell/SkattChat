@@ -12,7 +12,9 @@ body {
     align-items: center;
     height: 100vh;
     background: linear-gradient(135deg, #6A67CE, #4E4CB0);
-    color: #333;
+
+    /*Omar*/ 
+    color: #d1cbcb;
 }
 
 /* Container styling */
@@ -65,5 +67,3 @@ body {
 #register-form button:hover {
     background-color: #6A67CE;
 }
-
-

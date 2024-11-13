@@ -1,4 +1,4 @@
-  const socket = io();
+const socket = io();
 
 document.addEventListener('DOMContentLoaded', () => {
   
@@ -9,30 +9,64 @@ document.addEventListener('DOMContentLoaded', () => {
 
         const messageContainer = document.createElement('div');
         messageContainer.className = 'message-container';
+    
+        const actionButton = document.createElement('button');
+        actionButton.className = 'action-button';
+        actionButton.textContent = '🖥️';
+        actionButton.style.marginRight = '10px';
+        
+        // Fetch ChatGPT's opinion when button is clicked
+        actionButton.addEventListener('click', async () => {
+            try {
+                console.log("Making request to:", '/api/get-opinion');
+                const response = await fetch('/api/get-opinion', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ message: data.message })
+                });
+                const result = await response.json();
+                // Add AI response as a new message
+                addChatMessage({
+                    username: "AttyAI",
+                    message: `response to ${data.username}: "${data.message}" - ${result.opinion}`,
+                    timestamp: Date.now()
+                }, true);
+            } catch (error) {
+                console.error('Error fetching ChatGPT opinion:', error);
+            }
+        });
 
+        // Character picture placeholder
         const characterPicture = document.createElement('div');
         characterPicture.className = 'character-picture';
 
+        // Bubble wrapper
         const bubbleWrapper = document.createElement('div');
         bubbleWrapper.className = 'bubble-wrapper';
 
+        // Speech bubble
         const speechBubble = document.createElement('div');
         speechBubble.className = 'speech-bubble';
 
+        // Message content
         const messageContent = document.createElement('div');
         messageContent.className = 'message';
         messageContent.textContent = `${data.username}: ${data.message}`;
 
+        // Lower text (timestamp)
         const lowerText = document.createElement('div');
         lowerText.className = 'lower-text';
         lowerText.textContent = formatTimestamp(data.timestamp);
 
+        // Append the elements together
         speechBubble.appendChild(messageContent);
         bubbleWrapper.appendChild(speechBubble);
+        messageContainer.appendChild(actionButton); // Append the button first
         messageContainer.appendChild(characterPicture);
         messageContainer.appendChild(bubbleWrapper);
         messageContainer.appendChild(lowerText);
 
+        // Append messageContainer to messages list
         const messagesList = document.getElementById('messages');
         if (messagesList) {
             messagesList.appendChild(messageContainer);

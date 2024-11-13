@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Profile Editor</title>
+    <link rel="stylesheet" href="account.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Profile Editor</h1>
+        </header>
+        
+        <main>
+            <section class="profile-info">
+                <div class="button-container">
+                    <button class="back-to-home" onclick="window.location.href='chat.html';">Back to Home</button>
+                </div>
+                <div class="profile-picture" onclick="document.getElementById('upload-img').click();">
+                    <img src="account.svg" alt="Profile Picture" id="profile-img">
+                    <input type="file" id="upload-img" accept="image/*" style="display: none;">
+                </div>
+                <div class="profile-details">
+                    <div class="input-group">
+                        <label for="username">Username:</label>
+                        <input type="text" id="username" name="username" value="User123">
+                    </div>
+
+                    <div class="input-group">
+                        <label for="password">Password:</label>
+                        <input type="password" id="password" name="password">
+                    </div>
+
+                    <button id="save-profile">Save</button>
+                </div>
+            </section>
+            
+            <section class="friend-list">
+                <h2>Friends</h2>
+                <ul id="friends">
+                    <li>Friend 1</li>
+                    <li>Friend 2</li>
+                    <li>Friend 3</li>
+                    <li>Friend 4</li>
+                    <!-- Add more friends as needed -->
+                </ul>
+            </section>
+        </main>
+        
+        <footer>
+            <button id="logout">Log Out</button>
+        </footer>
+    </div>
+    <script>
+        let uploadedImage = '';
+
+        document.getElementById('upload-img').onchange = function(event) {
+            var reader = new FileReader();
+            reader.onload = function() {
+                uploadedImage = reader.result;
+                document.getElementById('profile-img').src = uploadedImage;
+            }
+            reader.readAsDataURL(event.target.files[0]);
+        };
+
+        document.getElementById('save-profile').onclick = function() {
+            if (uploadedImage) {
+                sessionStorage.setItem('profileImage', uploadedImage); // Save image to session storage
+            }
+        };
+
+        // Load the saved profile image on page load
+        window.onload = function() {
+            const savedImage = sessionStorage.getItem('profileImage');
+            if (savedImage) {
+                document.getElementById('profile-img').src = savedImage;
+                document.getElementById('taskbar-profile-img').src = savedImage;
+            }
+        };
+    </script>
+</body>
+</html>
