@@ -4,6 +4,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     let lastMessageDate = '';
 
+    // Function to add a new chat message to the messages container
     function addChatMessage(data) {
         console.log('Adding chat message:', data);
 
@@ -205,7 +206,6 @@ document.addEventListener('DOMContentLoaded', () => {
     socket.on('clear messages', function() {
         if (messagesList) {
             messagesList.innerHTML = '';
-            lastMessageDate = ''; // Reset the last message date
         }
     });
 
