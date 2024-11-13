@@ -364,4 +364,10 @@ button:hover {
 
 #chat-form button {
   padding: 0.5rem 1rem;
-  background-color: #00BCD
+  background-color: #00BCD0;
+  color: white;
+  border: none;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  transition: background-color 0.3s ease, transform 0.3s ease;
+}
