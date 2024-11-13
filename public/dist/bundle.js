@@ -5,7 +5,6 @@ document.addEventListener('DOMContentLoaded', () => {
     let lastMessageDate = '';
     let currentRoom = null;
     const userId = localStorage.getItem('userId');
-
     if (userId) {
 
 
@@ -559,5 +558,4 @@ document.getElementById('chat-form').addEventListener('submit', function(event) 
             });
         }
     });
-
 });
