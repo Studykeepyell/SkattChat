@@ -1,19 +1,15 @@
 const socket = io();
 
 document.addEventListener('DOMContentLoaded', () => {
-    let lastMessageDate = ''; // Track the date of the last message to group messages by date
-    const messagesList = document.getElementById('messages');
 
-    if (!messagesList) {
-        console.warn("The 'messages' container element was not found.");
-        return;
-    }
+    let lastMessageDate = '';
 
+    // Function to add a new chat message to the messages container
     function addChatMessage(data) {
         console.log('Adding chat message:', data);
 
         const messageDate = formatMessageDate(data.timestamp);
-        
+
         if (messageDate !== lastMessageDate) {
             // Create a new date header when the date changes
             const dateHeader = document.createElement('div');
@@ -55,6 +51,48 @@ document.addEventListener('DOMContentLoaded', () => {
         console.log('Message successfully appended to messages list');
     }
 
+    // Add Tic-Tac-Toe button event listener
+    const playTictactoeButton = document.getElementById('playTictactoe');
+    if (playTictactoeButton) {
+        playTictactoeButton.addEventListener('click', () => {
+            playTictactoeButton.disabled = true;
+            playTictactoeButton.textContent = 'Waiting for an opponent...';
+            socket.emit('findTictactoeOpponent'); // Emit event to find an opponent
+        });
+    }
+
+    socket.on('startTictactoeGame', (data) => {
+        const roomID = data.roomID;
+        const playerSymbol = data.playerSymbol;
+        const isFirstTurn = data.isFirstTurn;
+
+        playTictactoeButton.disabled = false;
+        playTictactoeButton.textContent = 'Play Tic-Tac-Toe';
+
+        // Open the Tic-Tac-Toe game in a new window and initialize it with correct parameters
+        const ticTacToeWindow = window.open('tictactoe.html', 'Tic-Tac-Toe Game', 'width=400,height=400');
+        ticTacToeWindow.onload = () => {
+            ticTacToeWindow.initGame(socket, roomID, playerSymbol, isFirstTurn);
+        };
+    });
+
+    socket.on('moveMade', ({ row, col, player }) => {
+        const cell = document.getElementById(`cell-${row}-${col}`);
+        if (cell) cell.textContent = player;
+    });
+
+    // Handle no opponent found (timeout)
+    socket.on('tictactoeWaitTimeout', () => {
+        playTictactoeButton.disabled = false;
+        playTictactoeButton.textContent = 'Play Tic-Tac-Toe';
+        alert('No opponents found. Try again later.');
+    });
+
+    socket.on('opponentDisconnected', () => {
+        alert("Your opponent disconnected. Game over.");
+    });
+
+    // Utility function to format the timestamp
     function formatTimestamp(timestamp) {
         const date = new Date(timestamp);
         if (isNaN(date)) {
@@ -64,6 +102,7 @@ document.addEventListener('DOMContentLoaded', () => {
         return date.toLocaleTimeString(undefined, options);
     }
 
+    // Utility function to format message date
     function formatMessageDate(timestamp) {
         const date = new Date(timestamp);
         const today = new Date();
@@ -80,7 +119,35 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
-    // Chat form submission and event listeners go here...
+    // Event listeners and socket.io handling code
+    const chatForm = document.getElementById('chat-form');
+    const messageInput = document.getElementById('messageForm');
+    const deleteAllMessagesButton = document.getElementById('deleteAllMessages');
+    const messagesList = document.getElementById('messages');
+
+    if (chatForm) {
+        chatForm.addEventListener('submit', function(event) {
+            event.preventDefault();
+            const message = messageInput.value.trim();
+            if (message) {
+                socket.emit('chat message', {
+                    username: localStorage.getItem('username'),
+                    message: message,
+                    timestamp: Date.now()
+                });
+                messageInput.value = '';
+            }
+        });
+    }
+
+    if (deleteAllMessagesButton) {
+        deleteAllMessagesButton.addEventListener('click', function() {
+            if (messagesList) {
+                messagesList.innerHTML = '';
+                socket.emit('clear messages');
+            }
+        });
+    }
 
     socket.on('chat message', function(data) {
         addChatMessage(data);
@@ -89,14 +156,13 @@ document.addEventListener('DOMContentLoaded', () => {
     socket.on('clear messages', function() {
         if (messagesList) {
             messagesList.innerHTML = '';
-            lastMessageDate = ''; // Reset the last message date
         }
     });
 
     socket.on('chat history', function(messages) {
         if (messagesList) {
             messagesList.innerHTML = '';
-            lastMessageDate = ''; // Reset last message date for new history load
+            lastMessageDate = ''; // Reset last message date to avoid duplicate headers
             messages.forEach((msg) => {
                 addChatMessage(msg);
             });
