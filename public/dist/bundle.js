@@ -101,53 +101,37 @@ async function fetchProfileImage(userId) {
     messageContainer.appendChild(friendRequestButton);
 }
 
+   // Create the AI action button
+   const actionButton = document.createElement('button');
+   actionButton.className = 'action-button';
+   actionButton.style.marginRight = '10px';
+   actionButton.textContent = 'Get AI Response'; // Add text for visibility
 
-        // Only create and append the action button if the username is not "AttyAI"
-        if (data.username !== 'AttyAI') {
-            const actionButton = document.createElement('button');
-            actionButton.className = 'action-button';
-            actionButton.textContent = 'Get Opinion';
-            actionButton.style.marginTop = '10px'; // Add space between content and button
-            actionButton.style.backgroundColor = '#1bbbff'; // Match the background color of the message container
-            actionButton.style.color = 'white';
-            actionButton.style.padding = '5px 10px';
-            actionButton.style.border = 'none';
-            actionButton.style.borderRadius = '5px';
-            actionButton.style.cursor = 'pointer';
+   // Fetch ChatGPT's opinion when button is clicked
+   actionButton.addEventListener('click', async () => {
+       try {
+           console.log("Making request to:", '/api/get-opinion');
+           const response = await fetch('/api/get-opinion', {
+               method: 'POST',
+               headers: { 'Content-Type': 'application/json' },
+               body: JSON.stringify({ message: data.message, roomId: data.roomId , username: data.username })
+           });
+           const result = await response.json();
+           // Add AI response as a new message
+           addChatMessage({
+               username: "AttyAI",
+               message: `response to ${data.username}: "${data.message}" - ${result.opinion}`,
+               timestamp: Date.now(),
+               roomId:"general"||"random"||"gaming"||"music" // Pass roomId if needed for display
+           }, true);
+       } catch (error) {
+           console.error('Error fetching ChatGPT opinion:', error);
+       }
+   });
 
-            // Hover effect for the button
-            actionButton.addEventListener('mouseover', () => {
-                actionButton.style.backgroundColor = '#168bb1'; // Darker blue on hover
-            });
+   // Append the action button to the message container
+   messageContainer.appendChild(actionButton);
 
-            actionButton.addEventListener('mouseout', () => {
-                actionButton.style.backgroundColor = '#1bbbff'; // Revert back to the original color
-            });
-
-            // Fetch ChatGPT's opinion when button is clicked
-            actionButton.addEventListener('click', async () => {
-                try {
-                    console.log("Making request to:", '/api/get-opinion');
-                    const response = await fetch('/api/get-opinion', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ message: data.message })
-                    });
-                    const result = await response.json();
-                    // Add AI response as a new message
-                    addChatMessage({
-                        username: "AttyAI",
-                        message: `response to ${data.username}: "${data.message}" - ${result.opinion}`,
-                        timestamp: Date.now()
-                    }, true);
-                } catch (error) {
-                    console.error('Error fetching ChatGPT opinion:', error);
-                }
-            });
-
-            // Append the action button to the message container
-            messageContainer.appendChild(actionButton);
-        }
 
         // Finally, append the message container to the messages list
         messagesList.appendChild(messageContainer);

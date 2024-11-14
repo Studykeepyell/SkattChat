@@ -14,6 +14,7 @@ const Room = require('./models/Room'); // Import the Room model
 const predefinedRooms = ['General', 'Random', 'Gaming', 'Music'];
 const User = require('./models/User');
 const multer = require('multer');
+const axios = require('axios');
 
 const app = express();
 const server = http.createServer(app);
@@ -44,10 +45,20 @@ app.use((req, res, next) => {
 
 
 
-
 app.post('/api/get-opinion', async (req, res) => {
-  const { message, username } = req.body;  // username should be passed from the client
+  const { message, roomId, username } = req.body;
+  
+  // Log received data for debugging
   console.log('Received request at /api/get-opinion');
+  console.log('Message:', message);
+  console.log('Room ID:', roomId);
+  console.log('Username:', username);
+
+  if (!message || !roomId || !username) {
+    console.error('Validation failed: message, roomId, and username are required.');
+    return res.status(400).json({ error: 'Message, room ID, and username are required.' });
+  }
+
   try {
     const response = await axios.post(
       'https://api.openai.com/v1/chat/completions',
@@ -72,13 +83,14 @@ app.post('/api/get-opinion', async (req, res) => {
     const aiMessage = new Message({
       username: 'AttyAI',
       message: `Response to ${username}: "${message}" - ${opinion}`,
-      timestamp: new Date()
+      timestamp: new Date(),
+      room: roomId
     });
     await aiMessage.save();
 
     res.json({ opinion });
   } catch (error) {
-    console.error('Error fetching opinion from ChatGPT:', error);
+    console.error('Error fetching opinion from ChatGPT:', error.response ? error.response.data : error.message);
     res.status(500).json({ error: 'Error fetching opinion from ChatGPT' });
   }
 });
