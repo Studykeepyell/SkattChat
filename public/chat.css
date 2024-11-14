@@ -176,7 +176,7 @@ button:hover {
 }
 
 .taskbar {
-  background-color: #37474F;
+  background-color: #333;
   width: 10%;
   padding: 1rem 0;
   display: flex;
@@ -211,10 +211,14 @@ button:hover {
   border-radius: 50%;
   vertical-align: middle;
   margin-right: 1%;
-} /* literally just edit width and height lol */
+  filter: brightness(0) saturate(100%);
+  filter: invert(1); /* This will make the icons white */
+}
+
+
 
 .taskbar button:hover {
-  background-color: #455A64;
+  background-color: hsl(0, 0%, 28%);
   transform: scale(1.1);
 }
 

@@ -31,8 +31,8 @@ body {
   flex-direction: column;
   align-items: center;
   background-color: #333;
-  padding: 2rem 1rem; /* Padding using rem for better scalability */
-  width: 12%; /* Taskbar takes up 12% of the screen width */
+  padding: 1rem 0; /* Padding using rem for better scalability */
+  width: 7.15%; /* Taskbar takes up 12% of the screen width */
   min-width: 100px; /* Minimum width for the taskbar */
   height: 100%;
 }
@@ -49,6 +49,7 @@ body {
 .taskbar-button:hover {
   transform: scale(1.1);
 }
+
 
 .button-icon {
   width: 2rem; /* Set icon size using rem */
