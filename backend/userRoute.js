@@ -59,6 +59,8 @@ router.post('/register', async (req, res) => {
     }
 });
 
+
+
 // Login route
 router.post('/login', async (req, res) => {
     console.log('Login route accessed');  // Debugging log

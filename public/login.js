@@ -20,8 +20,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function login(username, password) {
         const baseURL = window.location.hostname === 'localhost' 
-            ? 'http://localhost:3000' 
-            : 'https://skattchat.online';
+        ? 'http://localhost:3000' 
+        : 'https://skattchat.online';
     
         const xhr = new XMLHttpRequest();
         xhr.open('POST', `${baseURL}/api/users/login`, true);

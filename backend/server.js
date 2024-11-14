@@ -41,6 +41,15 @@ app.use((req, res, next) => {
 });
 
 
+app.use(session({
+  secret: 'yourSecret',
+  resave: false,
+  saveUninitialized: false,
+  cookie: {
+      secure: true, // Ensure this is true for HTTPS
+      sameSite: 'none' // Allows cookies to be sent with cross-site requests
+  }
+}));
 
 
 app.post('/api/get-opinion', async (req, res) => {
@@ -175,15 +184,6 @@ initializeStaticRooms();
 app.use((req, res) => {
   res.status(404).send('Page not found');
 });
-
-
-
-
-
-
-
-
-
 
 
 
