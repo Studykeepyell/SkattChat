@@ -37,4 +37,11 @@ document.addEventListener("DOMContentLoaded", () => {
             })
             .catch(error => console.error('Error fetching users:', error));
     }
+    document.getElementById('accountButton').addEventListener('click', function() {
+        window.location.href = 'account.html';
+    });
+      
+    document.getElementById('chatButton').addEventListener('click', function() {
+        window.location.href = 'chat.html';
+    });    
 });
