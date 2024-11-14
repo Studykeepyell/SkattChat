@@ -609,4 +609,9 @@ document.getElementById('chat-form').addEventListener('submit', function(event) 
             });
         }
     });
+
+    document.getElementById('addFriendButton').addEventListener('click', function() {
+        window.location.href = '/addFriend.html';
+      });
+      
 });

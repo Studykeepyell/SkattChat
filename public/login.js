@@ -41,9 +41,8 @@ document.addEventListener('DOMContentLoaded', () => {
                         } else {
                             console.warn('Warning: userId is missing in the response');
                         }
-    
+
                         localStorage.setItem('username', username);
-                        localStorage.setItem('profileImageURL', response.profileImage || ''); // Store profileImage URL
                         window.location.href = '/chat.html?username=' + encodeURIComponent(username);
                     } else {
                         alert(response.message || 'Invalid username or password');
@@ -57,12 +56,12 @@ document.addEventListener('DOMContentLoaded', () => {
                 alert('An error occurred during login. Please try again later.');
             }
         };
-    
+        
         xhr.onerror = function() {
             alert('A network error occurred. Please check your connection.');
         };
-    
-        // Send JSON data
+
+        // Send JSON string as the request body
         xhr.send(JSON.stringify({ username, password }));
     }
 });

@@ -17,9 +17,9 @@
           <button data-target="account.html" class="account-button" aria-label="Account">
               <img src="account.svg" class="button-icon" alt="Account" id="taskbar-profile-img">
           </button>
-          <button data-target="add-friend.html" aria-label="Add Friend">
-              <img src="add-friend.svg" class="button-icon" alt="Add Friend" id="search-icon"> 
-          </button>
+          <button data-target="add-friend.html" aria-label="Add Friend" id="addFriendButton">
+            <img src="add-friend.svg" class="button-icon" alt="Add Friend">
+          </button>          
           <button data-target="text.html" aria-label="Chat">
               <img src="chat.svg" class="button-icon" alt="Chat"> 
           </button>
@@ -105,7 +105,7 @@
           <div class="button-container">
             <button id="deleteAllMessages" aria-label="Delete All Messages">Delete All Messages</button>
             <button id="playTictactoe" aria-label="Play Tic Tac Toe">TTT</button>
-            <button id="logoutButton" aria-label="Logout">Logout</button>
+            <button id="playWordGame" style="margin-top: 10px;" onclick="window.location.href='./Games/wordGameStart.html'">Word Game</button>
           </div>
 
           <!-- Message Display Area -->

@@ -21,6 +21,10 @@ const io = socketIO(server);
 
 const userSocketMap = {}; // Map to track user IDs and their corresponding socket IDs
 
+
+const isWord = require('is-word');
+const englishWords = isWord('american-english');
+
 app.use(express.json()); // Parse JSON requests
 app.use(express.urlencoded({ extended: true })); // Parse URL-encoded requests
 
