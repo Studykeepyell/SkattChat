@@ -28,7 +28,7 @@ function displayCharacters() {
 
 async function checkWord(word) {
     let response = false;
-    const ifWord = await fetch(`http://localhost:5000/check-word?word=${word}`);
+    const ifWord = await fetch(`http://localhost:5001/check-word?word=${word}`);
     const data = await ifWord.json();
     console.log(`${word} is ${data.isEnglishWord ? 'an English' : 'not an English'} word.`);
     response = data.isEnglishWord;
