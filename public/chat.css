@@ -177,7 +177,7 @@ button:hover {
 
 .taskbar {
   background-color: #37474F;
-  width: 6%;
+  width: 8%;
   padding: 1rem 0;
   display: flex;
   flex-direction: column;
@@ -191,32 +191,32 @@ button:hover {
   height: 20%;
 }
 
-.taskbar button {
-  width: 80%;
-  height: 10%;
-  background-color: transparent;
-  color: #ECEFF1;
-  border: none;
-  border-radius: 0.5rem;
-  cursor: pointer;
-  transition: background-color 0.3s ease, transform 0.3s ease;
+
+/* Taskbar Styling */
+.taskbar {
   display: flex;
+  flex-direction: column;
   align-items: center;
-  justify-content: center;
+  background-color: #333;
+  padding: 2rem 1rem; /* Padding using rem for better scalability */
+  width: 12%; /* Taskbar takes up 12% of the screen width */
+  min-width: 100px; /* Minimum width for the taskbar */
+  height: 100%;
 }
 
-.taskbar button img {
-  width: 60%;
-  height: 60%;
-  border-radius: 50%;
-  vertical-align: middle;
-  margin-right: 1%;
+.taskbar-button {
+  background: none;
+  border: none;
+  outline: none;
+  cursor: pointer;
+  margin: 1.5rem 0; /* Margin with rem for spacing */
+  transition: transform 0.2s ease;
 }
 
-.taskbar button:hover {
-  background-color: #455A64;
+.taskbar-button:hover {
   transform: scale(1.1);
 }
+
 
 .hamburger-icon {
   width: 3rem;
