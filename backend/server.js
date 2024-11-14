@@ -1,4 +1,3 @@
-// server.js
 require('dotenv').config({ path: './.env' });
 const express = require('express');
 const http = require('http');
@@ -13,7 +12,8 @@ const path = require('path');
 const ticTacToe = require('./ticTacToe');
 const Room = require('./models/Room'); // Import the Room model
 const predefinedRooms = ['General', 'Random', 'Gaming', 'Music'];
-
+const User = require('./models/User');
+const multer = require('multer');
 
 const app = express();
 const server = http.createServer(app);
@@ -21,9 +21,29 @@ const io = socketIO(server);
 
 const userSocketMap = {}; // Map to track user IDs and their corresponding socket IDs
 
-console.log('Test Variable:', process.env.TEST_VAR); // Check if TEST_VAR is defined
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+
+const isWord = require('is-word');
+const englishWords = isWord('american-english');
+
+app.use(express.json()); // Parse JSON requests
+app.use(express.urlencoded({ extended: true })); // Parse URL-encoded requests
+
+// Register user routes at /api/users
+app.use('/api/users', userRoutes);
+
+// Debugging middleware
+app.use((req, res, next) => {
+    console.log(`Received request on path: ${req.path}`);
+    next();
+});
+app.use((req, res, next) => {
+    console.log(`Serving request for: ${req.url}`);
+    next();
+});
+
+
+
+
 
 app.post('/api/get-opinion', async (req, res) => {
   const { message, username } = req.body;  // username should be passed from the client
@@ -63,6 +83,7 @@ app.post('/api/get-opinion', async (req, res) => {
   }
 });
 
+
 // Middleware
 app.use(cors({
   origin: ['http://localhost:3000', 'https://skattchat.online'], // Allow both localhost and the live app origin
@@ -71,10 +92,7 @@ app.use(cors({
   allowedHeaders: ['Content-Type', 'Authorization'], // Allow required headers
 }));
 
-app.use((req, res, next) => {
-    console.log(`Serving request for: ${req.url}`);
-    next();
-});
+
 
 async function initializeStaticRooms() {
   try {
@@ -133,7 +151,6 @@ mongoose.connect(process.env.MONGO_URI, {
 .catch(err => console.log('MongoDB connection error:', err));
 
 // Routes
-app.use('/api/users', userRoutes);
 
 // Serve static files
 app.use(express.static(path.join(__dirname, '../public')));
@@ -150,16 +167,25 @@ app.use((req, res) => {
   res.status(404).send('Page not found');
 });
 
-// Endpoint to get all friends of the user
 app.get('/api/friends/:userId', async (req, res) => {
+  const { userId } = req.params;
+
   try {
-      const userId = req.params.userId;
-      const user = await User.findById(userId).populate('friends'); // Assuming 'friends' is an array of user IDs
-      res.json(user.friends); // Send list of friends
+      const user = await User.findById(userId).populate('friends');
+      if (!user) {
+          // User does not exist
+          return res.status(404).json({ success: false, message: 'User not found' });
+      }
+
+      // User exists but might not have friends
+      res.json({ success: true, friends: user.friends || [] });
   } catch (err) {
-      res.status(500).json({ error: 'Error retrieving friends' });
+      console.error('Error retrieving friends:', err);
+      res.status(500).json({ success: false, message: 'Error retrieving friends' });
   }
 });
+
+
 
 
 
@@ -187,6 +213,8 @@ app.post('/api/sendFriendRequest', async (req, res) => {
 
   res.json({ message: "Friend request sent successfully" });
 });
+
+
 
 
 
@@ -244,9 +272,67 @@ app.post('/api/declineFriendRequest', async (req, res) => {
   res.json({ message: "Friend request declined" });
 });
 
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+      cb(null, path.join(__dirname, 'uploads')); // Saves in 'uploads' folder
+  },
+  filename: (req, file, cb) => {
+      const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+      cb(null, uniqueSuffix + '-' + file.originalname); // Unique filename
+  }
+});
+
+const upload = multer({ storage });
 
 
 
+app.post('/api/uploadProfileImage/:userId', upload.single('profileImage'), async (req, res) => {
+  const { userId } = req.params;
+
+  if (!req.file) {
+      console.log('No file uploaded');
+      return res.status(400).json({ success: false, message: 'No file uploaded' });
+  }
+
+  const imageUrl = `/uploads/${req.file.filename}`;
+
+  try {
+      // Update user's profileImage in the database
+      const user = await User.findByIdAndUpdate(userId, { profileImage: imageUrl }, { new: true });
+      if (!user) {
+          return res.status(404).json({ success: false, message: 'User not found' });
+      }
+      res.json({ success: true, imageUrl });
+  } catch (error) {
+      console.error('Error saving profile image:', error);
+      res.status(500).json({ success: false, message: 'Failed to save profile image' });
+  }
+});
+
+
+
+
+
+
+
+app.get('/api/getUserProfileImage/:userId', async (req, res) => {
+  try {
+      const user = await User.findById(req.params.userId);
+      if (!user || !user.profileImage) {
+          return res.json({ success: false, message: 'Profile image not found' });
+      }
+      res.json({ success: true, profileImage: user.profileImage });
+  } catch (error) {
+      console.error('Error retrieving profile image:', error);
+      res.status(500).json({ success: false, message: 'Failed to retrieve profile image' });
+  }
+});
+
+// Other routes, including JSON routes
+app.use('/api/users', userRoutes);
+
+// Static files and socket configuration
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // Start the server
 const PORT = process.env.PORT || 3000;

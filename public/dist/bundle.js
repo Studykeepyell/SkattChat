@@ -4,28 +4,36 @@ document.addEventListener('DOMContentLoaded', () => {
 
     let lastMessageDate = '';
     let currentRoom = null;
+    const profileImageCache = {}; // Cache to store profile images by userId
+
+
     const userId = localStorage.getItem('userId');
-    if (userId) {
-
-
-        socket.emit('registerUser', userId);
-        console.log(`Emitted registerUser event for userId: ${userId}`);
-        // Fetch the user's private chat rooms
-        fetch(`/api/users/getUserRooms/${userId}`)
-            .then(response => response.json())
-            .then(rooms => {
-                rooms.forEach(room => {
-                    addRoomOption(room.roomId); // Adds room to the dropdown
-                });
-            });
+    // Function to fetch the profile image for a user
+async function fetchProfileImage(userId) {
+    // Check if the image is already cached
+    if (profileImageCache[userId]) {
+        return profileImageCache[userId];
     }
+
+    try {
+        const response = await fetch(`/api/getUserProfileImage/${userId}`);
+        const data = await response.json();
+        if (data.success) {
+            profileImageCache[userId] = data.profileImage; // Cache the result
+            return data.profileImage;
+        }
+    } catch (error) {
+        console.error(`Error fetching profile image for userId ${userId}:`, error);
+    }
+    return '/default-profile.png'; // Fallback to a default profile picture
+}
 
 
 
 
 
     // Function to add a new chat message to the messages container
-    function addChatMessage(data) {
+    async function addChatMessage(data) {
         console.log('Adding chat message:', data);
 
         const messageDate = formatMessageDate(data.timestamp);
@@ -45,8 +53,15 @@ document.addEventListener('DOMContentLoaded', () => {
         const userInfoContainer = document.createElement('div');
         userInfoContainer.className = 'user-info-container';
 
-        const characterPicture = document.createElement('div');
-        characterPicture.className = 'character-picture';
+        // Create profile picture element
+    const characterPicture = document.createElement('img');
+    characterPicture.className = 'character-picture';
+    characterPicture.alt = `${data.username}'s profile picture`;
+
+
+     // Fetch the user's profile image and set it
+     const profileImageUrl = await fetchProfileImage(data.userId);
+     characterPicture.src = profileImageUrl;
 
         const username = document.createElement('h2');
         username.className = 'username';
@@ -70,7 +85,13 @@ document.addEventListener('DOMContentLoaded', () => {
         messageContainer.appendChild(userInfoContainer);
         messageContainer.appendChild(messageContent);
 
-
+    // Fetch and set the user's profile image if available
+    if (data.userId) {
+        const profileImageUrl = await getUserProfileImage(data.userId);
+        if (profileImageUrl) {
+            characterPicture.src = profileImageUrl;
+        }
+    }
  // Add "Send Friend Request" button
  if (data.userId && data.userId !== localStorage.getItem('userId')) { // Check userId and prevent self-request
     const friendRequestButton = document.createElement('button');
@@ -134,9 +155,17 @@ document.addEventListener('DOMContentLoaded', () => {
 
 
 
+    async function getUserProfileImage(userId) {
+        try {
+            const response = await fetch(`/api/getUserProfileImage/${userId}`);
+            const data = await response.json();
+            return data.success ? data.profileImage : null;
+        } catch (error) {
+            console.error('Error fetching profile image:', error);
+            return null;
+        }
+    }
 
-
-    const friendRequestList = document.getElementById('friendRequestList');
 
 
 
@@ -277,29 +306,51 @@ function displayFriendRequest(senderId) {
     console.log("Displayed friend request with Accept/Decline buttons for:", senderId); // Log display confirmation
 }
 
-async function loadFriends(username) {
+async function loadFriends(userId) {
     try {
-        const response = await fetch(`/api/friends/${username}`);
-        const friends = await response.json();
+        const response = await fetch(`/api/friends/${userId}`);
+
+        if (!response.ok) {
+            throw new Error(`HTTP error! Status: ${response.status}`);
+        }
+
+        const data = await response.json();
+
+        if (!data.success) {
+            console.error('Error loading friends:', data.message);
+            return;
+        }
 
         const friendsListDiv = document.getElementById('friendsList');
         friendsListDiv.innerHTML = ''; // Clear existing friends
 
-        // Create a list of friends
-        friends.forEach(friend => {
-            const friendDiv = document.createElement('div');
-            friendDiv.classList.add('friend');
-            friendDiv.textContent = friend.username; // Display friend's name or username
-            friendsListDiv.appendChild(friendDiv);
-        });
+        if (data.friends.length === 0) {
+            // Display message if no friends are found
+            const noFriendsMessage = document.createElement('p');
+            noFriendsMessage.textContent = 'No friends found';
+            friendsListDiv.appendChild(noFriendsMessage);
+        } else {
+            // Create a list of friends if there are any
+            data.friends.forEach(friend => {
+                const friendDiv = document.createElement('div');
+                friendDiv.classList.add('friend');
+                friendDiv.textContent = friend.username; // Display friend's name or username
+                friendsListDiv.appendChild(friendDiv);
+            });
+        }
     } catch (err) {
         console.error('Error loading friends:', err);
     }
 }
-const username = localStorage.getItem('username');
-    if (userId) {
-        loadFriends(username);
-    }
+
+
+// Get userId from localStorage and load friends
+if (userId) {
+    loadFriends(userId);
+} else {
+    console.error('User ID not found in localStorage');
+}
+
 
 // Listen for the new chat room creation event from the server
 socket.on('newChatRoom', ({ roomId }) => {

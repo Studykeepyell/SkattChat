@@ -58,19 +58,47 @@ router.post('/register', async (req, res) => {
 
 // Login route
 router.post('/login', async (req, res) => {
+    console.log('Login route accessed');  // Debugging log
+
     const { username, password } = req.body;
 
     try {
         const user = await User.findOne({ username });
+
         if (!user || !(await user.comparePassword(password))) {
             return res.status(401).json({ success: false, message: 'Invalid credentials' });
         }
-        res.json({ success: true, message: 'Login successful' });
+
+        console.log('User ID to be returned:', user._id); // Verify that this logs the correct userId
+
+        res.json({
+            success: true,
+            userId: user._id,
+            username: user.username,
+            profileImage: user.profileImage || null // Return profileImage URL if it exists
+        });
     } catch (err) {
         console.error('Login error:', err);
         res.status(500).json({ success: false, message: 'Failed to log in user' });
     }
 });
+
+// Assuming this is in userRoute.js
+router.get('/friends/:userId', async (req, res) => {
+    const { userId } = req.params;
+
+    try {
+        const user = await User.findById(userId).populate('friends');
+        if (!user) {
+            return res.status(404).json({ success: false, message: 'User not found' });
+        }
+        res.json({ success: true, friends: user.friends });
+    } catch (err) {
+        console.error('Error loading friends:', err);
+        res.status(500).json({ success: false, message: 'Failed to load friends' });
+    }
+});
+
 
 // Logout route
 router.post('/logout', (req, res) => {
@@ -142,6 +170,37 @@ router.post('/declineFriendRequest', async (req, res) => {
 });
 
 
+router.put('/:userId', async (req, res) => {
+    const { userId } = req.params;
+    const { username, profileImage } = req.body;
+
+    // Validate the presence of userId
+    if (!userId) {
+        return res.status(400).json({ success: false, message: 'User ID is required' });
+    }
+
+    try {
+        // Update only if fields are provided
+        const updateFields = {};
+        if (username) updateFields.username = username;
+        if (profileImage) updateFields.profileImage = profileImage;
+
+        const user = await User.findByIdAndUpdate(
+            userId,
+            updateFields,
+            { new: true }
+        );
+
+        if (!user) {
+            return res.status(404).json({ success: false, message: 'User not found' });
+        }
+
+        res.json({ success: true, message: 'Profile updated successfully' });
+    } catch (error) {
+        console.error('Error updating profile:', error);
+        res.status(500).json({ success: false, message: 'Failed to update profile' });
+    }
+});
 
 
 

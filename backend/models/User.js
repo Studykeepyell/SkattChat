@@ -5,8 +5,10 @@ const userSchema = new mongoose.Schema({
     username: { type: String, unique: true, required: true },
     password: { type: String, required: true },
     friends: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }], // List of friends
-    friendRequests: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }] // List of pending friend requests
+    friendRequests: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }], // List of pending friend requests
+    profileImage: { type: String } // New field for profile image URL
 });
+
 
 // Pre-save middleware to hash the password
 userSchema.pre('save', async function(next) {

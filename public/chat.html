@@ -7,6 +7,7 @@
   <link rel="stylesheet" href="chat.css">
     <script src="/socket.io/socket.io.js"></script>
   <script src="/dist/bundle.js"></script>
+  <script src="/public/account.js"></script>
 </head>
 
 <body>
@@ -104,7 +105,7 @@
           <div class="button-container">
             <button id="deleteAllMessages" aria-label="Delete All Messages">Delete All Messages</button>
             <button id="playTictactoe" aria-label="Play Tic Tac Toe">TTT</button>
-            <button id="logoutButton" aria-label="Logout">Logout</button>
+            <button id="playWordGame" style="margin-top: 10px;" onclick="window.location.href='./Games/wordGameStart.html'">Word Game</button>
           </div>
 
           <!-- Message Display Area -->
