@@ -93,13 +93,15 @@ async function fetchProfileImage(userId) {
         }
     }
  // Add "Send Friend Request" button
- if (data.userId && data.userId !== localStorage.getItem('userId')) { // Check userId and prevent self-request
-    const friendRequestButton = document.createElement('button');
-    friendRequestButton.className = 'friend-request-button';
-    friendRequestButton.textContent = 'Add Friend';
-    friendRequestButton.onclick = () => sendFriendRequest(data.userId); // Pass data.userId as recipientId
-    messageContainer.appendChild(friendRequestButton);
-}
+ 
+
+        const friendRequestButton = document.createElement('button');
+        friendRequestButton.className = 'friend-request-button';
+        friendRequestButton.textContent = 'Add Friend';
+        
+        friendRequestButton.onclick = () => sendFriendRequest(data.userId); // Ensure sendFriendRequest function is defined
+        messageContainer.appendChild(friendRequestButton);
+    
 
    // Create the AI action button
    const actionButton = document.createElement('button');
@@ -154,104 +156,30 @@ async function fetchProfileImage(userId) {
 
 
 
-    // Function to accept a friend request
-    function acceptFriendRequest(friendId, listItem) {
-     fetch('/api/acceptFriendRequest', {
-         method: 'POST',
-         headers: { 'Content-Type': 'application/json' },
-         body: JSON.stringify({ userId: localStorage.getItem('userId'), friendId })
-     })
-     .then(response => response.json())
-     .then(data => {
-         alert(data.message);
-         if (listItem) listItem.remove(); // Remove the request from the UI
-         addFriendToList(friendId); // Add to friends list if accepted
-         joinRoom(data.roomId); // Switch to the new private chat room
-     });
- }
+
  
  
- 
- function declineFriendRequest(friendId, listItem) {
-     console.log(`Attempting to decline friend request from ${friendId}`); // Log action
-     fetch('/api/declineFriendRequest', {
-         method: 'POST',
-         headers: { 'Content-Type': 'application/json' },
-         body: JSON.stringify({ userId: localStorage.getItem('userId'), friendId })
-     })
-     .then(response => {
-         if (!response.ok) {
-             throw new Error(`Error: ${response.status} - ${response.statusText}`);
-         }
-         return response.json();
-     })
-     .then(data => {
-         console.log("Response from declineFriendRequest:", data); // Log server response
-         alert(data.message);
-         if (listItem) listItem.remove(); // Remove request from UI after action
-     })
-     .catch(error => console.error("Error in declineFriendRequest:", error));
- }
-
-
-
-
-// Handle new chat room creation
-socket.on('newChatRoom', (data) => {
-    const { roomId, friendId } = data;
-    console.log(`New chat room created: ${roomId} with user ${friendId}`);
-    joinRoom(roomId); // Join the new room
-});
-function sendFriendRequest(friendId) {
-    const senderId = localStorage.getItem('userId');
-    console.log(`Attempting to send friend request from ${senderId} to ${friendId}`);
-
-    if (!senderId || !friendId) {
-        console.error("Error: Missing senderId or recipientId.");
-        return; // Early exit if IDs are missing
+    function declineFriendRequest(friendId, listItem) {
+        console.log(`Attempting to decline friend request from ${friendId}`);
+        fetch('/api/declineFriendRequest', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ userId: localStorage.getItem('userId'), friendId })
+        })
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`Error: ${response.status} - ${response.statusText}`);
+            }
+            return response.json();
+        })
+        .then(data => {
+            console.log("Response from declineFriendRequest:", data);
+            alert(data.message);
+            if (listItem) listItem.remove(); // Remove the request from the UI
+        })
+        .catch(error => console.error("Error in declineFriendRequest:", error));
     }
-
-    fetch('/api/sendFriendRequest', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ senderId, recipientId: friendId })
-    })
-    .then(response => {
-        if (!response.ok) {
-            throw new Error("Failed to send friend request.");
-        }
-        return response.json();
-    })
-    .then(data => alert(data.message))
-    .catch(error => console.error("Error sending friend request:", error));
-}
-
-
-
-
-
-function acceptFriendRequest(friendId, listItem) {
-    console.log(`Attempting to accept friend request from ${friendId}`); // Log action
-    fetch('/api/acceptFriendRequest', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId: localStorage.getItem('userId'), friendId })
-    })
-    .then(response => {
-        if (!response.ok) {
-            throw new Error(`Error: ${response.status} - ${response.statusText}`);
-        }
-        return response.json();
-    })
-    .then(data => {
-        console.log("Response from acceptFriendRequest:", data); // Log server response
-        alert(data.message);
-        if (listItem) listItem.remove(); // Remove the request from the UI
-        addFriendToList(friendId); // Add to friends list if accepted
-        joinRoom(data.roomId); // Switch to the new private chat room
-    })
-    .catch(error => console.error("Error in acceptFriendRequest:", error));
-}
+    
 
 socket.on('friendRequestReceived', (data) => {
     console.log("Friend request received from:", data.senderId); // Log request
@@ -272,23 +200,94 @@ function displayFriendRequest(senderId) {
         return; // Avoid duplicate display
     }
 
+    // Create a list item to display the friend request
     const listItem = document.createElement('li');
     listItem.dataset.senderId = senderId; // Store senderId to prevent duplicates
+    listItem.className = 'friend-request-item';
     listItem.textContent = `Friend request from User ${senderId}`;
 
+    // Accept button
     const acceptButton = document.createElement('button');
+    acceptButton.className = 'accept-button';
     acceptButton.textContent = 'Accept';
     acceptButton.onclick = () => acceptFriendRequest(senderId, listItem);
 
+    // Decline button
     const declineButton = document.createElement('button');
+    declineButton.className = 'decline-button';
     declineButton.textContent = 'Decline';
     declineButton.onclick = () => declineFriendRequest(senderId, listItem);
 
+    // Append buttons to the list item
     listItem.appendChild(acceptButton);
     listItem.appendChild(declineButton);
+
+    // Append the list item to the friend request list
     friendRequestList.appendChild(listItem);
     console.log("Displayed friend request with Accept/Decline buttons for:", senderId); // Log display confirmation
 }
+
+
+// Handle new chat room creation
+socket.on('newChatRoom', (data) => {
+    const { roomId, friendId } = data;
+    console.log(`New chat room created: ${roomId} with user ${friendId}`);
+    joinRoom(roomId); // Join the new room
+});
+function sendFriendRequest(friendId) {
+    const senderId = localStorage.getItem('userId');
+    console.log(`Attempting to send friend request from ${senderId} to ${friendId}`);
+
+    if (!senderId || !friendId) {
+        console.error("Error: Missing senderId or friendId.");
+        return;
+    }
+
+    fetch('/api/sendFriendRequest', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ senderId, recipientId: friendId })
+    })
+    .then(response => {
+        if (!response.ok) throw new Error("Failed to send friend request.");
+        return response.json();
+    })
+    .then(data => {
+        alert(data.message);
+        // Emit a friend request event to notify the recipient via socket
+        socket.emit('friendRequestSent', { senderId, recipientId: friendId });
+    })
+    .catch(error => console.error("Error sending friend request:", error));
+}
+
+
+
+
+
+
+function acceptFriendRequest(friendId, listItem) {
+    console.log(`Attempting to accept friend request from ${friendId}`);
+    fetch('/api/acceptFriendRequest', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: localStorage.getItem('userId'), friendId })
+    })
+    .then(response => {
+        if (!response.ok) {
+            throw new Error(`Error: ${response.status} - ${response.statusText}`);
+        }
+        return response.json();
+    })
+    .then(data => {
+        console.log("Response from acceptFriendRequest:", data);
+        alert(data.message);
+        if (listItem) listItem.remove(); // Remove the request from the UI
+        addFriendToList(friendId); // Add to friends list if accepted
+        joinRoom(data.roomId); // Switch to the new private chat room
+    })
+    .catch(error => console.error("Error in acceptFriendRequest:", error));
+}
+
 
 async function loadFriends(userId) {
     try {

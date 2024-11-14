@@ -2,6 +2,10 @@ const express = require('express');
 const bcrypt = require('bcrypt');
 const User = require('./models/User'); // Adjust the path as needed
 const router = express.Router();
+const FriendRequest = require('./models/FriendRequest');
+
+// Ensure userSocketMap and io are accessible
+const { io, userSocketMap } = require('./server');
 
 // Search users endpoint
 router.get('/search', async (req, res) => {
@@ -25,7 +29,6 @@ router.get('/search', async (req, res) => {
     }
 });
 
-module.exports = router;
 
 const Room = require('./models/Room');
 
@@ -83,21 +86,6 @@ router.post('/login', async (req, res) => {
     }
 });
 
-// Assuming this is in userRoute.js
-router.get('/friends/:userId', async (req, res) => {
-    const { userId } = req.params;
-
-    try {
-        const user = await User.findById(userId).populate('friends');
-        if (!user) {
-            return res.status(404).json({ success: false, message: 'User not found' });
-        }
-        res.json({ success: true, friends: user.friends });
-    } catch (err) {
-        console.error('Error loading friends:', err);
-        res.status(500).json({ success: false, message: 'Failed to load friends' });
-    }
-});
 
 
 // Logout route
@@ -202,7 +190,54 @@ router.put('/:userId', async (req, res) => {
     }
 });
 
+module.exports = (io, userSocketMap) => {
+    router.post('/friends/:userId', async (req, res) => {
+        const { userId } = req.params; // Recipient ID
+        const { senderId } = req.body; // Sender ID
+
+        console.log("Received Sender ID:", senderId);
+        console.log("Received Recipient ID:", userId);
+
+        if (!senderId) {
+            console.log("Missing sender ID in request body");
+            return res.status(400).json({ message: "Sender ID is required." });
+        }
+
+        try {
+            // Check if a friend request already exists
+            const existingRequest = await FriendRequest.findOne({ senderId, recipientId: userId });
+            if (existingRequest) {
+                console.log("Friend request already exists between these users");
+                return res.status(400).json({ message: "Friend request already sent." });
+            }
+
+            // Create and save the friend request
+            const friendRequest = new FriendRequest({ senderId, recipientId: userId });
+            await friendRequest.save();
+            console.log("Friend request saved successfully");
+
+            // Check if the recipient is online before attempting to emit an event
+            console.log("Current userSocketMap:", userSocketMap); // Log the userSocketMap
+
+            if (userSocketMap[userId] && typeof userSocketMap[userId] === 'string') {
+                // If the recipient is online, emit the friend request notification
+                io.to(userSocketMap[userId]).emit('friendRequestReceived', { senderId });
+                console.log(`Emitted friendRequestReceived to ${userId} from ${senderId}`);
+            } else {
+                // If the recipient is offline, log this information
+                console.log(`Recipient with ID ${userId} is currently offline, storing request for later notification.`);
+            }
+
+            res.json({ message: "Friend request sent successfully" });
+        } catch (error) {
+            console.error("Error sending friend request:", error);
+            res.status(500).json({ message: "Error sending friend request" });
+        }
+    });
+
+    return router;
+};
 
 
 
-module.exports = router;
+

@@ -4,13 +4,13 @@ const http = require('http');
 const socketIO = require('socket.io');
 const mongoose = require('mongoose');
 const cors = require('cors');
-const userRoutes = require('./userRoute');
+
 const FriendRequest = require('./models/FriendRequest');
 const Message = require('./models/Message');
 const setupChat = require('./chat');
 const path = require('path');
 const ticTacToe = require('./ticTacToe');
-const Room = require('./models/Room'); // Import the Room model
+const Room = require('./models/Room');
 const predefinedRooms = ['General', 'Random', 'Gaming', 'Music'];
 const User = require('./models/User');
 const multer = require('multer');
@@ -19,18 +19,16 @@ const axios = require('axios');
 const app = express();
 const server = http.createServer(app);
 const io = socketIO(server);
-
 const userSocketMap = {}; // Map to track user IDs and their corresponding socket IDs
 
-
-const isWord = require('is-word');
-const englishWords = isWord('american-english');
-
+// Middleware for parsing JSON and URL-encoded data
 app.use(express.json()); // Parse JSON requests
 app.use(express.urlencoded({ extended: true })); // Parse URL-encoded requests
 
-// Register user routes at /api/users
-app.use('/api/users', userRoutes);
+// Load routes after declaring userSocketMap
+const userRoutes = require('./userRoute')(io, userSocketMap);
+app.use('/api/users', userRoutes); // Register user routes at /api/users
+
 
 // Debugging middleware
 app.use((req, res, next) => {
@@ -121,17 +119,14 @@ async function initializeStaticRooms() {
   }
 }
 
-
 io.on('connection', (socket) => {
   console.log(`User connected with socket ID: ${socket.id}`);
 
-  // Listen for an event where the client sends the userId
   socket.on('registerUser', (userId) => {
       console.log(`Registering user ${userId} with socket ID: ${socket.id}`);
       userSocketMap[userId] = socket.id; // Map the userId to the socketId
   });
 
-  // Remove the user from userSocketMap when they disconnect
   socket.on('disconnect', () => {
       console.log(`User with socket ID ${socket.id} disconnected`);
       for (const [userId, socketId] of Object.entries(userSocketMap)) {
@@ -143,6 +138,8 @@ io.on('connection', (socket) => {
       }
   });
 });
+
+module.exports = { io, userSocketMap };
 
 
 // Serve static files from the 'public' directory
@@ -179,23 +176,6 @@ app.use((req, res) => {
   res.status(404).send('Page not found');
 });
 
-app.get('/api/friends/:userId', async (req, res) => {
-  const { userId } = req.params;
-
-  try {
-      const user = await User.findById(userId).populate('friends');
-      if (!user) {
-          // User does not exist
-          return res.status(404).json({ success: false, message: 'User not found' });
-      }
-
-      // User exists but might not have friends
-      res.json({ success: true, friends: user.friends || [] });
-  } catch (err) {
-      console.error('Error retrieving friends:', err);
-      res.status(500).json({ success: false, message: 'Error retrieving friends' });
-  }
-});
 
 
 
@@ -203,26 +183,19 @@ app.get('/api/friends/:userId', async (req, res) => {
 
 
 
+
+
+
+
+// server.js
 app.post('/api/sendFriendRequest', async (req, res) => {
   const { senderId, recipientId } = req.body;
-
-  if (!senderId || !recipientId) {
-      return res.status(400).json({ message: "Missing sender or recipient ID" });
-  }
-
-  // Create and save the friend request
-  const friendRequest = new FriendRequest({ senderId, recipientId });
-  await friendRequest.save();
-
-  // Emit friend request event to the recipient
+  // Save the friend request and emit event to recipient
   const recipientSocketId = userSocketMap[recipientId];
   if (recipientSocketId) {
       io.to(recipientSocketId).emit('friendRequestReceived', { senderId });
-      console.log(`Emitted friendRequestReceived to ${recipientId} from ${senderId}`); // Log emission
-  } else {
-      console.error(`Error: recipientSocketId not found for recipient ${recipientId}`);
+      console.log(`Emitted friendRequestReceived to ${recipientId} from ${senderId}`);
   }
-
   res.json({ message: "Friend request sent successfully" });
 });
 
@@ -340,6 +313,7 @@ app.get('/api/getUserProfileImage/:userId', async (req, res) => {
   }
 });
 
+
 // Other routes, including JSON routes
 app.use('/api/users', userRoutes);
 
@@ -351,3 +325,4 @@ const PORT = process.env.PORT || 3000;
 server.listen(PORT, () => {
   console.log(`Server running on http://localhost:${PORT}`);
 });
+
