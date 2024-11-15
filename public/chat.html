@@ -6,9 +6,8 @@
     <title>Chat Room</title>
     <link rel="stylesheet" href="chat.css" />
     <script src="/socket.io/socket.io.js"></script>
-    <script src="/dist/bundle.js"></script>
-    <script src="/public/account.js"></script>
-  </head>
+  
+</head>
 
   <body>
     <div class="container">
@@ -103,8 +102,8 @@
         <!-- Friend Requests Section -->
         <div id="friendRequests">
           <h3>Pending Friend Requests</h3>
-          <ul id="friendRequestList">
-            <!-- Friend requests will be dynamically added here -->
+          <ul id="friendRequestList" class="friend-request-list"></ul>            
+          <!-- Friend requests will be dynamically added here -->
           </ul>
         </div>
 
@@ -148,14 +147,14 @@
           <!-- Input Form -->
           <!-- Input Form -->
           <div class="message-input-container">
-            <form id="chat-form" aria-label="Chat Form">
+            <form id="chat-form" aria-label="Chat Form" >
               <input
-                id="messageForm"
-                type="text"
-                placeholder="Type a message"
-                autocomplete="off"
-                aria-label="Message Input"
-              />
+            id="messageInput" 
+            type="text"
+            placeholder="Type a message"
+            autocomplete="off"
+            aria-label="Message Input"
+        />
               <button type="submit" aria-label="Send Message">Send</button>
               <button type="button" id="emoji-button" aria-label="Emoji Picker">
                 😊
@@ -217,11 +216,12 @@
       // Insert emoji into message input
       document.querySelectorAll(".emoji").forEach((emoji) => {
         emoji.addEventListener("click", () => {
-          const messageForm = document.getElementById("messageForm");
-          messageForm.value += emoji.textContent;
+          const messageInput = document.getElementById("messageInput");
+          messageInput.value += emoji.textContent;
           document.getElementById("emoji-picker").style.display = "none";
         });
       });
     </script>
+    <script src="/dist/bundle.js"></script>
   </body>
 </html>

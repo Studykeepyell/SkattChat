@@ -4,181 +4,149 @@ document.addEventListener('DOMContentLoaded', () => {
 
     let lastMessageDate = '';
     let currentRoom = null;
-    const profileImageCache = {}; // Cache to store profile images by userId
 
 
     const userId = localStorage.getItem('userId');
-    // Function to fetch the profile image for a user
-async function fetchProfileImage(userId) {
-    // Check if the image is already cached
-    if (profileImageCache[userId]) {
-        return profileImageCache[userId];
+    if (userId) {
+        socket.emit('registerUser', userId);
     }
 
-    try {
-        const response = await fetch(`/api/getUserProfileImage/${userId}`);
-        const data = await response.json();
-        if (data.success) {
-            profileImageCache[userId] = data.profileImage; // Cache the result
-            return data.profileImage;
+    loadFriendRequests(); // Load initial friend requests
+
+    // Function to fetch the profile image for a user
+    async function fetchProfileImage(userId) {
+        if (!userId) {
+            console.error("fetchProfileImage: userId is undefined. Returning default image.");
+            return '/default-profile.jpg'; // Return a default image URL
         }
-    } catch (error) {
-        console.error(`Error fetching profile image for userId ${userId}:`, error);
+    
+        try {
+            const response = await fetch(`/api/getUserProfileImage/${userId}`);
+            const data = await response.json();
+    
+            if (data.success) {
+                return data.profileImage;
+            } else {
+                console.error("fetchProfileImage: Profile image not found for userId:", userId);
+                return '/default-profile.jpg'; // Return a default image URL if not found
+            }
+        } catch (error) {
+            console.error("Error fetching profile image:", error);
+            return '/default-profile.jpg'; // Return a default image in case of error
+        }
     }
-    return '/default-profile.png'; // Fallback to a default profile picture
+    
+
+
+
+
+// Function to add a new chat message to the messages container
+async function addChatMessage(data) {
+    console.log('Adding chat message:', data);
+
+    const messagesList = document.getElementById('messages');
+    if (!messagesList) {
+        console.error("Error: 'messages' element not found.");
+        return;
+    }
+    
+
+    const messageDate = formatMessageDate(data.timestamp);
+
+    // Create a date header if the date changes
+    if (messageDate !== lastMessageDate) {
+        const dateHeader = document.createElement('div');
+        dateHeader.className = 'date-header';
+        dateHeader.textContent = messageDate;
+        messagesList.appendChild(dateHeader);
+        lastMessageDate = messageDate;
+    }
+
+    const messageContainer = document.createElement('div');
+    messageContainer.className = 'message-container';
+
+    // User Info Container
+    const userInfoContainer = document.createElement('div');
+    userInfoContainer.className = 'user-info-container';
+
+    // Profile picture
+    const characterPicture = document.createElement('img');
+    characterPicture.className = 'character-picture';
+    characterPicture.alt = `${data.username}'s profile picture`;
+
+    // Fetch and set the user's profile image if available
+    const profileImageUrl = await fetchProfileImage(data.userId);
+    characterPicture.src = profileImageUrl || 'default-profile.jpg'; // Fallback image if no URL
+
+    // Username and Timestamp
+    const username = document.createElement('h2');
+    username.className = 'username';
+    username.textContent = data.username;
+
+    const timeText = document.createElement('h4');
+    timeText.className = 'timestamp';
+    timeText.textContent = formatTimestamp(data.timestamp);
+
+    userInfoContainer.append(characterPicture, username, timeText);
+
+    // Message Content
+    const messageContent = document.createElement('div');
+    messageContent.className = 'message-content';
+    messageContent.textContent = data.message;
+
+    // Append message content and user info to the message container
+    messageContainer.append(userInfoContainer, messageContent);
+
+    // Friend Request Button
+    const friendRequestButton = document.createElement('button');
+    friendRequestButton.className = 'friend-request-button';
+    friendRequestButton.textContent = 'Add Friend';
+    friendRequestButton.onclick = () => sendFriendRequest(data.userId); // Ensure sendFriendRequest is defined
+    messageContainer.appendChild(friendRequestButton);
+
+    // AI Action Button
+    const actionButton = document.createElement('button');
+    actionButton.className = 'action-button';
+    actionButton.style.marginRight = '10px';
+    actionButton.textContent = 'Get AI Response';
+
+    actionButton.addEventListener('click', async () => {
+        try {
+            console.log("Making request to:", '/api/get-opinion');
+            const response = await fetch('/api/get-opinion', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ message: data.message, roomId: data.roomId, username: data.username })
+            });
+            const result = await response.json();
+            // Add AI response as a new message
+            addChatMessage({
+                username: "AttyAI",
+                message: `Response to ${data.username}: "${data.message}" - ${result.opinion}`,
+                timestamp: Date.now(),
+                roomId: data.roomId || "general" // Use data.roomId or a default
+            });
+        } catch (error) {
+            console.error('Error fetching ChatGPT opinion:', error);
+        }
+    });
+    messageContainer.appendChild(actionButton);
+
+    // Append the message container to the messages list
+    messagesList.appendChild(messageContainer);
+    messagesList.scrollTop = messagesList.scrollHeight; // Scroll to the latest message
 }
 
 
 
 
 
-    // Function to add a new chat message to the messages container
-    async function addChatMessage(data) {
-        console.log('Adding chat message:', data);
-
-        const messageDate = formatMessageDate(data.timestamp);
-
-        if (messageDate !== lastMessageDate) {
-            // Create a new date header when the date changes
-            const dateHeader = document.createElement('div');
-            dateHeader.className = 'date-header';
-            dateHeader.textContent = messageDate;
-            messagesList.appendChild(dateHeader); // Append date header to messages list
-            lastMessageDate = messageDate; // Update the last message date
-        }
-
-        const messageContainer = document.createElement('div');
-        messageContainer.className = 'message-container';
-
-        const userInfoContainer = document.createElement('div');
-        userInfoContainer.className = 'user-info-container';
-
-        // Create profile picture element
-    const characterPicture = document.createElement('img');
-    characterPicture.className = 'character-picture';
-    characterPicture.alt = `${data.username}'s profile picture`;
-
-
-     // Fetch the user's profile image and set it
-     const profileImageUrl = await fetchProfileImage(data.userId);
-     characterPicture.src = profileImageUrl;
-
-        const username = document.createElement('h2');
-        username.className = 'username';
-        username.textContent = data.username;
-
-        const timeText = document.createElement('h4');
-        timeText.className = 'timestamp';
-        timeText.textContent = formatTimestamp(data.timestamp);
-
-        // Append the user information
-        userInfoContainer.appendChild(characterPicture);
-        userInfoContainer.appendChild(username);
-        userInfoContainer.appendChild(timeText);
-
-        // Create the message content
-        const messageContent = document.createElement('div');
-        messageContent.className = 'message-content';
-        messageContent.textContent = data.message;
-
-        // Append message content and user info to the message container
-        messageContainer.appendChild(userInfoContainer);
-        messageContainer.appendChild(messageContent);
-
-    // Fetch and set the user's profile image if available
-    if (data.userId) {
-        const profileImageUrl = await getUserProfileImage(data.userId);
-        if (profileImageUrl) {
-            characterPicture.src = profileImageUrl;
-        }
-    }
- // Add "Send Friend Request" button
- 
-
-        const friendRequestButton = document.createElement('button');
-        friendRequestButton.className = 'friend-request-button';
-        friendRequestButton.textContent = 'Add Friend';
-        
-        friendRequestButton.onclick = () => sendFriendRequest(data.userId); // Ensure sendFriendRequest function is defined
-        messageContainer.appendChild(friendRequestButton);
-    
-
-   // Create the AI action button
-   const actionButton = document.createElement('button');
-   actionButton.className = 'action-button';
-   actionButton.style.marginRight = '10px';
-   actionButton.textContent = 'Get AI Response'; // Add text for visibility
-
-   // Fetch ChatGPT's opinion when button is clicked
-   actionButton.addEventListener('click', async () => {
-       try {
-           console.log("Making request to:", '/api/get-opinion');
-           const response = await fetch('/api/get-opinion', {
-               method: 'POST',
-               headers: { 'Content-Type': 'application/json' },
-               body: JSON.stringify({ message: data.message, roomId: data.roomId , username: data.username })
-           });
-           const result = await response.json();
-           // Add AI response as a new message
-           addChatMessage({
-               username: "AttyAI",
-               message: `response to ${data.username}: "${data.message}" - ${result.opinion}`,
-               timestamp: Date.now(),
-               roomId:"general"||"random"||"gaming"||"music" // Pass roomId if needed for display
-           }, true);
-       } catch (error) {
-           console.error('Error fetching ChatGPT opinion:', error);
-       }
-   });
-
-   // Append the action button to the message container
-   messageContainer.appendChild(actionButton);
-
-
-        // Finally, append the message container to the messages list
-        messagesList.appendChild(messageContainer);
-    }
-
-
-
-    async function getUserProfileImage(userId) {
-        try {
-            const response = await fetch(`/api/getUserProfileImage/${userId}`);
-            const data = await response.json();
-            return data.success ? data.profileImage : null;
-        } catch (error) {
-            console.error('Error fetching profile image:', error);
-            return null;
-        }
-    }
-
-
 
 
 
 
  
  
-    function declineFriendRequest(friendId, listItem) {
-        console.log(`Attempting to decline friend request from ${friendId}`);
-        fetch('/api/declineFriendRequest', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ userId: localStorage.getItem('userId'), friendId })
-        })
-        .then(response => {
-            if (!response.ok) {
-                throw new Error(`Error: ${response.status} - ${response.statusText}`);
-            }
-            return response.json();
-        })
-        .then(data => {
-            console.log("Response from declineFriendRequest:", data);
-            alert(data.message);
-            if (listItem) listItem.remove(); // Remove the request from the UI
-        })
-        .catch(error => console.error("Error in declineFriendRequest:", error));
-    }
     
 
 socket.on('friendRequestReceived', (data) => {
@@ -186,78 +154,143 @@ socket.on('friendRequestReceived', (data) => {
     displayFriendRequest(data.senderId);
 });
 
-function displayFriendRequest(senderId) {
-    const friendRequestList = document.getElementById('friendRequestList');
-    if (!friendRequestList) {
-        console.error("Error: friendRequestList element not found");
-        return;
-    }
+socket.on('newFriendRequest', (data) => {
+    console.log("Received new friend request:", data.message); // Log notification
+    loadFriendRequests(); // Refresh the friend request list
+});
 
-    // Check if this friend request is already displayed
-    const existingRequest = Array.from(friendRequestList.children).find(item => item.dataset.senderId === senderId);
-    if (existingRequest) {
-        console.log("Friend request already displayed for:", senderId);
-        return; // Avoid duplicate display
-    }
 
-    // Create a list item to display the friend request
-    const listItem = document.createElement('li');
-    listItem.dataset.senderId = senderId; // Store senderId to prevent duplicates
-    listItem.className = 'friend-request-item';
-    listItem.textContent = `Friend request from User ${senderId}`;
+async function respondToFriendRequest(requestId, status, senderId, receiverId) {
+    console.log('Responding to friend request:', { requestId, status, senderId, receiverId });
+
+    try {
+        const response = await fetch('/api/users/friends/respond', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ requestId, status, senderId, receiverId })
+        });
+
+        if (!response.ok) {
+            const errorMessage = await response.text();
+            throw new Error(`Failed to respond to friend request: ${errorMessage}`);
+        }
+
+        const data = await response.json();
+        console.log('Friend request response successful:', data);
+    } catch (error) {
+        console.error('Error responding to friend request:', error);
+    }
+}
+
+
+
+
+
+
+
+
+function displayFriendRequest(request) {
+    const requestItem = document.createElement('li');
+
+    // Display sender info
+    const senderInfo = document.createElement('span');
+    senderInfo.innerText = `Friend request from ${request.senderId.username}`;
 
     // Accept button
     const acceptButton = document.createElement('button');
-    acceptButton.className = 'accept-button';
-    acceptButton.textContent = 'Accept';
-    acceptButton.onclick = () => acceptFriendRequest(senderId, listItem);
+    acceptButton.innerText = 'Accept';
+    acceptButton.addEventListener('click', async () => {
+        await respondToFriendRequest(request._id, 'accepted', request.senderId._id, request.receiverId);
+    
+        // Remove the request from the UI
+        requestItem.remove();
+    
+        console.log(`Friend request ${request._id} accepted and removed from UI.`);
+    });
 
     // Decline button
     const declineButton = document.createElement('button');
-    declineButton.className = 'decline-button';
-    declineButton.textContent = 'Decline';
-    declineButton.onclick = () => declineFriendRequest(senderId, listItem);
+    declineButton.innerText = 'Decline';
+    declineButton.addEventListener('click', async () => {
+        await respondToFriendRequest(request._id, 'declined', request.senderId._id, request.receiverId);
+    
+        // Remove the request from the UI
+        requestItem.remove();
+    
+        console.log(`Friend request ${request._id} accepted and removed from UI.`);
+    });
 
-    // Append buttons to the list item
-    listItem.appendChild(acceptButton);
-    listItem.appendChild(declineButton);
+    // Append elements to the request item
+    requestItem.appendChild(senderInfo);
+    requestItem.appendChild(acceptButton);
+    requestItem.appendChild(declineButton);
 
-    // Append the list item to the friend request list
-    friendRequestList.appendChild(listItem);
-    console.log("Displayed friend request with Accept/Decline buttons for:", senderId); // Log display confirmation
+    // Append request item to the friend request list
+    const friendRequestList = document.getElementById('friendRequestList');
+    friendRequestList.appendChild(requestItem);
+
+    console.log("Added friend request to the list:", request);
 }
+
+
 
 
 // Handle new chat room creation
-socket.on('newChatRoom', (data) => {
-    const { roomId, friendId } = data;
-    console.log(`New chat room created: ${roomId} with user ${friendId}`);
-    joinRoom(roomId); // Join the new room
-});
-function sendFriendRequest(friendId) {
-    const senderId = localStorage.getItem('userId');
-    console.log(`Attempting to send friend request from ${senderId} to ${friendId}`);
+socket.on('newChatRoom', (room) => {
+    console.log('New chat room received:', room);
 
-    if (!senderId || !friendId) {
-        console.error("Error: Missing senderId or friendId.");
+    // Find the chat room list element
+    const chatRoomList = document.getElementById('chatRoomList'); // Adjust the ID if necessary
+
+    // Create a new list item for the room
+    const roomItem = document.createElement('li');
+    roomItem.textContent = room.name; // Use the room name or a custom label
+    roomItem.dataset.roomId = room.roomId;
+
+    // Add a button to join the room
+    const joinButton = document.createElement('button');
+    joinButton.textContent = 'Join';
+    joinButton.addEventListener('click', () => {
+        joinChatRoom(room.roomId); // Function to handle joining the room
+    });
+
+    roomItem.appendChild(joinButton);
+    chatRoomList.appendChild(roomItem);
+
+    console.log('New chat room added to the UI.');
+});
+
+function joinChatRoom(roomId) {
+    if (!roomId) {
+        console.error("Room ID is missing when trying to join a room.");
         return;
     }
 
-    fetch('/api/sendFriendRequest', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ senderId, recipientId: friendId })
-    })
-    .then(response => {
-        if (!response.ok) throw new Error("Failed to send friend request.");
-        return response.json();
-    })
-    .then(data => {
-        alert(data.message);
-        // Emit a friend request event to notify the recipient via socket
-        socket.emit('friendRequestSent', { senderId, recipientId: friendId });
-    })
-    .catch(error => console.error("Error sending friend request:", error));
+    console.log(`Joining chat room: ${roomId}`);
+    localStorage.setItem('currentRoom', roomId); // Store the current room ID
+
+    const messagesList = document.getElementById('messages');
+    if (messagesList) {
+        messagesList.innerHTML = ''; // Clear previous messages
+    }
+
+    fetch(`/api/chat/rooms/${roomId}/messages`)
+        .then(response => {
+            console.log('Fetch response status:', response.status); // Debug log
+            if (!response.ok) {
+                throw new Error(`Failed to fetch messages: ${response.statusText}`);
+            }
+            return response.json();
+        })
+        .then(messages => {
+            console.log(`Messages fetched for room ${roomId}:`, messages); // Debug log
+            messages.forEach(message => addChatMessage(message)); // Add messages to UI
+        })
+        .catch(error => console.error('Error loading messages:', error));
+
+    // Notify the server about joining the room
+    socket.emit('joinRoom', { roomId });
+    console.log(`Joined chat room: ${roomId}`);
 }
 
 
@@ -265,66 +298,118 @@ function sendFriendRequest(friendId) {
 
 
 
-function acceptFriendRequest(friendId, listItem) {
-    console.log(`Attempting to accept friend request from ${friendId}`);
-    fetch('/api/acceptFriendRequest', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId: localStorage.getItem('userId'), friendId })
-    })
-    .then(response => {
+
+
+
+
+
+async function sendFriendRequest(receiverId) {
+    const senderId = localStorage.getItem('userId'); // Get the sender's userId
+
+    console.log("Sending friend request to:", receiverId);
+    console.log("Sender ID:", senderId);
+
+    if (!senderId || !receiverId) {
+        console.error("Error: Missing senderId or receiverId");
+        return;
+    }
+
+    try {
+        const response = await fetch(`/api/users/friends/${receiverId}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ senderId })
+        });
+
         if (!response.ok) {
-            throw new Error(`Error: ${response.status} - ${response.statusText}`);
+            const errorMessage = await response.text();
+            throw new Error(`HTTP error! Status: ${response.status} - ${errorMessage}`);
         }
-        return response.json();
-    })
-    .then(data => {
-        console.log("Response from acceptFriendRequest:", data);
-        alert(data.message);
-        if (listItem) listItem.remove(); // Remove the request from the UI
-        addFriendToList(friendId); // Add to friends list if accepted
-        joinRoom(data.roomId); // Switch to the new private chat room
-    })
-    .catch(error => console.error("Error in acceptFriendRequest:", error));
+
+        const data = await response.json();
+        console.log("Friend request response:", data);
+
+        if (data.success) {
+            alert('Friend request sent successfully!');
+        } else {
+            alert(data.message);
+        }
+    } catch (error) {
+        console.error("Error sending friend request:", error);
+    }
 }
+
+
+
+
+
+
+
+async function loadFriendRequests() {
+    const userId = localStorage.getItem('userId'); // Get the logged-in user's ID
+
+    try {
+        const response = await fetch(`/api/users/friends/requests/${userId}`);
+        if (!response.ok) throw new Error(`Failed to load friend requests: ${response.statusText}`);
+        
+        const data = await response.json();
+        const friendRequestList = document.getElementById('friendRequestList');
+
+        // Log to confirm the friend request list is being accessed
+        console.log("Friend request list element:", friendRequestList);
+
+        if (friendRequestList) {
+            friendRequestList.innerHTML = ''; // Clear any existing requests
+        } else {
+            console.error("friendRequestList element not found in the DOM.");
+            return;
+        }
+
+        // Log to confirm the number of requests retrieved
+        console.log("Number of friend requests received:", data.friendRequests.length);
+
+        // Loop through each friend request and display it
+        data.friendRequests.forEach(request => {
+            displayFriendRequest(request); // Use existing function to display each request
+        });
+    } catch (error) {
+        console.error("Error loading friend requests:", error);
+    }
+}
+
+
+
 
 
 async function loadFriends(userId) {
     try {
-        const response = await fetch(`/api/friends/${userId}`);
-
-        if (!response.ok) {
-            throw new Error(`HTTP error! Status: ${response.status}`);
-        }
-
+        const response = await fetch(`/api/users/friends/${userId}`);
+        if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
+        
         const data = await response.json();
 
-        if (!data.success) {
-            console.error('Error loading friends:', data.message);
-            return;
-        }
-
         const friendsListDiv = document.getElementById('friendsList');
-        friendsListDiv.innerHTML = ''; // Clear existing friends
+        friendsListDiv.innerHTML = ''; // Clear existing content
 
-        if (data.friends.length === 0) {
+        // Check if friends data exists and has items
+        if (data.friends && data.friends.length > 0) {
+            data.friends.forEach(friend => {
+                const friendDiv = document.createElement('div');
+                friendDiv.classList.add('friend');
+                friendDiv.textContent = friend.username; // Adjust as needed to display friend info
+                friendsListDiv.appendChild(friendDiv);
+            });
+        } else {
             // Display message if no friends are found
             const noFriendsMessage = document.createElement('p');
             noFriendsMessage.textContent = 'No friends found';
             friendsListDiv.appendChild(noFriendsMessage);
-        } else {
-            // Create a list of friends if there are any
-            data.friends.forEach(friend => {
-                const friendDiv = document.createElement('div');
-                friendDiv.classList.add('friend');
-                friendDiv.textContent = friend.username; // Display friend's name or username
-                friendsListDiv.appendChild(friendDiv);
-            });
         }
-    } catch (err) {
-        console.error('Error loading friends:', err);
+    } catch (error) {
+        console.error('Error loading friends:', error);
     }
 }
+
 
 
 // Get userId from localStorage and load friends
@@ -335,111 +420,136 @@ if (userId) {
 }
 
 
-// Listen for the new chat room creation event from the server
-socket.on('newChatRoom', ({ roomId }) => {
-addRoomOption(roomId); // Add new room to the dropdown
-joinRoom(roomId); // Automatically join the new private chat room
-console.log(`Switched to new private room: ${roomId}`);
-});
-function addRoomOption(roomId) {
-    const roomButtonsContainer = document.getElementById('room-buttons');    
-  // Check if roomButtonsContainer exists and is valid
-  if (!roomButtonsContainer) {
-    console.error("Element with ID 'room-buttons' not found.");
-    return;
-  }
-  
-    // Check if a button for the room already exists
-  const roomExists = Array.from(roomButtonsContainer.children).some(button => button.dataset.roomId === roomId);
+socket.on('newChatRoom', (room) => {
+    console.log('New chat room created:', room);
 
-  
-  if (!roomExists) {
-    // Create a new button for the room
-    const newRoomButton = document.createElement('button');
-    newRoomButton.classList.add('chat-room-button');
-    newRoomButton.dataset.roomId = roomId;
-    newRoomButton.textContent = `Room ${roomId}`; // Set button text
+    // Find the chat room list element
+    const chatRoomList = document.getElementById('chatRoomList');
 
-    // Add click event listener to join the room
-    newRoomButton.addEventListener('click', () => {
-      joinRoom(roomId);
+    // Create a new list item for the room
+    const roomItem = document.createElement('li');
+    roomItem.textContent = room.name; // Use room name or custom display logic
+    roomItem.dataset.roomId = room.roomId;
+
+    // Add a button to join the room
+    const joinButton = document.createElement('button');
+    joinButton.textContent = 'Join';
+    joinButton.addEventListener('click', () => {
+        joinChatRoom(room.roomId);
     });
 
-    // Append the new button to the room buttons container
-    roomButtonsContainer.appendChild(newRoomButton);
-  }
+    roomItem.appendChild(joinButton);
+    chatRoomList.appendChild(roomItem);
 
-  console.log(`Added new button for room: ${roomId}`);
-}
-
-
-function joinRoom(roomId) {
-    if (currentRoom === roomId) return; // Avoid re-joining the same room
-  
-    currentRoom = roomId; // Update the active room
-    console.log(`Switching to room: ${roomId}`);
-  
-    socket.emit('joinRoom', roomId); // Emit event to server to join the room
-  
-    clearChatDisplay(); // Clear messages from previous room
-    loadRoomMessages(roomId); // Load messages for the new room
-  }
-  socket.on('chat message', (data) => {
-    const { room, username, message, timestamp } = data;
-  
-    // Only display messages for the current room
-    if (room === currentRoom) {
-        displayMessage({ username, message, timestamp });
-    }
-  });
-
-  const generalButton = document.getElementById('general-button');
-  const randomButton = document.getElementById('random-button');
-  const gamingButton = document.getElementById('gaming-button');
-  const musicButton = document.getElementById('music-button');
-
-  if (generalButton) {
-      generalButton.addEventListener('click', () => joinRoom('General'));
-  }
-  if (randomButton) {
-      randomButton.addEventListener('click', () => joinRoom('Random'));
-  }
-  if (gamingButton) {
-      gamingButton.addEventListener('click', () => joinRoom('Gaming'));
-  }
-  if (musicButton) {
-      musicButton.addEventListener('click', () => joinRoom('Music'));
-  }
+    console.log('New chat room added to the UI.');
+});
 
 
-// Function to display a message on the screen
-function displayMessage({ username, message, timestamp }) {
-    const messagesList = document.getElementById('messages');
-
-    const messageItem = document.createElement('li');
-    messageItem.textContent = `[${new Date(timestamp).toLocaleTimeString()}] ${username}: ${message}`;
-    messagesList.appendChild(messageItem);
-}
 
 
-function clearChatDisplay() {
+function joinChatRoom(roomId) {
+    console.log(`Joining chat room: ${roomId}`);
+    localStorage.setItem('currentRoom', roomId);
+
+    // Clear previous messages
     const messagesList = document.getElementById('messages');
     if (messagesList) {
         messagesList.innerHTML = ''; // Clear previous messages
     }
+
+    // Fetch messages for the room
+    fetch(`/api/chat/rooms/${roomId}/messages`)
+        .then(response => {
+            if (!response.ok) {
+                throw new Error(`Failed to fetch messages: ${response.statusText}`);
+            }
+            return response.json();
+        })
+        .then(messages => {
+            console.log('Fetched messages:', messages);
+            if (Array.isArray(messages)) {
+                messages.forEach(message => addChatMessage(message));
+            }
+        })
+        .catch(error => console.error('Error loading messages:', error));
 }
 
 
-function loadRoomMessages(roomId) {
-    console.log(`Loading messages for room: ${roomId}`);
-    socket.emit('requestChatHistory', roomId); // Request history from server
-  }
-  
-  socket.on('chat history', (messages) => {
-    messages.forEach((message) => {
-        displayMessage(message); // Display each message in the history
+
+
+
+
+const generalButton = document.getElementById('general-button');
+const randomButton = document.getElementById('random-button');
+const gamingButton = document.getElementById('gaming-button');
+const musicButton = document.getElementById('music-button');
+
+if (generalButton) {
+    generalButton.addEventListener('click', () => {
+        console.log('General button clicked');
+        joinChatRoom('general');
     });
-  });
+}
+if (randomButton) {
+    randomButton.addEventListener('click', () => {
+        console.log('Random button clicked');
+        joinChatRoom('random');
+    });
+}
+if (gamingButton) {
+    gamingButton.addEventListener('click', () => {
+        console.log('Gaming button clicked');
+        joinChatRoom('gaming');
+    });
+}
+if (musicButton) {
+    musicButton.addEventListener('click', () => {
+        console.log('Music button clicked');
+        joinChatRoom('music');
+    });
+}
+
+
+
+
+
+function loadChatRooms() {
+    const userId = localStorage.getItem('userId'); // Replace with your user ID logic
+
+    fetch(`/api/users/getUserRooms/${userId}`)
+        .then(response => response.json())
+        .then(rooms => {
+            const chatRoomList = document.getElementById('chatRoomList');
+            chatRoomList.innerHTML = ''; // Clear existing rooms
+
+            rooms.forEach(room => {
+                const roomItem = document.createElement('li');
+                roomItem.textContent = room.name;
+                roomItem.dataset.roomId = room.roomId;
+
+                const joinButton = document.createElement('button');
+                joinButton.textContent = 'Join';
+                joinButton.addEventListener('click', () => {
+                    joinChatRoom(room.roomId);
+                });
+
+                roomItem.appendChild(joinButton);
+                chatRoomList.appendChild(roomItem);
+            });
+
+            console.log('Chat rooms loaded:', rooms);
+        })
+        .catch(error => console.error('Error loading chat rooms:', error));
+}
+
+// Call this function on page load
+loadChatRooms();
+
+
+
+
+// Function to load historical messages
+
   
 
 
@@ -524,33 +634,34 @@ function loadRoomMessages(roomId) {
             sendMessage(); // Call sendMessage to handle sending
         });
     }
-
     function sendMessage() {
-        const message = messageInput.value.trim();
-        if (!message) return;
-
-        const room = currentRoom;
-        const username = localStorage.getItem('username');
+        const messageInput = document.getElementById('messageInput');
+        const message = messageInput?.value.trim();
         const userId = localStorage.getItem('userId');
-
-        if (!room || !username || !userId) {
-            console.error("Error: Missing required fields 'room', 'username', or 'userId'");
-            console.log({ room, username, userId });
+        const username = localStorage.getItem('username');
+        const roomId = localStorage.getItem('currentRoom');
+        const timestamp = Date.now();
+    
+        if (!message || !userId || !username || !roomId) {
+            console.error('Missing data to send message:', { message, userId, username, roomId });
+            alert('Please enter a message before sending.');
             return;
         }
-
-        const messageData = {
-            room,
-            username,
-            userId,
-            message,
-            timestamp: new Date().toISOString()
-        };
-
-        console.log('Sending message:', messageData);
-        socket.emit('chat message', messageData);
-        messageInput.value = ''; // Clear the input after sending
+    
+        console.log('Emitting chat message:', { roomId, username, userId, message, timestamp });
+    
+        socket.emit('chat message', { roomId, username, userId, message, timestamp });
+    
+        messageInput.value = '';
     }
+    
+    
+    
+    
+    
+    
+    
+    
 
     if (deleteAllMessagesButton) {
         deleteAllMessagesButton.addEventListener('click', () => {
@@ -573,8 +684,22 @@ document.getElementById('chat-form').addEventListener('submit', function(event) 
         });
     }
 
-    socket.on('chat message', function(data) {
-        addChatMessage(data);
+    
+
+    socket.on('chat message', (data) => {
+        console.log('New chat message received:', data);
+        addChatMessage(data); // Add the message to the UI
+    });
+    
+    
+    socket.on('connect', () => {
+        console.log("Connected to server");
+    
+        // Join the selected room when connected
+        const roomId = localStorage.getItem('currentRoom');
+        if (roomId) {
+            socket.emit('joinRoom', { roomId });
+        }
     });
 
     socket.on('clear messages', function() {
