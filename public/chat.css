@@ -43,6 +43,7 @@ body {
   height: 100%;
   width: 100%;
   padding: 2rem;
+  background-color: white;
 }
 
 #welcomeMessage {
@@ -108,8 +109,8 @@ button:hover {
 #messageForm {
   flex-grow: 1;
   padding: 0.625rem;
-  border: 1px solid #ccc;
-  border-radius: 0.25rem;
+  border: none;
+  outline:none;
   font-size: 1rem;
 }
 
@@ -316,8 +317,10 @@ button:hover {
   flex-direction: column;
   align-items: center;
   justify-content: space-between;
-  padding: 1%;
+  padding-left: 0.1%;
   position: relative;
+  background-color: lightgray;
+  width: 60%;
 }
 
 .styled-button {
@@ -395,7 +398,8 @@ button:hover {
 
 
 .room-select {
-  width: 100%;
+  width: 40%;
+  background-color: white;
 }
 
 .chat-room-section {
