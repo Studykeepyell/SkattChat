@@ -12,7 +12,7 @@ module.exports = {
       },
       {
         name: 'Skychat-wordgame',
-        script: '/home/ec2-user/my-project/Skychat/backend/wordGameServer.js.js', // Path to your frontend server file
+        script: '/home/ec2-user/my-project/Skychat/backend/wordGameServer.js', // Path to your frontend server file
         cwd: '/home/ec2-user/my-project/Skychat/backend', // Directory of the server
         env: {
           NODE_ENV: 'production',
