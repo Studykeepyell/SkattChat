@@ -4,313 +4,263 @@ const http = require('http');
 const socketIO = require('socket.io');
 const mongoose = require('mongoose');
 const cors = require('cors');
+const multer = require('multer');
+const path = require('path');
+const axios = require('axios');
 
 const FriendRequest = require('./models/FriendRequest');
 const Message = require('./models/Message');
-const setupChat = require('./chat');
-const path = require('path');
-const ticTacToe = require('./ticTacToe');
 const Room = require('./models/Room');
-const predefinedRooms = ['General', 'Random', 'Gaming', 'Music'];
 const User = require('./models/User');
-const multer = require('multer');
-const axios = require('axios');
+const ticTacToe = require('./ticTacToe');
+const chatRoutes = require('./chatRoutes'); // Adjust the path as needed
 
+// Configuration
 const app = express();
 const server = http.createServer(app);
+const userSocketMap = {};
+
 const io = socketIO(server);
-const userSocketMap = {}; // Map to track user IDs and their corresponding socket IDs
+const userRoutes = require('./userRoute')(io, userSocketMap); // Adjusted to pass io and userSocketMap
 
-// Middleware for parsing JSON and URL-encoded data
-app.use(express.json()); // Parse JSON requests
-app.use(express.urlencoded({ extended: true })); // Parse URL-encoded requests
+// Middleware
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+app.use(cors({
+    origin: ['http://localhost:3000', 'https://skattchat.online'],
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization']
+}));
 
-// Load routes after declaring userSocketMap
-const userRoutes = require('./userRoute')(io, userSocketMap);
-app.use('/api/users', userRoutes); // Register user routes at /api/users
+// Load user routes and pass io and userSocketMap
+app.use('/api/users', userRoutes); // Updated usage
+app.use('/api/chat', chatRoutes);
 
 
 // Debugging middleware
 app.use((req, res, next) => {
-    console.log(`Received request on path: ${req.path}`);
-    next();
-});
-app.use((req, res, next) => {
-    console.log(`Serving request for: ${req.url}`);
+    console.log(`Request Path: ${req.path}`);
     next();
 });
 
-app.post('/api/get-opinion', async (req, res) => {
-  const { message, roomId, username } = req.body;
-  
-  // Log received data for debugging
-  console.log('Received request at /api/get-opinion');
-  console.log('Message:', message);
-  console.log('Room ID:', roomId);
-  console.log('Username:', username);
+// Routes
+app.use(express.static(path.join(__dirname, '../public')));
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
-  if (!message || !roomId || !username) {
-    console.error('Validation failed: message, roomId, and username are required.');
-    return res.status(400).json({ error: 'Message, room ID, and username are required.' });
-  }
-
-  try {
-    const response = await axios.post(
-      'https://api.openai.com/v1/chat/completions',
-      {
-        model: 'gpt-3.5-turbo',
-        messages: [
-          { role: 'system', content: 'You are an assistant that gives opinions on messages.' },
-          { role: 'user', content: `What is your opinion on this message: "${message}"` }
-        ]
-      },
-      {
-        headers: {
-          'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`,
-          'Content-Type': 'application/json'
-        }
-      }
-    );
-
-    const opinion = response.data.choices[0].message.content;
-
-    // Save AI response to the database
-    const aiMessage = new Message({
-      username: 'AttyAI',
-      message: `Response to ${username}: "${message}" - ${opinion}`,
-      timestamp: new Date(),
-      room: roomId
-    });
-    await aiMessage.save();
-
-    res.json({ opinion });
-  } catch (error) {
-    console.error('Error fetching opinion from ChatGPT:', error.response ? error.response.data : error.message);
-    res.status(500).json({ error: 'Error fetching opinion from ChatGPT' });
-  }
-});
-
-
-// Middleware
-app.use(cors({
-  origin: ['http://localhost:3000', 'https://skattchat.online'], // Allow both localhost and the live app origin
-  credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'], // Allow common HTTP methods
-  allowedHeaders: ['Content-Type', 'Authorization'], // Allow required headers
-}));
+app.get('/index', (req, res) => res.sendFile(path.join(__dirname, '../public', 'index.html')));
 
 
 
-async function initializeStaticRooms() {
-  try {
-      for (const roomName of predefinedRooms) {
-          const roomId = roomName; // Use room name as ID
-          const existingRoom = await Room.findOne({ roomId });
+async function createDefaultRooms() {
+  const defaultRooms = [
+      { roomId: 'general', name: 'General' },
+      { roomId: 'random', name: 'Random' },
+      { roomId: 'gaming', name: 'Gaming' },
+      { roomId: 'music', name: 'Music' }
+  ];
+
+  for (const room of defaultRooms) {
+      try {
+          const existingRoom = await Room.findOne({ roomId: room.roomId });
           if (!existingRoom) {
-              await Room.create({ roomId, participants: [] });
-              console.log(`Created static room: ${roomId}`);
+              await Room.create(room);
+              console.log(`Default room created: ${room.name}`);
+          } else {
+              console.log(`Default room already exists: ${room.name}`);
           }
+      } catch (error) {
+          console.error(`Error creating room ${room.name}:`, error);
       }
-  } catch (err) {
-      console.error('Error initializing static rooms:', err);
   }
 }
 
+
+
+// Friend Request Routes
+app.post('/api/sendFriendRequest', async (req, res) => {
+    const { senderId, recipientId } = req.body;
+    const recipientSocketId = userSocketMap[recipientId];
+    if (recipientSocketId) {
+        io.to(recipientSocketId).emit('friendRequestReceived', { senderId });
+    }
+    res.json({ message: "Friend request sent successfully" });
+});
+
+app.post('/api/acceptFriendRequest', async (req, res) => {
+    const { userId, friendId } = req.body;
+    const roomId = `room-${userId}-${friendId}`;
+    let room = await Room.findOne({ roomId }) || await Room.create({ roomId, participants: [userId, friendId] });
+
+    [userSocketMap[userId], userSocketMap[friendId]].forEach(socketId => {
+        if (socketId) io.to(socketId).emit('newChatRoom', { roomId });
+    });
+
+    await FriendRequest.deleteOne({ senderId: friendId, recipientId: userId });
+    res.json({ message: "Friend request accepted successfully", roomId });
+});
+
+app.post('/api/declineFriendRequest', async (req, res) => {
+    const { userId, friendId } = req.body;
+    await FriendRequest.deleteOne({ senderId: friendId, recipientId: userId });
+    if (userSocketMap[friendId]) io.to(userSocketMap[friendId]).emit('friendRequestDeclined', { userId });
+    res.json({ message: "Friend request declined" });
+});
+
+// Opinion API using ChatGPT
+app.post('/api/get-opinion', async (req, res) => {
+    const { message, roomId, username } = req.body;
+    if (!message || !roomId || !username) return res.status(400).json({ error: 'Required fields missing.' });
+
+    try {
+        const response = await axios.post(
+            'https://api.openai.com/v1/chat/completions',
+            {
+                model: 'gpt-3.5-turbo',
+                messages: [{ role: 'user', content: `Opinion on this message: "${message}"` }]
+            },
+            { headers: { Authorization: `Bearer ${process.env.OPENAI_API_KEY}`, 'Content-Type': 'application/json' } }
+        );
+
+        const opinion = response.data.choices[0].message.content;
+        await Message.create({ username: 'AttyAI', message: opinion, timestamp: new Date(), room: roomId });
+        res.json({ opinion });
+    } catch (error) {
+        res.status(500).json({ error: 'Error fetching opinion from ChatGPT' });
+    }
+});
+
+// File Uploads
+const storage = multer.diskStorage({
+    destination: (req, file, cb) => cb(null, path.join(__dirname, 'uploads')),
+    filename: (req, file, cb) => cb(null, `${Date.now()}-${Math.random().toString(36).substring(7)}-${file.originalname}`)
+});
+const upload = multer({ storage });
+
+app.post('/api/uploadProfileImage/:userId', upload.single('profileImage'), async (req, res) => {
+    const imageUrl = `/uploads/${req.file.filename}`;
+    const user = await User.findByIdAndUpdate(req.params.userId, { profileImage: imageUrl }, { new: true });
+    if (user) res.json({ success: true, imageUrl });
+    else res.status(404).json({ success: false, message: 'User not found' });
+});
+
+app.get('/api/getUserProfileImage/:userId', async (req, res) => {
+    const user = await User.findById(req.params.userId);
+    res.json(user ? { success: true, profileImage: user.profileImage } : { success: false, message: 'Profile image not found' });
+});
+
+// MongoDB and Socket.IO Setup
+mongoose.connect(process.env.MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true })
+.then(() => {
+  console.log('Connected to MongoDB');
+
+  // Create default rooms after database connection
+  createDefaultRooms().then(() => {
+      console.log('Default rooms initialized.');
+  }).catch(console.error);
+})
+.catch(error => {
+  console.error('Error connecting to MongoDB:', error);
+});
+
+
+// Socket.IO Handlers
+// Socket.IO Handlers
 io.on('connection', (socket) => {
-  console.log(`User connected with socket ID: ${socket.id}`);
+    // Handle when a client joins a room
+    socket.on('joinRoom', ({ roomId }) => {
+        socket.join(roomId);
+        console.log(`User joined room: ${roomId}`);
+    });
 
-  socket.on('registerUser', (userId) => {
-      console.log(`Registering user ${userId} with socket ID: ${socket.id}`);
-      userSocketMap[userId] = socket.id; // Map the userId to the socketId
-  });
-
+  // Remove user from userSocketMap on disconnect
   socket.on('disconnect', () => {
-      console.log(`User with socket ID ${socket.id} disconnected`);
       for (const [userId, socketId] of Object.entries(userSocketMap)) {
           if (socketId === socket.id) {
               delete userSocketMap[userId];
-              console.log(`Removed user ${userId} from userSocketMap`);
-              break;
+              console.log(`User ${userId} disconnected and removed from userSocketMap`);
           }
       }
   });
-});
-
-module.exports = { io, userSocketMap };
-
-
-// Serve static files from the 'public' directory
-app.get('/index', (req, res) => {
-    res.sendFile(path.join(__dirname, '../public', 'index.html'));
-});
-
-console.log('MongoDB URI:', process.env.MONGO_URI); // Log the MongoDB URI for debugging
-
-mongoose.connect(process.env.MONGO_URI )
-  .then(() => console.log('Connected to MongoDB'))
-  .catch(err => console.log('MongoDB connection error:', err));
-mongoose.connect(process.env.MONGO_URI, {
-    useNewUrlParser: true,
-    useUnifiedTopology: true
-})
-.then(() => console.log('Connected to MongoDB'))
-.catch(err => console.log('MongoDB connection error:', err));
-
-// Routes
-
-// Serve static files
-app.use(express.static(path.join(__dirname, '../public')));
-
-// Initialize Chat and Tic-Tac-Toe functionality
-ticTacToe(io);// Initializes Tic-Tac-Toe functionality
-setupChat(io);
-
-initializeStaticRooms();
-
-// Socket.io for handling chat rooms
-// 404 handler
-app.use((req, res) => {
-  res.status(404).send('Page not found');
-});
 
 
 
-// server.js
-app.post('/api/sendFriendRequest', async (req, res) => {
-  const { senderId, recipientId } = req.body;
-  // Save the friend request and emit event to recipient
-  const recipientSocketId = userSocketMap[recipientId];
-  if (recipientSocketId) {
-      io.to(recipientSocketId).emit('friendRequestReceived', { senderId });
-      console.log(`Emitted friendRequestReceived to ${recipientId} from ${senderId}`);
-  }
-  res.json({ message: "Friend request sent successfully" });
-});
-
-
-
-
-
-app.post('/api/acceptFriendRequest', async (req, res) => {
-  const { userId, friendId } = req.body;
-
-  const updatedRequest = await FriendRequest.findOneAndUpdate(
-      { senderId: friendId, recipientId: userId, status: 'pending' },
-      { status: 'accepted' },
-      { new: true }
-  );
-
-  // Create a unique room ID for the private chat room
-  const roomId = `room-${userId}-${friendId}`;
-
-  // Check if the room already exists to prevent duplicate rooms
-  let room = await Room.findOne({ roomId });
-  if (!room) {
-      room = new Room({
-          roomId: roomId,
-          participants: [userId, friendId]
-      });
-      await room.save(); // Save the new room to the database
-  }
-
-  // Notify both users to join the new chat room and update their friend lists
-  const userSocketId = userSocketMap[userId];
-  const friendSocketId = userSocketMap[friendId];
-
-  if (userSocketId) {
-      io.to(userSocketId).emit('newChatRoom', { roomId });
-      io.to(userSocketId).emit('addFriend', { friendId });
-  }
-  if (friendSocketId) {
-      io.to(friendSocketId).emit('newChatRoom', { roomId });
-      io.to(friendSocketId).emit('addFriend', { userId });
-  }
-
-  await FriendRequest.deleteOne({ senderId: friendId, recipientId: userId });
-
-  res.json({ message: "Friend request accepted successfully", roomId });
-});
-
-
-app.post('/api/declineFriendRequest', async (req, res) => {
-  const { userId, friendId } = req.body;
-
-  await FriendRequest.deleteOne({ senderId: friendId, recipientId: userId });
-
-  const userSocketId = userSocketMap[friendId];
-  if (userSocketId) {
-      io.to(userSocketId).emit('friendRequestDeclined', { userId });
-  }
-
-  res.json({ message: "Friend request declined" });
-});
-
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-      cb(null, path.join(__dirname, 'uploads')); // Saves in 'uploads' folder
-  },
-  filename: (req, file, cb) => {
-      const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-      cb(null, uniqueSuffix + '-' + file.originalname); // Unique filename
-  }
-});
-
-const upload = multer({ storage });
-
-
-
-app.post('/api/uploadProfileImage/:userId', upload.single('profileImage'), async (req, res) => {
-  const { userId } = req.params;
-
-  if (!req.file) {
-      console.log('No file uploaded');
-      return res.status(400).json({ success: false, message: 'No file uploaded' });
-  }
-
-  const imageUrl = `/uploads/${req.file.filename}`;
-
-  try {
-      // Update user's profileImage in the database
-      const user = await User.findByIdAndUpdate(userId, { profileImage: imageUrl }, { new: true });
-      if (!user) {
-          return res.status(404).json({ success: false, message: 'User not found' });
+    // Listen for joinRoom event
+    socket.on('joinRoom', (roomId) => {
+      if (typeof roomId !== 'string') {
+          console.error('Invalid roomId received:', roomId);
+          return;
       }
-      res.json({ success: true, imageUrl });
-  } catch (error) {
-      console.error('Error saving profile image:', error);
-      res.status(500).json({ success: false, message: 'Failed to save profile image' });
-  }
+
+      socket.join(roomId);
+      console.log(`User joined room: ${roomId}`);
+  });
+
+
+  // Listen for new chat messages and broadcast them
+  socket.on('chat message', async (data) => {
+    const { roomId, username, userId, message, timestamp } = data;
+    
+    // Save the message to the database
+    try {
+        const newMessage = new Message({
+            roomId,
+            userId,
+            username,
+            message,
+            timestamp
+        });
+        await newMessage.save();
+
+        // Broadcast the message to everyone in the room
+        io.to(roomId).emit('chat message', {
+            roomId,
+            username,
+            userId,
+            message,
+            timestamp
+        });
+        console.log(`Message sent to room ${roomId} by ${username}: ${message}`);
+    } catch (error) {
+        console.error('Error saving message:', error);
+    }
 });
 
 
 
 
 
+  socket.on('sendMessage', async ({ roomId, username, userId, message, timestamp }) => {
+    try {
+        if (!userId) {
+            console.error("userId is undefined!");
+            return; // Exit if userId is undefined
+        }
 
+        console.log("Received userId:", userId);
 
-app.get('/api/getUserProfileImage/:userId', async (req, res) => {
-  try {
-      const user = await User.findById(req.params.userId);
-      if (!user || !user.profileImage) {
-          return res.json({ success: false, message: 'Profile image not found' });
-      }
-      res.json({ success: true, profileImage: user.profileImage });
-  } catch (error) {
-      console.error('Error retrieving profile image:', error);
-      res.status(500).json({ success: false, message: 'Failed to retrieve profile image' });
-  }
+        // Save the message to the database
+        const newMessage = new Message({ roomId, username, userId, message, timestamp });
+        await newMessage.save();
+
+        // Broadcast the message to all users in the room
+        io.to(roomId).emit('chat message', {
+            room: roomId,
+            username,
+            message,
+            timestamp
+        });
+        console.log(`Message sent to room ${roomId} by ${username}: ${message}`);
+    } catch (error) {
+        console.error("Error saving message to database:", error);
+    }
 });
 
 
-// Other routes, including JSON routes
-app.use('/api/users', userRoutes);
 
-// Static files and socket configuration
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
+});
 
-// Start the server
+
+
 const PORT = process.env.PORT || 3000;
-server.listen(PORT, () => {
-  console.log(`Server running on http://localhost:${PORT}`);
-});
-
+server.listen(PORT, () => console.log(`Server running on http://localhost:${PORT}`));
