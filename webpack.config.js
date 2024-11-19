@@ -1,10 +1,24 @@
 const path = require('path');
 
 module.exports = {
-  entry: './public/client.js', // Your main JavaScript file
-  output: {
-    filename: 'bundle.js', // Output filename
-    path: path.resolve(__dirname, 'public', 'dist'), // Output directory set to "public/dist"
-  },
-  mode: 'production',
+    mode: 'development', // or 'production'
+    entry: './public/scripts/index.js', // Update the path to your main file
+    output: {
+        path: path.resolve(__dirname, 'public/dist'),
+        filename: 'bundle.js',
+    },
+    module: {
+        rules: [
+            {
+                test: /\.js$/,
+                exclude: /node_modules/,
+                use: {
+                    loader: 'babel-loader',
+                    options: {
+                        presets: ['@babel/preset-env'],
+                    },
+                },
+            },
+        ],
+    },
 };

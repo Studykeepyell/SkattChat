@@ -1,11 +1,11 @@
 const mongoose = require('mongoose');
 
-const messageSchema = new mongoose.Schema({
+const MessageSchema = new mongoose.Schema({
     roomId: { type: String, required: true },
     userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
     username: { type: String, required: true },
     message: { type: String, required: true },
-    timestamp: { type: Number, required: true }
-}, { timestamps: true });
+    timestamp: { type: Date, default: Date.now },
+});
 
-module.exports = mongoose.model('Message', messageSchema);
+module.exports = mongoose.model('Message', MessageSchema);

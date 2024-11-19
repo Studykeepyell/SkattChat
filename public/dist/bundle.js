@@ -1,726 +1,136 @@
-const socket = io();
-
-document.addEventListener('DOMContentLoaded', () => {
-
-    let lastMessageDate = '';
-    let currentRoom = null;
-
-
-    const userId = localStorage.getItem('userId');
-    if (userId) {
-        socket.emit('registerUser', userId);
-    }
-
-    loadFriendRequests(); // Load initial friend requests
-
-    // Function to fetch the profile image for a user
-    async function fetchProfileImage(userId) {
-        if (!userId) {
-            console.error("fetchProfileImage: userId is undefined. Returning default image.");
-            return '/default-profile.jpg'; // Return a default image URL
-        }
-    
-        try {
-            const response = await fetch(`/api/getUserProfileImage/${userId}`);
-            const data = await response.json();
-    
-            if (data.success) {
-                return data.profileImage;
-            } else {
-                console.error("fetchProfileImage: Profile image not found for userId:", userId);
-                return '/default-profile.jpg'; // Return a default image URL if not found
-            }
-        } catch (error) {
-            console.error("Error fetching profile image:", error);
-            return '/default-profile.jpg'; // Return a default image in case of error
-        }
-    }
-    
-
-
-
-
-// Function to add a new chat message to the messages container
-async function addChatMessage(data) {
-    console.log('Adding chat message:', data);
-
-    const messagesList = document.getElementById('messages');
-    if (!messagesList) {
-        console.error("Error: 'messages' element not found.");
-        return;
-    }
-    
-
-    const messageDate = formatMessageDate(data.timestamp);
-
-    // Create a date header if the date changes
-    if (messageDate !== lastMessageDate) {
-        const dateHeader = document.createElement('div');
-        dateHeader.className = 'date-header';
-        dateHeader.textContent = messageDate;
-        messagesList.appendChild(dateHeader);
-        lastMessageDate = messageDate;
-    }
-
-    const messageContainer = document.createElement('div');
-    messageContainer.className = 'message-container';
-
-    // User Info Container
-    const userInfoContainer = document.createElement('div');
-    userInfoContainer.className = 'user-info-container';
-
-    // Profile picture
-    const characterPicture = document.createElement('img');
-    characterPicture.className = 'character-picture';
-    characterPicture.alt = `${data.username}'s profile picture`;
-
-    // Fetch and set the user's profile image if available
-    const profileImageUrl = await fetchProfileImage(data.userId);
-    characterPicture.src = profileImageUrl || 'default-profile.jpg'; // Fallback image if no URL
-
-    // Username and Timestamp
-    const username = document.createElement('h2');
-    username.className = 'username';
-    username.textContent = data.username;
-
-    const timeText = document.createElement('h4');
-    timeText.className = 'timestamp';
-    timeText.textContent = formatTimestamp(data.timestamp);
-
-    userInfoContainer.append(characterPicture, username, timeText);
-
-    // Message Content
-    const messageContent = document.createElement('div');
-    messageContent.className = 'message-content';
-    messageContent.textContent = data.message;
-
-    // Append message content and user info to the message container
-    messageContainer.append(userInfoContainer, messageContent);
-
-    // Friend Request Button
-    const friendRequestButton = document.createElement('button');
-    friendRequestButton.className = 'friend-request-button';
-    friendRequestButton.textContent = 'Add Friend';
-    friendRequestButton.onclick = () => sendFriendRequest(data.userId); // Ensure sendFriendRequest is defined
-    messageContainer.appendChild(friendRequestButton);
-
-    // AI Action Button
-    const actionButton = document.createElement('button');
-    actionButton.className = 'action-button';
-    actionButton.style.marginRight = '10px';
-    actionButton.textContent = 'Get AI Response';
-
-    actionButton.addEventListener('click', async () => {
-        try {
-            console.log("Making request to:", '/api/get-opinion');
-            const response = await fetch('/api/get-opinion', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ message: data.message, roomId: data.roomId, username: data.username })
-            });
-            const result = await response.json();
-            // Add AI response as a new message
-            addChatMessage({
-                username: "AttyAI",
-                message: `Response to ${data.username}: "${data.message}" - ${result.opinion}`,
-                timestamp: Date.now(),
-                roomId: data.roomId || "general" // Use data.roomId or a default
-            });
-        } catch (error) {
-            console.error('Error fetching ChatGPT opinion:', error);
-        }
-    });
-    messageContainer.appendChild(actionButton);
-
-    // Append the message container to the messages list
-    messagesList.appendChild(messageContainer);
-    messagesList.scrollTop = messagesList.scrollHeight; // Scroll to the latest message
-}
-
-
-
-
-
-
-
-
-
- 
- 
-    
-
-socket.on('friendRequestReceived', (data) => {
-    console.log("Friend request received from:", data.senderId); // Log request
-    displayFriendRequest(data.senderId);
-});
-
-socket.on('newFriendRequest', (data) => {
-    console.log("Received new friend request:", data.message); // Log notification
-    loadFriendRequests(); // Refresh the friend request list
-});
-
-
-async function respondToFriendRequest(requestId, status, senderId, receiverId) {
-    console.log('Responding to friend request:', { requestId, status, senderId, receiverId });
-
-    try {
-        const response = await fetch('/api/users/friends/respond', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ requestId, status, senderId, receiverId })
-        });
-
-        if (!response.ok) {
-            const errorMessage = await response.text();
-            throw new Error(`Failed to respond to friend request: ${errorMessage}`);
-        }
-
-        const data = await response.json();
-        console.log('Friend request response successful:', data);
-    } catch (error) {
-        console.error('Error responding to friend request:', error);
-    }
-}
-
-
-
-
-
-
-
-
-function displayFriendRequest(request) {
-    const requestItem = document.createElement('li');
-
-    // Display sender info
-    const senderInfo = document.createElement('span');
-    senderInfo.innerText = `Friend request from ${request.senderId.username}`;
-
-    // Accept button
-    const acceptButton = document.createElement('button');
-    acceptButton.innerText = 'Accept';
-    acceptButton.addEventListener('click', async () => {
-        await respondToFriendRequest(request._id, 'accepted', request.senderId._id, request.receiverId);
-    
-        // Remove the request from the UI
-        requestItem.remove();
-    
-        console.log(`Friend request ${request._id} accepted and removed from UI.`);
-    });
-
-    // Decline button
-    const declineButton = document.createElement('button');
-    declineButton.innerText = 'Decline';
-    declineButton.addEventListener('click', async () => {
-        await respondToFriendRequest(request._id, 'declined', request.senderId._id, request.receiverId);
-    
-        // Remove the request from the UI
-        requestItem.remove();
-    
-        console.log(`Friend request ${request._id} accepted and removed from UI.`);
-    });
-
-    // Append elements to the request item
-    requestItem.appendChild(senderInfo);
-    requestItem.appendChild(acceptButton);
-    requestItem.appendChild(declineButton);
-
-    // Append request item to the friend request list
-    const friendRequestList = document.getElementById('friendRequestList');
-    friendRequestList.appendChild(requestItem);
-
-    console.log("Added friend request to the list:", request);
-}
-
-
-
-
-// Handle new chat room creation
-socket.on('newChatRoom', (room) => {
-    console.log('New chat room received:', room);
-
-    // Find the chat room list element
-    const chatRoomList = document.getElementById('chatRoomList'); // Adjust the ID if necessary
-
-    // Create a new list item for the room
-    const roomItem = document.createElement('li');
-    roomItem.textContent = room.name; // Use the room name or a custom label
-    roomItem.dataset.roomId = room.roomId;
-
-    // Add a button to join the room
-    const joinButton = document.createElement('button');
-    joinButton.textContent = 'Join';
-    joinButton.addEventListener('click', () => {
-        joinChatRoom(room.roomId); // Function to handle joining the room
-    });
-
-    roomItem.appendChild(joinButton);
-    chatRoomList.appendChild(roomItem);
-
-    console.log('New chat room added to the UI.');
-});
-
-function joinChatRoom(roomId) {
-    if (!roomId) {
-        console.error("Room ID is missing when trying to join a room.");
-        return;
-    }
-
-    console.log(`Joining chat room: ${roomId}`);
-    localStorage.setItem('currentRoom', roomId); // Store the current room ID
-
-    const messagesList = document.getElementById('messages');
-    if (messagesList) {
-        messagesList.innerHTML = ''; // Clear previous messages
-    }
-
-    fetch(`/api/chat/rooms/${roomId}/messages`)
-        .then(response => {
-            console.log('Fetch response status:', response.status); // Debug log
-            if (!response.ok) {
-                throw new Error(`Failed to fetch messages: ${response.statusText}`);
-            }
-            return response.json();
-        })
-        .then(messages => {
-            console.log(`Messages fetched for room ${roomId}:`, messages); // Debug log
-            messages.forEach(message => addChatMessage(message)); // Add messages to UI
-        })
-        .catch(error => console.error('Error loading messages:', error));
-
-    // Notify the server about joining the room
-    socket.emit('joinRoom', { roomId });
-    console.log(`Joined chat room: ${roomId}`);
-}
-
-
-
-
-
-
-
-
-
-
-
-async function sendFriendRequest(receiverId) {
-    const senderId = localStorage.getItem('userId'); // Get the sender's userId
-
-    console.log("Sending friend request to:", receiverId);
-    console.log("Sender ID:", senderId);
-
-    if (!senderId || !receiverId) {
-        console.error("Error: Missing senderId or receiverId");
-        return;
-    }
-
-    try {
-        const response = await fetch(`/api/users/friends/${receiverId}`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ senderId })
-        });
-
-        if (!response.ok) {
-            const errorMessage = await response.text();
-            throw new Error(`HTTP error! Status: ${response.status} - ${errorMessage}`);
-        }
-
-        const data = await response.json();
-        console.log("Friend request response:", data);
-
-        if (data.success) {
-            alert('Friend request sent successfully!');
-        } else {
-            alert(data.message);
-        }
-    } catch (error) {
-        console.error("Error sending friend request:", error);
-    }
-}
-
-
-
-
-
-
-
-async function loadFriendRequests() {
-    const userId = localStorage.getItem('userId'); // Get the logged-in user's ID
-
-    try {
-        const response = await fetch(`/api/users/friends/requests/${userId}`);
-        if (!response.ok) throw new Error(`Failed to load friend requests: ${response.statusText}`);
-        
-        const data = await response.json();
-        const friendRequestList = document.getElementById('friendRequestList');
-
-        // Log to confirm the friend request list is being accessed
-        console.log("Friend request list element:", friendRequestList);
-
-        if (friendRequestList) {
-            friendRequestList.innerHTML = ''; // Clear any existing requests
-        } else {
-            console.error("friendRequestList element not found in the DOM.");
-            return;
-        }
-
-        // Log to confirm the number of requests retrieved
-        console.log("Number of friend requests received:", data.friendRequests.length);
-
-        // Loop through each friend request and display it
-        data.friendRequests.forEach(request => {
-            displayFriendRequest(request); // Use existing function to display each request
-        });
-    } catch (error) {
-        console.error("Error loading friend requests:", error);
-    }
-}
-
-
-
-
-
-async function loadFriends(userId) {
-    try {
-        const response = await fetch(`/api/users/friends/${userId}`);
-        if (!response.ok) throw new Error(`HTTP error! Status: ${response.status}`);
-        
-        const data = await response.json();
-
-        const friendsListDiv = document.getElementById('friendsList');
-        friendsListDiv.innerHTML = ''; // Clear existing content
-
-        // Check if friends data exists and has items
-        if (data.friends && data.friends.length > 0) {
-            data.friends.forEach(friend => {
-                const friendDiv = document.createElement('div');
-                friendDiv.classList.add('friend');
-                friendDiv.textContent = friend.username; // Adjust as needed to display friend info
-                friendsListDiv.appendChild(friendDiv);
-            });
-        } else {
-            // Display message if no friends are found
-            const noFriendsMessage = document.createElement('p');
-            noFriendsMessage.textContent = 'No friends found';
-            friendsListDiv.appendChild(noFriendsMessage);
-        }
-    } catch (error) {
-        console.error('Error loading friends:', error);
-    }
-}
-
-
-
-// Get userId from localStorage and load friends
-if (userId) {
-    loadFriends(userId);
-} else {
-    console.error('User ID not found in localStorage');
-}
-
-
-socket.on('newChatRoom', (room) => {
-    console.log('New chat room created:', room);
-
-    // Find the chat room list element
-    const chatRoomList = document.getElementById('chatRoomList');
-
-    // Create a new list item for the room
-    const roomItem = document.createElement('li');
-    roomItem.textContent = room.name; // Use room name or custom display logic
-    roomItem.dataset.roomId = room.roomId;
-
-    // Add a button to join the room
-    const joinButton = document.createElement('button');
-    joinButton.textContent = 'Join';
-    joinButton.addEventListener('click', () => {
-        joinChatRoom(room.roomId);
-    });
-
-    roomItem.appendChild(joinButton);
-    chatRoomList.appendChild(roomItem);
-
-    console.log('New chat room added to the UI.');
-});
-
-
-
-
-function joinChatRoom(roomId) {
-    console.log(`Joining chat room: ${roomId}`);
-    localStorage.setItem('currentRoom', roomId);
-
-    // Clear previous messages
-    const messagesList = document.getElementById('messages');
-    if (messagesList) {
-        messagesList.innerHTML = ''; // Clear previous messages
-    }
-
-    // Fetch messages for the room
-    fetch(`/api/chat/rooms/${roomId}/messages`)
-        .then(response => {
-            if (!response.ok) {
-                throw new Error(`Failed to fetch messages: ${response.statusText}`);
-            }
-            return response.json();
-        })
-        .then(messages => {
-            console.log('Fetched messages:', messages);
-            if (Array.isArray(messages)) {
-                messages.forEach(message => addChatMessage(message));
-            }
-        })
-        .catch(error => console.error('Error loading messages:', error));
-}
-
-
-
-
-
-
-const generalButton = document.getElementById('general-button');
-const randomButton = document.getElementById('random-button');
-const gamingButton = document.getElementById('gaming-button');
-const musicButton = document.getElementById('music-button');
-
-if (generalButton) {
-    generalButton.addEventListener('click', () => {
-        console.log('General button clicked');
-        joinChatRoom('general');
-    });
-}
-if (randomButton) {
-    randomButton.addEventListener('click', () => {
-        console.log('Random button clicked');
-        joinChatRoom('random');
-    });
-}
-if (gamingButton) {
-    gamingButton.addEventListener('click', () => {
-        console.log('Gaming button clicked');
-        joinChatRoom('gaming');
-    });
-}
-if (musicButton) {
-    musicButton.addEventListener('click', () => {
-        console.log('Music button clicked');
-        joinChatRoom('music');
-    });
-}
-
-
-
-
-
-function loadChatRooms() {
-    const userId = localStorage.getItem('userId'); // Replace with your user ID logic
-
-    fetch(`/api/users/getUserRooms/${userId}`)
-        .then(response => response.json())
-        .then(rooms => {
-            const chatRoomList = document.getElementById('chatRoomList');
-            chatRoomList.innerHTML = ''; // Clear existing rooms
-
-            rooms.forEach(room => {
-                const roomItem = document.createElement('li');
-                roomItem.textContent = room.name;
-                roomItem.dataset.roomId = room.roomId;
-
-                const joinButton = document.createElement('button');
-                joinButton.textContent = 'Join';
-                joinButton.addEventListener('click', () => {
-                    joinChatRoom(room.roomId);
-                });
-
-                roomItem.appendChild(joinButton);
-                chatRoomList.appendChild(roomItem);
-            });
-
-            console.log('Chat rooms loaded:', rooms);
-        })
-        .catch(error => console.error('Error loading chat rooms:', error));
-}
-
-// Call this function on page load
-loadChatRooms();
-
-
-
-
-// Function to load historical messages
-
-  
-
-
-
-
-    // Add Tic-Tac-Toe button event listener
-    const playTictactoeButton = document.getElementById('playTictactoe');
-    if (playTictactoeButton) {
-        playTictactoeButton.addEventListener('click', () => {
-            playTictactoeButton.disabled = true;
-            playTictactoeButton.textContent = 'Waiting for an opponent...';
-            socket.emit('findTictactoeOpponent'); // Emit event to find an opponent
-        });
-    }
-
-    socket.on('startTictactoeGame', (data) => {
-        const roomID = data.roomID;
-        const playerSymbol = data.playerSymbol;
-        const isFirstTurn = data.isFirstTurn;
-
-        playTictactoeButton.disabled = false;
-        playTictactoeButton.textContent = 'Play Tic-Tac-Toe';
-
-        // Open the Tic-Tac-Toe game in a new window and initialize it with correct parameters
-        const ticTacToeWindow = window.open('tictactoe.html', 'Tic-Tac-Toe Game', 'width=400,height=400');
-        ticTacToeWindow.onload = () => {
-            ticTacToeWindow.initGame(socket, roomID, playerSymbol, isFirstTurn);
-        };
-    });
-
-    socket.on('moveMade', ({ row, col, player }) => {
-        const cell = document.getElementById(`cell-${row}-${col}`);
-        if (cell) cell.textContent = player;
-    });
-
-    // Handle no opponent found (timeout)
-    socket.on('tictactoeWaitTimeout', () => {
-        playTictactoeButton.disabled = false;
-        playTictactoeButton.textContent = 'Play Tic-Tac-Toe';
-        alert('No opponents found. Try again later.');
-    });
-
-    socket.on('opponentDisconnected', () => {
-        alert("Your opponent disconnected. Game over.");
-    });
-
-    // Utility function to format the timestamp
-    function formatTimestamp(timestamp) {
-        const date = new Date(timestamp);
-        if (isNaN(date)) {
-            return 'Invalid Date';
-        }
-        const options = { hour: 'numeric', minute: 'numeric', hour12: true };
-        return date.toLocaleTimeString(undefined, options);
-    }
-
-    // Utility function to format message date
-    function formatMessageDate(timestamp) {
-        const date = new Date(timestamp);
-        const today = new Date();
-        const yesterday = new Date(today);
-        yesterday.setDate(today.getDate() - 1);
-
-        if (date.toDateString() === today.toDateString()) {
-            return 'Today';
-        } else if (date.toDateString() === yesterday.toDateString()) {
-            return 'Yesterday';
-        } else {
-            const options = { month: 'short', day: 'numeric', year: 'numeric' };
-            return date.toLocaleDateString(undefined, options);
-        }
-    }
-
-    const chatForm = document.getElementById('chat-form');
-    const messageInput = document.getElementById('messageForm'); // Updated to match the HTML
-    const deleteAllMessagesButton = document.getElementById('deleteAllMessages');
-    const messagesList = document.getElementById('messages');
-
-    if (chatForm && messageInput) {
-        chatForm.addEventListener('submit', function(event) {
-            event.preventDefault();
-            sendMessage(); // Call sendMessage to handle sending
-        });
-    }
-    function sendMessage() {
-        const messageInput = document.getElementById('messageInput');
-        const message = messageInput?.value.trim();
-        const userId = localStorage.getItem('userId');
-        const username = localStorage.getItem('username');
-        const roomId = localStorage.getItem('currentRoom');
-        const timestamp = Date.now();
-    
-        if (!message || !userId || !username || !roomId) {
-            console.error('Missing data to send message:', { message, userId, username, roomId });
-            alert('Please enter a message before sending.');
-            return;
-        }
-    
-        console.log('Emitting chat message:', { roomId, username, userId, message, timestamp });
-    
-        socket.emit('chat message', { roomId, username, userId, message, timestamp });
-    
-        messageInput.value = '';
-    }
-    
-    
-    
-    
-    
-    
-    
-    
-
-    if (deleteAllMessagesButton) {
-        deleteAllMessagesButton.addEventListener('click', () => {
-            socket.emit('clear messages');
-        });
-    }
-// Attach event listener to the form submission
-document.getElementById('chat-form').addEventListener('submit', function(event) {
-    event.preventDefault(); // Prevent form from reloading the page
-    sendMessage(); // Call the sendMessage function
-});
-
-
-    if (deleteAllMessagesButton) {
-        deleteAllMessagesButton.addEventListener('click', function() {
-            if (messagesList) {
-                messagesList.innerHTML = '';
-                socket.emit('clear messages');
-            }
-        });
-    }
-
-    
-
-    socket.on('chat message', (data) => {
-        console.log('New chat message received:', data);
-        addChatMessage(data); // Add the message to the UI
-    });
-    
-    
-    socket.on('connect', () => {
-        console.log("Connected to server");
-    
-        // Join the selected room when connected
-        const roomId = localStorage.getItem('currentRoom');
-        if (roomId) {
-            socket.emit('joinRoom', { roomId });
-        }
-    });
-
-    socket.on('clear messages', function() {
-        if (messagesList) {
-            messagesList.innerHTML = '';
-        }
-    });
-
-    socket.on('chat history', function(messages) {
-        if (messagesList) {
-            messagesList.innerHTML = '';
-            lastMessageDate = ''; // Reset last message date to avoid duplicate headers
-            messages.forEach((msg) => {
-                addChatMessage(msg);
-            });
-        }
-    });
-
-    document.getElementById('addFriendButton').addEventListener('click', function() {
-        window.location.href = '/addFriend.html';
-      });
-
-      
-});
+/*
+ * ATTENTION: The "eval" devtool has been used (maybe by default in mode: "development").
+ * This devtool is neither made for production nor for readable output files.
+ * It uses "eval()" calls to create a separate source file in the browser devtools.
+ * If you are trying to read the output file, select a different devtool (https://webpack.js.org/configuration/devtool/)
+ * or disable the default devtool with "devtool: false".
+ * If you are looking for production-ready output files, see mode: "production" (https://webpack.js.org/configuration/mode/).
+ */
+/******/ (() => { // webpackBootstrap
+/******/ 	"use strict";
+/******/ 	var __webpack_modules__ = ({
+
+/***/ "./public/scripts/chat/chat.js":
+/*!*************************************!*\
+  !*** ./public/scripts/chat/chat.js ***!
+  \*************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+eval("__webpack_require__.r(__webpack_exports__);\n/* harmony export */ __webpack_require__.d(__webpack_exports__, {\n/* harmony export */   addChatMessage: () => (/* binding */ addChatMessage),\n/* harmony export */   createChatRoom: () => (/* binding */ createChatRoom),\n/* harmony export */   displayChatRoom: () => (/* binding */ displayChatRoom),\n/* harmony export */   joinChatRoom: () => (/* binding */ joinChatRoom),\n/* harmony export */   sendAIMessage: () => (/* binding */ sendAIMessage)\n/* harmony export */ });\n/* harmony import */ var _utils_utils_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ../utils/utils.js */ \"./public/scripts/utils/utils.js\");\nfunction _typeof(o) { \"@babel/helpers - typeof\"; return _typeof = \"function\" == typeof Symbol && \"symbol\" == typeof Symbol.iterator ? function (o) { return typeof o; } : function (o) { return o && \"function\" == typeof Symbol && o.constructor === Symbol && o !== Symbol.prototype ? \"symbol\" : typeof o; }, _typeof(o); }\nfunction _regeneratorRuntime() { \"use strict\"; /*! regenerator-runtime -- Copyright (c) 2014-present, Facebook, Inc. -- license (MIT): https://github.com/facebook/regenerator/blob/main/LICENSE */ _regeneratorRuntime = function _regeneratorRuntime() { return e; }; var t, e = {}, r = Object.prototype, n = r.hasOwnProperty, o = Object.defineProperty || function (t, e, r) { t[e] = r.value; }, i = \"function\" == typeof Symbol ? Symbol : {}, a = i.iterator || \"@@iterator\", c = i.asyncIterator || \"@@asyncIterator\", u = i.toStringTag || \"@@toStringTag\"; function define(t, e, r) { return Object.defineProperty(t, e, { value: r, enumerable: !0, configurable: !0, writable: !0 }), t[e]; } try { define({}, \"\"); } catch (t) { define = function define(t, e, r) { return t[e] = r; }; } function wrap(t, e, r, n) { var i = e && e.prototype instanceof Generator ? e : Generator, a = Object.create(i.prototype), c = new Context(n || []); return o(a, \"_invoke\", { value: makeInvokeMethod(t, r, c) }), a; } function tryCatch(t, e, r) { try { return { type: \"normal\", arg: t.call(e, r) }; } catch (t) { return { type: \"throw\", arg: t }; } } e.wrap = wrap; var h = \"suspendedStart\", l = \"suspendedYield\", f = \"executing\", s = \"completed\", y = {}; function Generator() {} function GeneratorFunction() {} function GeneratorFunctionPrototype() {} var p = {}; define(p, a, function () { return this; }); var d = Object.getPrototypeOf, v = d && d(d(values([]))); v && v !== r && n.call(v, a) && (p = v); var g = GeneratorFunctionPrototype.prototype = Generator.prototype = Object.create(p); function defineIteratorMethods(t) { [\"next\", \"throw\", \"return\"].forEach(function (e) { define(t, e, function (t) { return this._invoke(e, t); }); }); } function AsyncIterator(t, e) { function invoke(r, o, i, a) { var c = tryCatch(t[r], t, o); if (\"throw\" !== c.type) { var u = c.arg, h = u.value; return h && \"object\" == _typeof(h) && n.call(h, \"__await\") ? e.resolve(h.__await).then(function (t) { invoke(\"next\", t, i, a); }, function (t) { invoke(\"throw\", t, i, a); }) : e.resolve(h).then(function (t) { u.value = t, i(u); }, function (t) { return invoke(\"throw\", t, i, a); }); } a(c.arg); } var r; o(this, \"_invoke\", { value: function value(t, n) { function callInvokeWithMethodAndArg() { return new e(function (e, r) { invoke(t, n, e, r); }); } return r = r ? r.then(callInvokeWithMethodAndArg, callInvokeWithMethodAndArg) : callInvokeWithMethodAndArg(); } }); } function makeInvokeMethod(e, r, n) { var o = h; return function (i, a) { if (o === f) throw Error(\"Generator is already running\"); if (o === s) { if (\"throw\" === i) throw a; return { value: t, done: !0 }; } for (n.method = i, n.arg = a;;) { var c = n.delegate; if (c) { var u = maybeInvokeDelegate(c, n); if (u) { if (u === y) continue; return u; } } if (\"next\" === n.method) n.sent = n._sent = n.arg;else if (\"throw\" === n.method) { if (o === h) throw o = s, n.arg; n.dispatchException(n.arg); } else \"return\" === n.method && n.abrupt(\"return\", n.arg); o = f; var p = tryCatch(e, r, n); if (\"normal\" === p.type) { if (o = n.done ? s : l, p.arg === y) continue; return { value: p.arg, done: n.done }; } \"throw\" === p.type && (o = s, n.method = \"throw\", n.arg = p.arg); } }; } function maybeInvokeDelegate(e, r) { var n = r.method, o = e.iterator[n]; if (o === t) return r.delegate = null, \"throw\" === n && e.iterator[\"return\"] && (r.method = \"return\", r.arg = t, maybeInvokeDelegate(e, r), \"throw\" === r.method) || \"return\" !== n && (r.method = \"throw\", r.arg = new TypeError(\"The iterator does not provide a '\" + n + \"' method\")), y; var i = tryCatch(o, e.iterator, r.arg); if (\"throw\" === i.type) return r.method = \"throw\", r.arg = i.arg, r.delegate = null, y; var a = i.arg; return a ? a.done ? (r[e.resultName] = a.value, r.next = e.nextLoc, \"return\" !== r.method && (r.method = \"next\", r.arg = t), r.delegate = null, y) : a : (r.method = \"throw\", r.arg = new TypeError(\"iterator result is not an object\"), r.delegate = null, y); } function pushTryEntry(t) { var e = { tryLoc: t[0] }; 1 in t && (e.catchLoc = t[1]), 2 in t && (e.finallyLoc = t[2], e.afterLoc = t[3]), this.tryEntries.push(e); } function resetTryEntry(t) { var e = t.completion || {}; e.type = \"normal\", delete e.arg, t.completion = e; } function Context(t) { this.tryEntries = [{ tryLoc: \"root\" }], t.forEach(pushTryEntry, this), this.reset(!0); } function values(e) { if (e || \"\" === e) { var r = e[a]; if (r) return r.call(e); if (\"function\" == typeof e.next) return e; if (!isNaN(e.length)) { var o = -1, i = function next() { for (; ++o < e.length;) if (n.call(e, o)) return next.value = e[o], next.done = !1, next; return next.value = t, next.done = !0, next; }; return i.next = i; } } throw new TypeError(_typeof(e) + \" is not iterable\"); } return GeneratorFunction.prototype = GeneratorFunctionPrototype, o(g, \"constructor\", { value: GeneratorFunctionPrototype, configurable: !0 }), o(GeneratorFunctionPrototype, \"constructor\", { value: GeneratorFunction, configurable: !0 }), GeneratorFunction.displayName = define(GeneratorFunctionPrototype, u, \"GeneratorFunction\"), e.isGeneratorFunction = function (t) { var e = \"function\" == typeof t && t.constructor; return !!e && (e === GeneratorFunction || \"GeneratorFunction\" === (e.displayName || e.name)); }, e.mark = function (t) { return Object.setPrototypeOf ? Object.setPrototypeOf(t, GeneratorFunctionPrototype) : (t.__proto__ = GeneratorFunctionPrototype, define(t, u, \"GeneratorFunction\")), t.prototype = Object.create(g), t; }, e.awrap = function (t) { return { __await: t }; }, defineIteratorMethods(AsyncIterator.prototype), define(AsyncIterator.prototype, c, function () { return this; }), e.AsyncIterator = AsyncIterator, e.async = function (t, r, n, o, i) { void 0 === i && (i = Promise); var a = new AsyncIterator(wrap(t, r, n, o), i); return e.isGeneratorFunction(r) ? a : a.next().then(function (t) { return t.done ? t.value : a.next(); }); }, defineIteratorMethods(g), define(g, u, \"Generator\"), define(g, a, function () { return this; }), define(g, \"toString\", function () { return \"[object Generator]\"; }), e.keys = function (t) { var e = Object(t), r = []; for (var n in e) r.push(n); return r.reverse(), function next() { for (; r.length;) { var t = r.pop(); if (t in e) return next.value = t, next.done = !1, next; } return next.done = !0, next; }; }, e.values = values, Context.prototype = { constructor: Context, reset: function reset(e) { if (this.prev = 0, this.next = 0, this.sent = this._sent = t, this.done = !1, this.delegate = null, this.method = \"next\", this.arg = t, this.tryEntries.forEach(resetTryEntry), !e) for (var r in this) \"t\" === r.charAt(0) && n.call(this, r) && !isNaN(+r.slice(1)) && (this[r] = t); }, stop: function stop() { this.done = !0; var t = this.tryEntries[0].completion; if (\"throw\" === t.type) throw t.arg; return this.rval; }, dispatchException: function dispatchException(e) { if (this.done) throw e; var r = this; function handle(n, o) { return a.type = \"throw\", a.arg = e, r.next = n, o && (r.method = \"next\", r.arg = t), !!o; } for (var o = this.tryEntries.length - 1; o >= 0; --o) { var i = this.tryEntries[o], a = i.completion; if (\"root\" === i.tryLoc) return handle(\"end\"); if (i.tryLoc <= this.prev) { var c = n.call(i, \"catchLoc\"), u = n.call(i, \"finallyLoc\"); if (c && u) { if (this.prev < i.catchLoc) return handle(i.catchLoc, !0); if (this.prev < i.finallyLoc) return handle(i.finallyLoc); } else if (c) { if (this.prev < i.catchLoc) return handle(i.catchLoc, !0); } else { if (!u) throw Error(\"try statement without catch or finally\"); if (this.prev < i.finallyLoc) return handle(i.finallyLoc); } } } }, abrupt: function abrupt(t, e) { for (var r = this.tryEntries.length - 1; r >= 0; --r) { var o = this.tryEntries[r]; if (o.tryLoc <= this.prev && n.call(o, \"finallyLoc\") && this.prev < o.finallyLoc) { var i = o; break; } } i && (\"break\" === t || \"continue\" === t) && i.tryLoc <= e && e <= i.finallyLoc && (i = null); var a = i ? i.completion : {}; return a.type = t, a.arg = e, i ? (this.method = \"next\", this.next = i.finallyLoc, y) : this.complete(a); }, complete: function complete(t, e) { if (\"throw\" === t.type) throw t.arg; return \"break\" === t.type || \"continue\" === t.type ? this.next = t.arg : \"return\" === t.type ? (this.rval = this.arg = t.arg, this.method = \"return\", this.next = \"end\") : \"normal\" === t.type && e && (this.next = e), y; }, finish: function finish(t) { for (var e = this.tryEntries.length - 1; e >= 0; --e) { var r = this.tryEntries[e]; if (r.finallyLoc === t) return this.complete(r.completion, r.afterLoc), resetTryEntry(r), y; } }, \"catch\": function _catch(t) { for (var e = this.tryEntries.length - 1; e >= 0; --e) { var r = this.tryEntries[e]; if (r.tryLoc === t) { var n = r.completion; if (\"throw\" === n.type) { var o = n.arg; resetTryEntry(r); } return o; } } throw Error(\"illegal catch attempt\"); }, delegateYield: function delegateYield(e, r, n) { return this.delegate = { iterator: values(e), resultName: r, nextLoc: n }, \"next\" === this.method && (this.arg = t), y; } }, e; }\nfunction asyncGeneratorStep(n, t, e, r, o, a, c) { try { var i = n[a](c), u = i.value; } catch (n) { return void e(n); } i.done ? t(u) : Promise.resolve(u).then(r, o); }\nfunction _asyncToGenerator(n) { return function () { var t = this, e = arguments; return new Promise(function (r, o) { var a = n.apply(t, e); function _next(n) { asyncGeneratorStep(a, r, o, _next, _throw, \"next\", n); } function _throw(n) { asyncGeneratorStep(a, r, o, _next, _throw, \"throw\", n); } _next(void 0); }); }; }\n\nfunction addChatMessage(_x) {\n  return _addChatMessage.apply(this, arguments);\n}\nfunction _addChatMessage() {\n  _addChatMessage = _asyncToGenerator(/*#__PURE__*/_regeneratorRuntime().mark(function _callee2(data) {\n    var messagesList, messageDate, dateHeader, messageContainer, userInfoContainer, characterPicture, profileImageUrl, username, timeText, messageContent, friendRequestButton, actionButton;\n    return _regeneratorRuntime().wrap(function _callee2$(_context2) {\n      while (1) switch (_context2.prev = _context2.next) {\n        case 0:\n          console.log('Adding chat message:', data);\n          messagesList = document.getElementById('messages');\n          if (messagesList) {\n            _context2.next = 5;\n            break;\n          }\n          console.error(\"Error: 'messages' element not found.\");\n          return _context2.abrupt(\"return\");\n        case 5:\n          messageDate = (0,_utils_utils_js__WEBPACK_IMPORTED_MODULE_0__.formatMessageDate)(data.timestamp); // Create a date header if the date changes\n          if (messageDate !== lastMessageDate) {\n            dateHeader = document.createElement('div');\n            dateHeader.className = 'date-header';\n            dateHeader.textContent = messageDate;\n            messagesList.appendChild(dateHeader);\n            lastMessageDate = messageDate;\n          }\n          messageContainer = document.createElement('div');\n          messageContainer.className = 'message-container';\n\n          // User Info Container\n          userInfoContainer = document.createElement('div');\n          userInfoContainer.className = 'user-info-container';\n\n          // Profile picture\n          characterPicture = document.createElement('img');\n          characterPicture.className = 'character-picture';\n          characterPicture.alt = \"\".concat(data.username, \"'s profile picture\");\n\n          // Fetch and set the user's profile image if available\n          _context2.next = 16;\n          return (0,_utils_utils_js__WEBPACK_IMPORTED_MODULE_0__.fetchProfileImage)(data.userId);\n        case 16:\n          profileImageUrl = _context2.sent;\n          characterPicture.src = profileImageUrl || 'default-profile.jpg'; // Fallback image if no URL\n\n          // Username and Timestamp\n          username = document.createElement('h2');\n          username.className = 'username';\n          username.textContent = data.username;\n          timeText = document.createElement('h4');\n          timeText.className = 'timestamp';\n          timeText.textContent = (0,_utils_utils_js__WEBPACK_IMPORTED_MODULE_0__.formatTimestamp)(data.timestamp);\n          userInfoContainer.append(characterPicture, username, timeText);\n\n          // Message Content\n          messageContent = document.createElement('div');\n          messageContent.className = 'message-content';\n          messageContent.textContent = data.message;\n\n          // Append message content and user info to the message container\n          messageContainer.append(userInfoContainer, messageContent);\n\n          // Friend Request Button\n          friendRequestButton = document.createElement('button');\n          friendRequestButton.className = 'friend-request-button';\n          friendRequestButton.textContent = 'Add Friend';\n          friendRequestButton.onclick = function () {\n            return sendFriendRequest(data.userId);\n          }; // Ensure sendFriendRequest is defined\n          messageContainer.appendChild(friendRequestButton);\n\n          // AI Action Button\n          actionButton = document.createElement('button');\n          actionButton.className = 'action-button';\n          actionButton.style.marginRight = '10px';\n          actionButton.textContent = 'Get AI Response';\n          actionButton.addEventListener('click', /*#__PURE__*/_asyncToGenerator(/*#__PURE__*/_regeneratorRuntime().mark(function _callee() {\n            var response, result;\n            return _regeneratorRuntime().wrap(function _callee$(_context) {\n              while (1) switch (_context.prev = _context.next) {\n                case 0:\n                  _context.prev = 0;\n                  console.log(\"Making request to:\", '/api/get-opinion');\n                  _context.next = 4;\n                  return fetch('/api/get-opinion', {\n                    method: 'POST',\n                    headers: {\n                      'Content-Type': 'application/json'\n                    },\n                    body: JSON.stringify({\n                      message: data.message,\n                      roomId: data.roomId,\n                      username: data.username\n                    })\n                  });\n                case 4:\n                  response = _context.sent;\n                  _context.next = 7;\n                  return response.json();\n                case 7:\n                  result = _context.sent;\n                  // Add AI response as a new message\n                  addChatMessage({\n                    username: \"AttyAI\",\n                    message: \"Response to \".concat(data.username, \": \\\"\").concat(data.message, \"\\\" - \").concat(result.opinion),\n                    timestamp: Date.now(),\n                    roomId: data.roomId || \"general\" // Use data.roomId or a default\n                  });\n                  _context.next = 14;\n                  break;\n                case 11:\n                  _context.prev = 11;\n                  _context.t0 = _context[\"catch\"](0);\n                  console.error('Error fetching ChatGPT opinion:', _context.t0);\n                case 14:\n                case \"end\":\n                  return _context.stop();\n              }\n            }, _callee, null, [[0, 11]]);\n          })));\n          messageContainer.appendChild(actionButton);\n\n          // Append the message container to the messages list\n          messagesList.appendChild(messageContainer);\n          messagesList.scrollTop = messagesList.scrollHeight; // Scroll to the latest message\n        case 42:\n        case \"end\":\n          return _context2.stop();\n      }\n    }, _callee2);\n  }));\n  return _addChatMessage.apply(this, arguments);\n}\nfunction createChatRoom(_x2, _x3, _x4) {\n  return _createChatRoom.apply(this, arguments);\n}\nfunction _createChatRoom() {\n  _createChatRoom = _asyncToGenerator(/*#__PURE__*/_regeneratorRuntime().mark(function _callee3(roomName, userId, socket) {\n    var response, data;\n    return _regeneratorRuntime().wrap(function _callee3$(_context3) {\n      while (1) switch (_context3.prev = _context3.next) {\n        case 0:\n          _context3.prev = 0;\n          _context3.next = 3;\n          return fetch('/api/chat/rooms', {\n            method: 'POST',\n            headers: {\n              'Content-Type': 'application/json'\n            },\n            body: JSON.stringify({\n              roomName: roomName,\n              userId: userId\n            })\n          });\n        case 3:\n          response = _context3.sent;\n          _context3.next = 6;\n          return response.json();\n        case 6:\n          data = _context3.sent;\n          if (data.success) {\n            socket.emit('joinRoom', {\n              roomId: data.room.roomId\n            });\n            alert(\"Chat room \\\"\".concat(roomName, \"\\\" created successfully!\"));\n          } else {\n            alert('Failed to create chat room.');\n          }\n          _context3.next = 13;\n          break;\n        case 10:\n          _context3.prev = 10;\n          _context3.t0 = _context3[\"catch\"](0);\n          console.error('Error creating chat room:', _context3.t0);\n        case 13:\n        case \"end\":\n          return _context3.stop();\n      }\n    }, _callee3, null, [[0, 10]]);\n  }));\n  return _createChatRoom.apply(this, arguments);\n}\nfunction displayChatRoom(room, container) {\n  var roomElement = document.createElement('div');\n  roomElement.className = 'chat-room';\n  roomElement.textContent = room.name;\n  roomElement.addEventListener('click', function () {\n    localStorage.setItem('currentRoom', room.roomId);\n    location.reload();\n  });\n  container.appendChild(roomElement);\n}\nfunction sendAIMessage(_x5, _x6, _x7, _x8) {\n  return _sendAIMessage.apply(this, arguments);\n}\nfunction _sendAIMessage() {\n  _sendAIMessage = _asyncToGenerator(/*#__PURE__*/_regeneratorRuntime().mark(function _callee4(socket, roomId, username, message) {\n    var aiMessage;\n    return _regeneratorRuntime().wrap(function _callee4$(_context4) {\n      while (1) switch (_context4.prev = _context4.next) {\n        case 0:\n          _context4.next = 2;\n          return getAIResponse(message, roomId, username);\n        case 2:\n          aiMessage = _context4.sent;\n          socket.emit('chat message', {\n            roomId: roomId,\n            username: 'AI',\n            message: aiMessage,\n            timestamp: Date.now()\n          });\n        case 4:\n        case \"end\":\n          return _context4.stop();\n      }\n    }, _callee4);\n  }));\n  return _sendAIMessage.apply(this, arguments);\n}\nfunction joinChatRoom(_x9, _x10) {\n  return _joinChatRoom.apply(this, arguments);\n}\nfunction _joinChatRoom() {\n  _joinChatRoom = _asyncToGenerator(/*#__PURE__*/_regeneratorRuntime().mark(function _callee5(socket, roomId) {\n    var messagesList, response, data;\n    return _regeneratorRuntime().wrap(function _callee5$(_context5) {\n      while (1) switch (_context5.prev = _context5.next) {\n        case 0:\n          if (roomId) {\n            _context5.next = 3;\n            break;\n          }\n          console.error('Room ID is required to join a chat room.');\n          return _context5.abrupt(\"return\");\n        case 3:\n          // Save the active room to local storage\n          localStorage.setItem('currentRoom', roomId);\n\n          // Clear chat messages from the previous room\n          messagesList = document.getElementById('messages');\n          if (messagesList) messagesList.innerHTML = '';\n\n          // Emit the event to join the room\n          socket.emit('joinRoom', {\n            roomId: roomId\n          });\n\n          // Fetch chat history for the new room\n          _context5.prev = 7;\n          _context5.next = 10;\n          return fetch(\"/api/chat/rooms/\".concat(roomId, \"/messages\"));\n        case 10:\n          response = _context5.sent;\n          _context5.next = 13;\n          return response.json();\n        case 13:\n          data = _context5.sent;\n          if (response.ok && data.messages) {\n            // Display chat history\n            data.messages.forEach(function (message) {\n              addChatMessage(message); // Assuming `addChatMessage` handles rendering\n            });\n          } else {\n            console.warn('No chat history available for this room.');\n          }\n          _context5.next = 20;\n          break;\n        case 17:\n          _context5.prev = 17;\n          _context5.t0 = _context5[\"catch\"](7);\n          console.error('Error fetching chat history:', _context5.t0);\n        case 20:\n          console.log(\"Joined chat room: \".concat(roomId));\n        case 21:\n        case \"end\":\n          return _context5.stop();\n      }\n    }, _callee5, null, [[7, 17]]);\n  }));\n  return _joinChatRoom.apply(this, arguments);\n}\n\n//# sourceURL=webpack://skychat/./public/scripts/chat/chat.js?");
+
+/***/ }),
+
+/***/ "./public/scripts/chat/chatSocket.js":
+/*!*******************************************!*\
+  !*** ./public/scripts/chat/chatSocket.js ***!
+  \*******************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+eval("__webpack_require__.r(__webpack_exports__);\n/* harmony export */ __webpack_require__.d(__webpack_exports__, {\n/* harmony export */   setupChatSocket: () => (/* binding */ setupChatSocket)\n/* harmony export */ });\n/* harmony import */ var _chat_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./chat.js */ \"./public/scripts/chat/chat.js\");\n\nfunction setupChatSocket(socket) {\n  socket.on('chat message', function (data) {\n    var messagesList = document.getElementById('messages');\n    (0,_chat_js__WEBPACK_IMPORTED_MODULE_0__.addChatMessage)(data, messagesList);\n  });\n  socket.on('clear messages', function () {\n    var messagesList = document.getElementById('messages');\n    if (messagesList) messagesList.innerHTML = '';\n  });\n  socket.on('newChatRoom', function (room) {\n    var roomList = document.getElementById('roomList');\n    if (roomList) displayChatRoom(room, roomList);\n  });\n  socket.on('updateChatRoomList', function (rooms) {\n    var roomList = document.getElementById('roomList');\n    roomList.innerHTML = ''; // Clear existing rooms\n    rooms.forEach(function (room) {\n      return displayChatRoom(room, roomList);\n    });\n  });\n}\n\n//# sourceURL=webpack://skychat/./public/scripts/chat/chatSocket.js?");
+
+/***/ }),
+
+/***/ "./public/scripts/friends/friendSocket.js":
+/*!************************************************!*\
+  !*** ./public/scripts/friends/friendSocket.js ***!
+  \************************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+eval("__webpack_require__.r(__webpack_exports__);\n/* harmony export */ __webpack_require__.d(__webpack_exports__, {\n/* harmony export */   setupFriendSocket: () => (/* binding */ setupFriendSocket)\n/* harmony export */ });\nfunction setupFriendSocket(socket) {\n  socket.on('friendRequestReceived', function (data) {\n    console.log(\"Friend request received from:\", data.senderId); // Log request\n    displayFriendRequest(data.senderId);\n  });\n  socket.on('newFriendRequest', function (data) {\n    console.log(\"Received new friend request:\", data.message); // Log notification\n    loadFriendRequests(); // Refresh the friend request list\n  });\n  socket.on('friendRequestAccepted', function (data) {\n    alert(\"\".concat(data.senderId, \" accepted your friend request!\"));\n    socket.emit('updateFriendList', {\n      userId: data.receiverId\n    });\n  });\n  socket.on('friendListUpdated', function (friends) {\n    var friendListContainer = document.getElementById('friendList');\n    friendListContainer.innerHTML = ''; // Clear current list\n    friends.forEach(function (friend) {\n      var friendItem = document.createElement('li');\n      friendItem.textContent = friend.username;\n      friendListContainer.appendChild(friendItem);\n    });\n  });\n}\n\n//# sourceURL=webpack://skychat/./public/scripts/friends/friendSocket.js?");
+
+/***/ }),
+
+/***/ "./public/scripts/friends/friends.js":
+/*!*******************************************!*\
+  !*** ./public/scripts/friends/friends.js ***!
+  \*******************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+eval("__webpack_require__.r(__webpack_exports__);\n/* harmony export */ __webpack_require__.d(__webpack_exports__, {\n/* harmony export */   displayFriendRequest: () => (/* binding */ displayFriendRequest),\n/* harmony export */   loadFriendRequests: () => (/* binding */ loadFriendRequests),\n/* harmony export */   respondToFriendRequest: () => (/* binding */ respondToFriendRequest),\n/* harmony export */   sendFriendRequest: () => (/* binding */ sendFriendRequest)\n/* harmony export */ });\nfunction _typeof(o) { \"@babel/helpers - typeof\"; return _typeof = \"function\" == typeof Symbol && \"symbol\" == typeof Symbol.iterator ? function (o) { return typeof o; } : function (o) { return o && \"function\" == typeof Symbol && o.constructor === Symbol && o !== Symbol.prototype ? \"symbol\" : typeof o; }, _typeof(o); }\nfunction _regeneratorRuntime() { \"use strict\"; /*! regenerator-runtime -- Copyright (c) 2014-present, Facebook, Inc. -- license (MIT): https://github.com/facebook/regenerator/blob/main/LICENSE */ _regeneratorRuntime = function _regeneratorRuntime() { return e; }; var t, e = {}, r = Object.prototype, n = r.hasOwnProperty, o = Object.defineProperty || function (t, e, r) { t[e] = r.value; }, i = \"function\" == typeof Symbol ? Symbol : {}, a = i.iterator || \"@@iterator\", c = i.asyncIterator || \"@@asyncIterator\", u = i.toStringTag || \"@@toStringTag\"; function define(t, e, r) { return Object.defineProperty(t, e, { value: r, enumerable: !0, configurable: !0, writable: !0 }), t[e]; } try { define({}, \"\"); } catch (t) { define = function define(t, e, r) { return t[e] = r; }; } function wrap(t, e, r, n) { var i = e && e.prototype instanceof Generator ? e : Generator, a = Object.create(i.prototype), c = new Context(n || []); return o(a, \"_invoke\", { value: makeInvokeMethod(t, r, c) }), a; } function tryCatch(t, e, r) { try { return { type: \"normal\", arg: t.call(e, r) }; } catch (t) { return { type: \"throw\", arg: t }; } } e.wrap = wrap; var h = \"suspendedStart\", l = \"suspendedYield\", f = \"executing\", s = \"completed\", y = {}; function Generator() {} function GeneratorFunction() {} function GeneratorFunctionPrototype() {} var p = {}; define(p, a, function () { return this; }); var d = Object.getPrototypeOf, v = d && d(d(values([]))); v && v !== r && n.call(v, a) && (p = v); var g = GeneratorFunctionPrototype.prototype = Generator.prototype = Object.create(p); function defineIteratorMethods(t) { [\"next\", \"throw\", \"return\"].forEach(function (e) { define(t, e, function (t) { return this._invoke(e, t); }); }); } function AsyncIterator(t, e) { function invoke(r, o, i, a) { var c = tryCatch(t[r], t, o); if (\"throw\" !== c.type) { var u = c.arg, h = u.value; return h && \"object\" == _typeof(h) && n.call(h, \"__await\") ? e.resolve(h.__await).then(function (t) { invoke(\"next\", t, i, a); }, function (t) { invoke(\"throw\", t, i, a); }) : e.resolve(h).then(function (t) { u.value = t, i(u); }, function (t) { return invoke(\"throw\", t, i, a); }); } a(c.arg); } var r; o(this, \"_invoke\", { value: function value(t, n) { function callInvokeWithMethodAndArg() { return new e(function (e, r) { invoke(t, n, e, r); }); } return r = r ? r.then(callInvokeWithMethodAndArg, callInvokeWithMethodAndArg) : callInvokeWithMethodAndArg(); } }); } function makeInvokeMethod(e, r, n) { var o = h; return function (i, a) { if (o === f) throw Error(\"Generator is already running\"); if (o === s) { if (\"throw\" === i) throw a; return { value: t, done: !0 }; } for (n.method = i, n.arg = a;;) { var c = n.delegate; if (c) { var u = maybeInvokeDelegate(c, n); if (u) { if (u === y) continue; return u; } } if (\"next\" === n.method) n.sent = n._sent = n.arg;else if (\"throw\" === n.method) { if (o === h) throw o = s, n.arg; n.dispatchException(n.arg); } else \"return\" === n.method && n.abrupt(\"return\", n.arg); o = f; var p = tryCatch(e, r, n); if (\"normal\" === p.type) { if (o = n.done ? s : l, p.arg === y) continue; return { value: p.arg, done: n.done }; } \"throw\" === p.type && (o = s, n.method = \"throw\", n.arg = p.arg); } }; } function maybeInvokeDelegate(e, r) { var n = r.method, o = e.iterator[n]; if (o === t) return r.delegate = null, \"throw\" === n && e.iterator[\"return\"] && (r.method = \"return\", r.arg = t, maybeInvokeDelegate(e, r), \"throw\" === r.method) || \"return\" !== n && (r.method = \"throw\", r.arg = new TypeError(\"The iterator does not provide a '\" + n + \"' method\")), y; var i = tryCatch(o, e.iterator, r.arg); if (\"throw\" === i.type) return r.method = \"throw\", r.arg = i.arg, r.delegate = null, y; var a = i.arg; return a ? a.done ? (r[e.resultName] = a.value, r.next = e.nextLoc, \"return\" !== r.method && (r.method = \"next\", r.arg = t), r.delegate = null, y) : a : (r.method = \"throw\", r.arg = new TypeError(\"iterator result is not an object\"), r.delegate = null, y); } function pushTryEntry(t) { var e = { tryLoc: t[0] }; 1 in t && (e.catchLoc = t[1]), 2 in t && (e.finallyLoc = t[2], e.afterLoc = t[3]), this.tryEntries.push(e); } function resetTryEntry(t) { var e = t.completion || {}; e.type = \"normal\", delete e.arg, t.completion = e; } function Context(t) { this.tryEntries = [{ tryLoc: \"root\" }], t.forEach(pushTryEntry, this), this.reset(!0); } function values(e) { if (e || \"\" === e) { var r = e[a]; if (r) return r.call(e); if (\"function\" == typeof e.next) return e; if (!isNaN(e.length)) { var o = -1, i = function next() { for (; ++o < e.length;) if (n.call(e, o)) return next.value = e[o], next.done = !1, next; return next.value = t, next.done = !0, next; }; return i.next = i; } } throw new TypeError(_typeof(e) + \" is not iterable\"); } return GeneratorFunction.prototype = GeneratorFunctionPrototype, o(g, \"constructor\", { value: GeneratorFunctionPrototype, configurable: !0 }), o(GeneratorFunctionPrototype, \"constructor\", { value: GeneratorFunction, configurable: !0 }), GeneratorFunction.displayName = define(GeneratorFunctionPrototype, u, \"GeneratorFunction\"), e.isGeneratorFunction = function (t) { var e = \"function\" == typeof t && t.constructor; return !!e && (e === GeneratorFunction || \"GeneratorFunction\" === (e.displayName || e.name)); }, e.mark = function (t) { return Object.setPrototypeOf ? Object.setPrototypeOf(t, GeneratorFunctionPrototype) : (t.__proto__ = GeneratorFunctionPrototype, define(t, u, \"GeneratorFunction\")), t.prototype = Object.create(g), t; }, e.awrap = function (t) { return { __await: t }; }, defineIteratorMethods(AsyncIterator.prototype), define(AsyncIterator.prototype, c, function () { return this; }), e.AsyncIterator = AsyncIterator, e.async = function (t, r, n, o, i) { void 0 === i && (i = Promise); var a = new AsyncIterator(wrap(t, r, n, o), i); return e.isGeneratorFunction(r) ? a : a.next().then(function (t) { return t.done ? t.value : a.next(); }); }, defineIteratorMethods(g), define(g, u, \"Generator\"), define(g, a, function () { return this; }), define(g, \"toString\", function () { return \"[object Generator]\"; }), e.keys = function (t) { var e = Object(t), r = []; for (var n in e) r.push(n); return r.reverse(), function next() { for (; r.length;) { var t = r.pop(); if (t in e) return next.value = t, next.done = !1, next; } return next.done = !0, next; }; }, e.values = values, Context.prototype = { constructor: Context, reset: function reset(e) { if (this.prev = 0, this.next = 0, this.sent = this._sent = t, this.done = !1, this.delegate = null, this.method = \"next\", this.arg = t, this.tryEntries.forEach(resetTryEntry), !e) for (var r in this) \"t\" === r.charAt(0) && n.call(this, r) && !isNaN(+r.slice(1)) && (this[r] = t); }, stop: function stop() { this.done = !0; var t = this.tryEntries[0].completion; if (\"throw\" === t.type) throw t.arg; return this.rval; }, dispatchException: function dispatchException(e) { if (this.done) throw e; var r = this; function handle(n, o) { return a.type = \"throw\", a.arg = e, r.next = n, o && (r.method = \"next\", r.arg = t), !!o; } for (var o = this.tryEntries.length - 1; o >= 0; --o) { var i = this.tryEntries[o], a = i.completion; if (\"root\" === i.tryLoc) return handle(\"end\"); if (i.tryLoc <= this.prev) { var c = n.call(i, \"catchLoc\"), u = n.call(i, \"finallyLoc\"); if (c && u) { if (this.prev < i.catchLoc) return handle(i.catchLoc, !0); if (this.prev < i.finallyLoc) return handle(i.finallyLoc); } else if (c) { if (this.prev < i.catchLoc) return handle(i.catchLoc, !0); } else { if (!u) throw Error(\"try statement without catch or finally\"); if (this.prev < i.finallyLoc) return handle(i.finallyLoc); } } } }, abrupt: function abrupt(t, e) { for (var r = this.tryEntries.length - 1; r >= 0; --r) { var o = this.tryEntries[r]; if (o.tryLoc <= this.prev && n.call(o, \"finallyLoc\") && this.prev < o.finallyLoc) { var i = o; break; } } i && (\"break\" === t || \"continue\" === t) && i.tryLoc <= e && e <= i.finallyLoc && (i = null); var a = i ? i.completion : {}; return a.type = t, a.arg = e, i ? (this.method = \"next\", this.next = i.finallyLoc, y) : this.complete(a); }, complete: function complete(t, e) { if (\"throw\" === t.type) throw t.arg; return \"break\" === t.type || \"continue\" === t.type ? this.next = t.arg : \"return\" === t.type ? (this.rval = this.arg = t.arg, this.method = \"return\", this.next = \"end\") : \"normal\" === t.type && e && (this.next = e), y; }, finish: function finish(t) { for (var e = this.tryEntries.length - 1; e >= 0; --e) { var r = this.tryEntries[e]; if (r.finallyLoc === t) return this.complete(r.completion, r.afterLoc), resetTryEntry(r), y; } }, \"catch\": function _catch(t) { for (var e = this.tryEntries.length - 1; e >= 0; --e) { var r = this.tryEntries[e]; if (r.tryLoc === t) { var n = r.completion; if (\"throw\" === n.type) { var o = n.arg; resetTryEntry(r); } return o; } } throw Error(\"illegal catch attempt\"); }, delegateYield: function delegateYield(e, r, n) { return this.delegate = { iterator: values(e), resultName: r, nextLoc: n }, \"next\" === this.method && (this.arg = t), y; } }, e; }\nfunction asyncGeneratorStep(n, t, e, r, o, a, c) { try { var i = n[a](c), u = i.value; } catch (n) { return void e(n); } i.done ? t(u) : Promise.resolve(u).then(r, o); }\nfunction _asyncToGenerator(n) { return function () { var t = this, e = arguments; return new Promise(function (r, o) { var a = n.apply(t, e); function _next(n) { asyncGeneratorStep(a, r, o, _next, _throw, \"next\", n); } function _throw(n) { asyncGeneratorStep(a, r, o, _next, _throw, \"throw\", n); } _next(void 0); }); }; }\nfunction sendFriendRequest(_x) {\n  return _sendFriendRequest.apply(this, arguments);\n}\nfunction _sendFriendRequest() {\n  _sendFriendRequest = _asyncToGenerator(/*#__PURE__*/_regeneratorRuntime().mark(function _callee3(receiverId) {\n    var senderId, response, errorMessage, data;\n    return _regeneratorRuntime().wrap(function _callee3$(_context3) {\n      while (1) switch (_context3.prev = _context3.next) {\n        case 0:\n          senderId = localStorage.getItem('userId'); // Get the sender's userId\n          console.log(\"Sending friend request to:\", receiverId);\n          console.log(\"Sender ID:\", senderId);\n          if (!(!senderId || !receiverId)) {\n            _context3.next = 6;\n            break;\n          }\n          console.error(\"Error: Missing senderId or receiverId\");\n          return _context3.abrupt(\"return\");\n        case 6:\n          _context3.prev = 6;\n          _context3.next = 9;\n          return fetch(\"/api/users/friends/\".concat(receiverId), {\n            method: 'POST',\n            headers: {\n              'Content-Type': 'application/json'\n            },\n            body: JSON.stringify({\n              senderId: senderId\n            })\n          });\n        case 9:\n          response = _context3.sent;\n          if (response.ok) {\n            _context3.next = 15;\n            break;\n          }\n          _context3.next = 13;\n          return response.text();\n        case 13:\n          errorMessage = _context3.sent;\n          throw new Error(\"HTTP error! Status: \".concat(response.status, \" - \").concat(errorMessage));\n        case 15:\n          _context3.next = 17;\n          return response.json();\n        case 17:\n          data = _context3.sent;\n          console.log(\"Friend request response:\", data);\n          if (data.success) {\n            alert('Friend request sent successfully!');\n          } else {\n            alert(data.message);\n          }\n          _context3.next = 25;\n          break;\n        case 22:\n          _context3.prev = 22;\n          _context3.t0 = _context3[\"catch\"](6);\n          console.error(\"Error sending friend request:\", _context3.t0);\n        case 25:\n        case \"end\":\n          return _context3.stop();\n      }\n    }, _callee3, null, [[6, 22]]);\n  }));\n  return _sendFriendRequest.apply(this, arguments);\n}\nfunction loadFriendRequests() {\n  return _loadFriendRequests.apply(this, arguments);\n}\nfunction _loadFriendRequests() {\n  _loadFriendRequests = _asyncToGenerator(/*#__PURE__*/_regeneratorRuntime().mark(function _callee4() {\n    var userId, response, data, friendRequestList;\n    return _regeneratorRuntime().wrap(function _callee4$(_context4) {\n      while (1) switch (_context4.prev = _context4.next) {\n        case 0:\n          userId = localStorage.getItem('userId'); // Get the logged-in user's ID\n          _context4.prev = 1;\n          _context4.next = 4;\n          return fetch(\"/api/users/friends/requests/\".concat(userId));\n        case 4:\n          response = _context4.sent;\n          if (response.ok) {\n            _context4.next = 7;\n            break;\n          }\n          throw new Error(\"Failed to load friend requests: \".concat(response.statusText));\n        case 7:\n          _context4.next = 9;\n          return response.json();\n        case 9:\n          data = _context4.sent;\n          friendRequestList = document.getElementById('friendRequestList'); // Log to confirm the friend request list is being accessed\n          console.log(\"Friend request list element:\", friendRequestList);\n          if (!friendRequestList) {\n            _context4.next = 16;\n            break;\n          }\n          friendRequestList.innerHTML = ''; // Clear any existing requests\n          _context4.next = 18;\n          break;\n        case 16:\n          console.error(\"friendRequestList element not found in the DOM.\");\n          return _context4.abrupt(\"return\");\n        case 18:\n          // Log to confirm the number of requests retrieved\n          console.log(\"Number of friend requests received:\", data.friendRequests.length);\n\n          // Loop through each friend request and display it\n          data.friendRequests.forEach(function (request) {\n            displayFriendRequest(request); // Use existing function to display each request\n          });\n          _context4.next = 25;\n          break;\n        case 22:\n          _context4.prev = 22;\n          _context4.t0 = _context4[\"catch\"](1);\n          console.error(\"Error loading friend requests:\", _context4.t0);\n        case 25:\n        case \"end\":\n          return _context4.stop();\n      }\n    }, _callee4, null, [[1, 22]]);\n  }));\n  return _loadFriendRequests.apply(this, arguments);\n}\nfunction displayFriendRequest(request) {\n  var requestItem = document.createElement('li');\n\n  // Display sender info\n  var senderInfo = document.createElement('span');\n  senderInfo.innerText = \"Friend request from \".concat(request.senderId.username);\n\n  // Accept button\n  var acceptButton = document.createElement('button');\n  acceptButton.innerText = 'Accept';\n  acceptButton.addEventListener('click', /*#__PURE__*/_asyncToGenerator(/*#__PURE__*/_regeneratorRuntime().mark(function _callee() {\n    return _regeneratorRuntime().wrap(function _callee$(_context) {\n      while (1) switch (_context.prev = _context.next) {\n        case 0:\n          _context.next = 2;\n          return respondToFriendRequest(request._id, 'accepted', request.senderId._id, request.receiverId);\n        case 2:\n          // Remove the request from the UI\n          requestItem.remove();\n          console.log(\"Friend request \".concat(request._id, \" accepted and removed from UI.\"));\n        case 4:\n        case \"end\":\n          return _context.stop();\n      }\n    }, _callee);\n  })));\n\n  // Decline button\n  var declineButton = document.createElement('button');\n  declineButton.innerText = 'Decline';\n  declineButton.addEventListener('click', /*#__PURE__*/_asyncToGenerator(/*#__PURE__*/_regeneratorRuntime().mark(function _callee2() {\n    return _regeneratorRuntime().wrap(function _callee2$(_context2) {\n      while (1) switch (_context2.prev = _context2.next) {\n        case 0:\n          _context2.next = 2;\n          return respondToFriendRequest(request._id, 'declined', request.senderId._id, request.receiverId);\n        case 2:\n          // Remove the request from the UI\n          requestItem.remove();\n          console.log(\"Friend request \".concat(request._id, \" accepted and removed from UI.\"));\n        case 4:\n        case \"end\":\n          return _context2.stop();\n      }\n    }, _callee2);\n  })));\n\n  // Append elements to the request item\n  requestItem.appendChild(senderInfo);\n  requestItem.appendChild(acceptButton);\n  requestItem.appendChild(declineButton);\n\n  // Append request item to the friend request list\n  var friendRequestList = document.getElementById('friendRequestList');\n  friendRequestList.appendChild(requestItem);\n  console.log(\"Added friend request to the list:\", request);\n}\nfunction respondToFriendRequest(_x2, _x3, _x4) {\n  return _respondToFriendRequest.apply(this, arguments);\n}\nfunction _respondToFriendRequest() {\n  _respondToFriendRequest = _asyncToGenerator(/*#__PURE__*/_regeneratorRuntime().mark(function _callee5(requestId, status, socket) {\n    var response, data;\n    return _regeneratorRuntime().wrap(function _callee5$(_context5) {\n      while (1) switch (_context5.prev = _context5.next) {\n        case 0:\n          _context5.prev = 0;\n          _context5.next = 3;\n          return fetch('/api/users/friends/respond', {\n            method: 'POST',\n            headers: {\n              'Content-Type': 'application/json'\n            },\n            body: JSON.stringify({\n              requestId: requestId,\n              status: status\n            })\n          });\n        case 3:\n          response = _context5.sent;\n          _context5.next = 6;\n          return response.json();\n        case 6:\n          data = _context5.sent;\n          if (data.success) {\n            alert(\"Friend request \".concat(status));\n            socket.emit('updateFriendList', {\n              userId: localStorage.getItem('userId')\n            });\n          } else {\n            alert('Failed to respond to friend request.');\n          }\n          _context5.next = 13;\n          break;\n        case 10:\n          _context5.prev = 10;\n          _context5.t0 = _context5[\"catch\"](0);\n          console.error('Error responding to friend request:', _context5.t0);\n        case 13:\n        case \"end\":\n          return _context5.stop();\n      }\n    }, _callee5, null, [[0, 10]]);\n  }));\n  return _respondToFriendRequest.apply(this, arguments);\n}\n\n//# sourceURL=webpack://skychat/./public/scripts/friends/friends.js?");
+
+/***/ }),
+
+/***/ "./public/scripts/index.js":
+/*!*********************************!*\
+  !*** ./public/scripts/index.js ***!
+  \*********************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+eval("__webpack_require__.r(__webpack_exports__);\n/* harmony import */ var _chat_chatSocket_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! ./chat/chatSocket.js */ \"./public/scripts/chat/chatSocket.js\");\n/* harmony import */ var _friends_friendSocket_js__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! ./friends/friendSocket.js */ \"./public/scripts/friends/friendSocket.js\");\n/* harmony import */ var _friends_friends_js__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! ./friends/friends.js */ \"./public/scripts/friends/friends.js\");\n/* harmony import */ var _chat_chat_js__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! ./chat/chat.js */ \"./public/scripts/chat/chat.js\");\n\n\n\n\n\ndocument.addEventListener('DOMContentLoaded', function () {\n  var socket = io();\n\n  // Initialize chat and friend features\n  (0,_chat_chatSocket_js__WEBPACK_IMPORTED_MODULE_0__.setupChatSocket)(socket);\n  (0,_friends_friendSocket_js__WEBPACK_IMPORTED_MODULE_1__.setupFriendSocket)(socket);\n\n  // Load initial friend requests\n  (0,_friends_friends_js__WEBPACK_IMPORTED_MODULE_2__.loadFriendRequests)();\n\n  // Handle creating new chat rooms\n  document.getElementById('createRoomBtn').addEventListener('click', function () {\n    var roomName = prompt('Enter the room name:');\n    if (roomName) (0,_chat_chat_js__WEBPACK_IMPORTED_MODULE_3__.createChatRoom)(roomName, localStorage.getItem('userId'), socket);\n  });\n\n  // Handle friend request response\n  document.getElementById('friendRequestList').addEventListener('click', function (e) {\n    if (e.target.classList.contains('accept')) {\n      var requestId = e.target.dataset.requestId;\n      (0,_friends_friends_js__WEBPACK_IMPORTED_MODULE_2__.respondToFriendRequest)(requestId, 'accepted', socket);\n    } else if (e.target.classList.contains('decline')) {\n      var _requestId = e.target.dataset.requestId;\n      (0,_friends_friends_js__WEBPACK_IMPORTED_MODULE_2__.respondToFriendRequest)(_requestId, 'declined', socket);\n    }\n  });\n\n  // Load initial chat room\n  var lastRoom = localStorage.getItem('currentRoom') || 'general';\n  (0,_chat_chat_js__WEBPACK_IMPORTED_MODULE_3__.joinChatRoom)(socket, lastRoom);\n\n  // Attach event listeners for room switching\n  document.querySelectorAll('.chat-room').forEach(function (roomElement) {\n    roomElement.addEventListener('click', function (e) {\n      var roomId = e.target.dataset.roomId;\n      (0,_chat_chat_js__WEBPACK_IMPORTED_MODULE_3__.joinChatRoom)(socket, roomId);\n    });\n  });\n});\n\n//# sourceURL=webpack://skychat/./public/scripts/index.js?");
+
+/***/ }),
+
+/***/ "./public/scripts/utils/utils.js":
+/*!***************************************!*\
+  !*** ./public/scripts/utils/utils.js ***!
+  \***************************************/
+/***/ ((__unused_webpack_module, __webpack_exports__, __webpack_require__) => {
+
+eval("__webpack_require__.r(__webpack_exports__);\n/* harmony export */ __webpack_require__.d(__webpack_exports__, {\n/* harmony export */   fetchProfileImage: () => (/* binding */ fetchProfileImage),\n/* harmony export */   formatMessageDate: () => (/* binding */ formatMessageDate),\n/* harmony export */   formatTimestamp: () => (/* binding */ formatTimestamp)\n/* harmony export */ });\nfunction _typeof(o) { \"@babel/helpers - typeof\"; return _typeof = \"function\" == typeof Symbol && \"symbol\" == typeof Symbol.iterator ? function (o) { return typeof o; } : function (o) { return o && \"function\" == typeof Symbol && o.constructor === Symbol && o !== Symbol.prototype ? \"symbol\" : typeof o; }, _typeof(o); }\nfunction _regeneratorRuntime() { \"use strict\"; /*! regenerator-runtime -- Copyright (c) 2014-present, Facebook, Inc. -- license (MIT): https://github.com/facebook/regenerator/blob/main/LICENSE */ _regeneratorRuntime = function _regeneratorRuntime() { return e; }; var t, e = {}, r = Object.prototype, n = r.hasOwnProperty, o = Object.defineProperty || function (t, e, r) { t[e] = r.value; }, i = \"function\" == typeof Symbol ? Symbol : {}, a = i.iterator || \"@@iterator\", c = i.asyncIterator || \"@@asyncIterator\", u = i.toStringTag || \"@@toStringTag\"; function define(t, e, r) { return Object.defineProperty(t, e, { value: r, enumerable: !0, configurable: !0, writable: !0 }), t[e]; } try { define({}, \"\"); } catch (t) { define = function define(t, e, r) { return t[e] = r; }; } function wrap(t, e, r, n) { var i = e && e.prototype instanceof Generator ? e : Generator, a = Object.create(i.prototype), c = new Context(n || []); return o(a, \"_invoke\", { value: makeInvokeMethod(t, r, c) }), a; } function tryCatch(t, e, r) { try { return { type: \"normal\", arg: t.call(e, r) }; } catch (t) { return { type: \"throw\", arg: t }; } } e.wrap = wrap; var h = \"suspendedStart\", l = \"suspendedYield\", f = \"executing\", s = \"completed\", y = {}; function Generator() {} function GeneratorFunction() {} function GeneratorFunctionPrototype() {} var p = {}; define(p, a, function () { return this; }); var d = Object.getPrototypeOf, v = d && d(d(values([]))); v && v !== r && n.call(v, a) && (p = v); var g = GeneratorFunctionPrototype.prototype = Generator.prototype = Object.create(p); function defineIteratorMethods(t) { [\"next\", \"throw\", \"return\"].forEach(function (e) { define(t, e, function (t) { return this._invoke(e, t); }); }); } function AsyncIterator(t, e) { function invoke(r, o, i, a) { var c = tryCatch(t[r], t, o); if (\"throw\" !== c.type) { var u = c.arg, h = u.value; return h && \"object\" == _typeof(h) && n.call(h, \"__await\") ? e.resolve(h.__await).then(function (t) { invoke(\"next\", t, i, a); }, function (t) { invoke(\"throw\", t, i, a); }) : e.resolve(h).then(function (t) { u.value = t, i(u); }, function (t) { return invoke(\"throw\", t, i, a); }); } a(c.arg); } var r; o(this, \"_invoke\", { value: function value(t, n) { function callInvokeWithMethodAndArg() { return new e(function (e, r) { invoke(t, n, e, r); }); } return r = r ? r.then(callInvokeWithMethodAndArg, callInvokeWithMethodAndArg) : callInvokeWithMethodAndArg(); } }); } function makeInvokeMethod(e, r, n) { var o = h; return function (i, a) { if (o === f) throw Error(\"Generator is already running\"); if (o === s) { if (\"throw\" === i) throw a; return { value: t, done: !0 }; } for (n.method = i, n.arg = a;;) { var c = n.delegate; if (c) { var u = maybeInvokeDelegate(c, n); if (u) { if (u === y) continue; return u; } } if (\"next\" === n.method) n.sent = n._sent = n.arg;else if (\"throw\" === n.method) { if (o === h) throw o = s, n.arg; n.dispatchException(n.arg); } else \"return\" === n.method && n.abrupt(\"return\", n.arg); o = f; var p = tryCatch(e, r, n); if (\"normal\" === p.type) { if (o = n.done ? s : l, p.arg === y) continue; return { value: p.arg, done: n.done }; } \"throw\" === p.type && (o = s, n.method = \"throw\", n.arg = p.arg); } }; } function maybeInvokeDelegate(e, r) { var n = r.method, o = e.iterator[n]; if (o === t) return r.delegate = null, \"throw\" === n && e.iterator[\"return\"] && (r.method = \"return\", r.arg = t, maybeInvokeDelegate(e, r), \"throw\" === r.method) || \"return\" !== n && (r.method = \"throw\", r.arg = new TypeError(\"The iterator does not provide a '\" + n + \"' method\")), y; var i = tryCatch(o, e.iterator, r.arg); if (\"throw\" === i.type) return r.method = \"throw\", r.arg = i.arg, r.delegate = null, y; var a = i.arg; return a ? a.done ? (r[e.resultName] = a.value, r.next = e.nextLoc, \"return\" !== r.method && (r.method = \"next\", r.arg = t), r.delegate = null, y) : a : (r.method = \"throw\", r.arg = new TypeError(\"iterator result is not an object\"), r.delegate = null, y); } function pushTryEntry(t) { var e = { tryLoc: t[0] }; 1 in t && (e.catchLoc = t[1]), 2 in t && (e.finallyLoc = t[2], e.afterLoc = t[3]), this.tryEntries.push(e); } function resetTryEntry(t) { var e = t.completion || {}; e.type = \"normal\", delete e.arg, t.completion = e; } function Context(t) { this.tryEntries = [{ tryLoc: \"root\" }], t.forEach(pushTryEntry, this), this.reset(!0); } function values(e) { if (e || \"\" === e) { var r = e[a]; if (r) return r.call(e); if (\"function\" == typeof e.next) return e; if (!isNaN(e.length)) { var o = -1, i = function next() { for (; ++o < e.length;) if (n.call(e, o)) return next.value = e[o], next.done = !1, next; return next.value = t, next.done = !0, next; }; return i.next = i; } } throw new TypeError(_typeof(e) + \" is not iterable\"); } return GeneratorFunction.prototype = GeneratorFunctionPrototype, o(g, \"constructor\", { value: GeneratorFunctionPrototype, configurable: !0 }), o(GeneratorFunctionPrototype, \"constructor\", { value: GeneratorFunction, configurable: !0 }), GeneratorFunction.displayName = define(GeneratorFunctionPrototype, u, \"GeneratorFunction\"), e.isGeneratorFunction = function (t) { var e = \"function\" == typeof t && t.constructor; return !!e && (e === GeneratorFunction || \"GeneratorFunction\" === (e.displayName || e.name)); }, e.mark = function (t) { return Object.setPrototypeOf ? Object.setPrototypeOf(t, GeneratorFunctionPrototype) : (t.__proto__ = GeneratorFunctionPrototype, define(t, u, \"GeneratorFunction\")), t.prototype = Object.create(g), t; }, e.awrap = function (t) { return { __await: t }; }, defineIteratorMethods(AsyncIterator.prototype), define(AsyncIterator.prototype, c, function () { return this; }), e.AsyncIterator = AsyncIterator, e.async = function (t, r, n, o, i) { void 0 === i && (i = Promise); var a = new AsyncIterator(wrap(t, r, n, o), i); return e.isGeneratorFunction(r) ? a : a.next().then(function (t) { return t.done ? t.value : a.next(); }); }, defineIteratorMethods(g), define(g, u, \"Generator\"), define(g, a, function () { return this; }), define(g, \"toString\", function () { return \"[object Generator]\"; }), e.keys = function (t) { var e = Object(t), r = []; for (var n in e) r.push(n); return r.reverse(), function next() { for (; r.length;) { var t = r.pop(); if (t in e) return next.value = t, next.done = !1, next; } return next.done = !0, next; }; }, e.values = values, Context.prototype = { constructor: Context, reset: function reset(e) { if (this.prev = 0, this.next = 0, this.sent = this._sent = t, this.done = !1, this.delegate = null, this.method = \"next\", this.arg = t, this.tryEntries.forEach(resetTryEntry), !e) for (var r in this) \"t\" === r.charAt(0) && n.call(this, r) && !isNaN(+r.slice(1)) && (this[r] = t); }, stop: function stop() { this.done = !0; var t = this.tryEntries[0].completion; if (\"throw\" === t.type) throw t.arg; return this.rval; }, dispatchException: function dispatchException(e) { if (this.done) throw e; var r = this; function handle(n, o) { return a.type = \"throw\", a.arg = e, r.next = n, o && (r.method = \"next\", r.arg = t), !!o; } for (var o = this.tryEntries.length - 1; o >= 0; --o) { var i = this.tryEntries[o], a = i.completion; if (\"root\" === i.tryLoc) return handle(\"end\"); if (i.tryLoc <= this.prev) { var c = n.call(i, \"catchLoc\"), u = n.call(i, \"finallyLoc\"); if (c && u) { if (this.prev < i.catchLoc) return handle(i.catchLoc, !0); if (this.prev < i.finallyLoc) return handle(i.finallyLoc); } else if (c) { if (this.prev < i.catchLoc) return handle(i.catchLoc, !0); } else { if (!u) throw Error(\"try statement without catch or finally\"); if (this.prev < i.finallyLoc) return handle(i.finallyLoc); } } } }, abrupt: function abrupt(t, e) { for (var r = this.tryEntries.length - 1; r >= 0; --r) { var o = this.tryEntries[r]; if (o.tryLoc <= this.prev && n.call(o, \"finallyLoc\") && this.prev < o.finallyLoc) { var i = o; break; } } i && (\"break\" === t || \"continue\" === t) && i.tryLoc <= e && e <= i.finallyLoc && (i = null); var a = i ? i.completion : {}; return a.type = t, a.arg = e, i ? (this.method = \"next\", this.next = i.finallyLoc, y) : this.complete(a); }, complete: function complete(t, e) { if (\"throw\" === t.type) throw t.arg; return \"break\" === t.type || \"continue\" === t.type ? this.next = t.arg : \"return\" === t.type ? (this.rval = this.arg = t.arg, this.method = \"return\", this.next = \"end\") : \"normal\" === t.type && e && (this.next = e), y; }, finish: function finish(t) { for (var e = this.tryEntries.length - 1; e >= 0; --e) { var r = this.tryEntries[e]; if (r.finallyLoc === t) return this.complete(r.completion, r.afterLoc), resetTryEntry(r), y; } }, \"catch\": function _catch(t) { for (var e = this.tryEntries.length - 1; e >= 0; --e) { var r = this.tryEntries[e]; if (r.tryLoc === t) { var n = r.completion; if (\"throw\" === n.type) { var o = n.arg; resetTryEntry(r); } return o; } } throw Error(\"illegal catch attempt\"); }, delegateYield: function delegateYield(e, r, n) { return this.delegate = { iterator: values(e), resultName: r, nextLoc: n }, \"next\" === this.method && (this.arg = t), y; } }, e; }\nfunction asyncGeneratorStep(n, t, e, r, o, a, c) { try { var i = n[a](c), u = i.value; } catch (n) { return void e(n); } i.done ? t(u) : Promise.resolve(u).then(r, o); }\nfunction _asyncToGenerator(n) { return function () { var t = this, e = arguments; return new Promise(function (r, o) { var a = n.apply(t, e); function _next(n) { asyncGeneratorStep(a, r, o, _next, _throw, \"next\", n); } function _throw(n) { asyncGeneratorStep(a, r, o, _next, _throw, \"throw\", n); } _next(void 0); }); }; }\nfunction fetchProfileImage(_x) {\n  return _fetchProfileImage.apply(this, arguments);\n}\nfunction _fetchProfileImage() {\n  _fetchProfileImage = _asyncToGenerator(/*#__PURE__*/_regeneratorRuntime().mark(function _callee(userId) {\n    var response, data;\n    return _regeneratorRuntime().wrap(function _callee$(_context) {\n      while (1) switch (_context.prev = _context.next) {\n        case 0:\n          if (userId) {\n            _context.next = 2;\n            break;\n          }\n          return _context.abrupt(\"return\", '/default-profile.jpg');\n        case 2:\n          _context.prev = 2;\n          _context.next = 5;\n          return fetch(\"/api/getUserProfileImage/\".concat(userId));\n        case 5:\n          response = _context.sent;\n          _context.next = 8;\n          return response.json();\n        case 8:\n          data = _context.sent;\n          return _context.abrupt(\"return\", data.success ? data.profileImage : '/default-profile.jpg');\n        case 12:\n          _context.prev = 12;\n          _context.t0 = _context[\"catch\"](2);\n          return _context.abrupt(\"return\", '/default-profile.jpg');\n        case 15:\n        case \"end\":\n          return _context.stop();\n      }\n    }, _callee, null, [[2, 12]]);\n  }));\n  return _fetchProfileImage.apply(this, arguments);\n}\nfunction formatTimestamp(timestamp) {\n  var date = new Date(timestamp);\n  return date.toLocaleTimeString(undefined, {\n    hour: '2-digit',\n    minute: '2-digit'\n  });\n}\nfunction formatMessageDate(timestamp) {\n  var date = new Date(timestamp);\n  var today = new Date();\n  if (date.toDateString() === today.toDateString()) return 'Today';\n  return date.toLocaleDateString(undefined, {\n    month: 'short',\n    day: 'numeric',\n    year: 'numeric'\n  });\n}\n\n//# sourceURL=webpack://skychat/./public/scripts/utils/utils.js?");
+
+/***/ })
+
+/******/ 	});
+/************************************************************************/
+/******/ 	// The module cache
+/******/ 	var __webpack_module_cache__ = {};
+/******/ 	
+/******/ 	// The require function
+/******/ 	function __webpack_require__(moduleId) {
+/******/ 		// Check if module is in cache
+/******/ 		var cachedModule = __webpack_module_cache__[moduleId];
+/******/ 		if (cachedModule !== undefined) {
+/******/ 			return cachedModule.exports;
+/******/ 		}
+/******/ 		// Create a new module (and put it into the cache)
+/******/ 		var module = __webpack_module_cache__[moduleId] = {
+/******/ 			// no module.id needed
+/******/ 			// no module.loaded needed
+/******/ 			exports: {}
+/******/ 		};
+/******/ 	
+/******/ 		// Execute the module function
+/******/ 		__webpack_modules__[moduleId](module, module.exports, __webpack_require__);
+/******/ 	
+/******/ 		// Return the exports of the module
+/******/ 		return module.exports;
+/******/ 	}
+/******/ 	
+/************************************************************************/
+/******/ 	/* webpack/runtime/define property getters */
+/******/ 	(() => {
+/******/ 		// define getter functions for harmony exports
+/******/ 		__webpack_require__.d = (exports, definition) => {
+/******/ 			for(var key in definition) {
+/******/ 				if(__webpack_require__.o(definition, key) && !__webpack_require__.o(exports, key)) {
+/******/ 					Object.defineProperty(exports, key, { enumerable: true, get: definition[key] });
+/******/ 				}
+/******/ 			}
+/******/ 		};
+/******/ 	})();
+/******/ 	
+/******/ 	/* webpack/runtime/hasOwnProperty shorthand */
+/******/ 	(() => {
+/******/ 		__webpack_require__.o = (obj, prop) => (Object.prototype.hasOwnProperty.call(obj, prop))
+/******/ 	})();
+/******/ 	
+/******/ 	/* webpack/runtime/make namespace object */
+/******/ 	(() => {
+/******/ 		// define __esModule on exports
+/******/ 		__webpack_require__.r = (exports) => {
+/******/ 			if(typeof Symbol !== 'undefined' && Symbol.toStringTag) {
+/******/ 				Object.defineProperty(exports, Symbol.toStringTag, { value: 'Module' });
+/******/ 			}
+/******/ 			Object.defineProperty(exports, '__esModule', { value: true });
+/******/ 		};
+/******/ 	})();
+/******/ 	
+/************************************************************************/
+/******/ 	
+/******/ 	// startup
+/******/ 	// Load entry module and return exports
+/******/ 	// This entry module can't be inlined because the eval devtool is used.
+/******/ 	var __webpack_exports__ = __webpack_require__("./public/scripts/index.js");
+/******/ 	
+/******/ })()
+;
