@@ -1,11 +1,11 @@
 const mongoose = require('mongoose');
 
-const MessageSchema = new mongoose.Schema({
-    roomId: { type: String, required: true },
-    userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
-    username: { type: String, required: true },
-    message: { type: String, required: true },
-    timestamp: { type: Date, default: Date.now },
+const messageSchema = new mongoose.Schema({
+    roomId: { type: String, required: true }, // Tag to identify the room
+    userId: { type: String, required: true }, // User who sent the message
+    username: { type: String, required: true }, // Display name of the sender
+    message: { type: String, required: true }, // Message content
+    timestamp: { type: Date, default: Date.now }, // Time the message was sent
 });
 
-module.exports = mongoose.model('Message', MessageSchema);
+module.exports = mongoose.model('Message', messageSchema);

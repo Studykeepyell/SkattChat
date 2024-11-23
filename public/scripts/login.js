@@ -32,12 +32,15 @@ document.addEventListener('DOMContentLoaded', () => {
                 try {
                     console.log('Response received:', xhr.responseText);
                     const response = JSON.parse(xhr.responseText);
-    
+                    
                     if (response.success) {
                         console.log('Login was successful.');
                         if (response.userId) {
                             localStorage.setItem('userId', response.userId);
+                            localStorage.setItem('authToken', response.token);
                             console.log('userId stored in localStorage:', localStorage.getItem('userId'));
+                            console.log('authToken stored in localStorage:', localStorage.getItem('authToken'));
+
                         } else {
                             console.warn('Warning: userId is missing in the response');
                         }

@@ -1,4 +1,6 @@
 const User = require('../models/User');
+const jwt = require('jsonwebtoken');
+const bcrypt = require('bcrypt');
 
 exports.register = async (req, res) => { /* Registration logic */ 
     const { username, password } = req.body;
@@ -21,18 +23,30 @@ exports.register = async (req, res) => { /* Registration logic */
 
 
 
-exports.login = async (req, res) => { 
-    /* Login logic */
+exports.login = async (req, res) => {
     const { username, password } = req.body;
+    console.log('Login request received:', { username, password }); // Debug log
 
     try {
         const user = await User.findOne({ username });
-        if (!user || !(await user.comparePassword(password))) {
+        console.log('User found:', user); // Debug log
+
+        if (!user) {
             return res.status(401).json({ success: false, message: 'Invalid credentials' });
         }
-        res.json({ success: true, userId: user._id, username: user.username, profileImage: user.profileImage || null });
-    } catch (err) {
-        res.status(500).json({ success: false, message: 'Failed to log in user' });
+
+        const isPasswordValid = await bcrypt.compare(password, user.password);
+        console.log('Password valid:', isPasswordValid); // Debug log
+
+        if (!isPasswordValid) {
+            return res.status(401).json({ success: false, message: 'Invalid credentials' });
+        }
+
+        const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, { expiresIn: '1h' });
+        res.json({ success: true, userId: user._id, token });
+    } catch (error) {
+        console.error('Error during login:', error); // Log the error
+        res.status(500).json({ success: false, message: 'Server error' });
     }
 };
 

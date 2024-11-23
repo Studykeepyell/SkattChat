@@ -10,12 +10,19 @@ const opinionRoutes = require('./routes/opinionRoutes');
 const fileRoutes = require('./routes/fileRoutes');
 const userRoutes = require('./routes/userRoutes'); 
 const { setupSocket } = require('./socket/index');
+const socketIO = require('socket.io'); // Add this line
 
 
 // App and Server Setup
 const app = express();
 const server = http.createServer(app);
-const io = require('socket.io')(server, { cors: { origin: '*' } });
+const io = socketIO(server, {
+    cors: {
+        origin: ['http://localhost:3000',"https://skattchat.online"], // Your frontend URL
+        methods: ['GET', 'POST'],
+        credentials: true,
+    },
+});
 
 
 // Middleware
@@ -37,11 +44,12 @@ app.use((req, res, next) => {
 
 
 // Load user routes and pass io and userSocketMap
+
+app.use('/api/friendRequests', friendRequestRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/chat', chatRoutes);
 app.use('/api/opinion', opinionRoutes);
 app.use('/api/files', fileRoutes);
-app.use('/api/friendRequests', friendRequestRoutes);
 
 //servve static files
 app.use(express.static(path.join(__dirname, '../public')));

@@ -73,34 +73,35 @@
         >
         <button id="createRoomBtn">Create Room</button>
 
-          <div class="chat-room" id="general-button">
-            <img src="../images/general-icon.png" alt="General" class="room-icon" />
-            <div class="room-info">
+        <div class="chat-room" data-room-id="general" id="general-button">
+          <img src="../images/general-icon.png" alt="General" class="room-icon" />
+          <div class="room-info">
               <span class="room-name">General</span>
               <span class="room-time">10:11 AM</span>
-            </div>
           </div>
-          <div class="chat-room" id="random-button">
-            <img src="../images/random-icon.png" alt="Random" class="room-icon" />
-            <div class="room-info">
+      </div>
+      <div class="chat-room" data-room-id="random" id="random-button">
+          <img src="../images/random-icon.png" alt="Random" class="room-icon" />
+          <div class="room-info">
               <span class="room-name">Random</span>
               <span class="room-time">Yesterday</span>
-            </div>
           </div>
-          <div class="chat-room" id="gaming-button">
-            <img src="../images/gaming-icon.png" alt="Gaming" class="room-icon" />
-            <div class="room-info">
+      </div>
+      <div class="chat-room" data-room-id="gaming" id="gaming-button">
+          <img src="../images/gaming-icon.png" alt="Gaming" class="room-icon" />
+          <div class="room-info">
               <span class="room-name">Gaming</span>
               <span class="room-time">24/4/1</span>
-            </div>
           </div>
-          <div class="chat-room" id="music-button">
-            <img src="../images/music-icon.png" alt="Music" class="room-icon" />
-            <div class="room-info">
+      </div>
+      <div class="chat-room" data-room-id="music" id="music-button">
+          <img src="../images/music-icon.png" alt="Music" class="room-icon" />
+          <div class="room-info">
               <span class="room-name">Music</span>
               <span class="room-time">24/11/9</span>
-            </div>
           </div>
+      </div>
+      
         </section>
 
         <!-- Friend Requests Section -->
@@ -153,6 +154,7 @@
             placeholder="Type a message"
             autocomplete="off"
             aria-label="Message Input"
+            required
         />
               <button type="submit" aria-label="Send Message">Send</button>
               <button type="button" id="emoji-button" aria-label="Emoji Picker">

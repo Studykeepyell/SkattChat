@@ -1,5 +1,6 @@
 const userSocketMap = {};
 const Message = require('../models/Message');
+const Room = require('../models/Room');
 
 const setupSocket = (io) => {
     io.on('connection', (socket) => {
@@ -21,40 +22,44 @@ const setupSocket = (io) => {
             }
         });
 
-        socket.on('joinRoom', (roomId) => {
-            console.log(`Raw roomId:`, roomId);
+        socket.on('joinRoom', async (roomId) => {
+            const existingRoom = await Room.findOne({ roomId });
+            if (!existingRoom) {
+                console.error(`Room "${roomId}" does not exist in the database.`);
+                return; // Optionally send an error message to the client
+            }
+        
             socket.join(roomId);
-            console.log(`Socket ${socket.id} joined room: ${roomId}`);
+            console.log(`User ${socket.id} joined room: ${roomId}`);
+        
+            // Emit chat history for the joined room
+            try {
+                const messages = await Message.find({ roomId }).sort({ timestamp: 1 });
+                socket.emit('chat history', messages);
+            } catch (error) {
+                console.error(`Error loading messages for room ${roomId}:`, error);
+            }
         });
         
-
-        // Chat events
-        socket.on('chat message', async (data) => {
-            const { roomId, username, userId, message, timestamp } = data;
-            
-            // Save the message to the database
-            try {
-                const newMessage = new Message({
-                    roomId,
-                    userId,
-                    username,
-                    message,
-                    timestamp
-                });
-                await newMessage.save();
         
-                // Broadcast the message to everyone in the room
-                io.to(roomId).emit('chat message', {
-                    roomId,
-                    username,
-                    userId,
-                    message,
-                    timestamp
-                });
-                console.log(`Message sent to room ${roomId} by ${username}: ${message}`);
-            // Emit the message to all users in the room
-            io.to(roomId).emit('chatMessage', newMessage);
-            console.log(`Message sent to room ${roomId}: ${message}`);
+
+      // Listen for chat message
+    socket.on('chat message', async (data) => {
+        const { roomId, username, userId, message, timestamp } = data;
+
+        console.log('Chat message received:', data); // Debug log
+
+        if (!roomId || !username || !userId || !message) {
+            console.error('Invalid message data:', data);
+            return;
+        }
+
+        try {
+            const newMessage = await Message.create({ roomId, username, userId, message, timestamp });
+            console.log('Message saved to database:', newMessage); // Debug log
+
+            // Broadcast the message to the room
+            io.to(roomId).emit('chat message', newMessage);
         } catch (error) {
             console.error('Error saving message:', error);
         }

@@ -40,9 +40,22 @@ export async function sendFriendRequest(receiverId) {
 
 export async function loadFriendRequests() {
     const userId = localStorage.getItem('userId'); // Get the logged-in user's ID
+    const token = localStorage.getItem('authToken');
+
+    if (!userId || !token) {
+        console.error('User ID or token is missing.');
+        return;
+    }
 
     try {
-        const response = await fetch(`/api/friendRequests/requests/${userId}`);
+        const response = await fetch(`/api/friendRequests/requests/${userId}`, {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`, // Add the token to the request
+            },
+        });
+
         if (!response.ok) throw new Error(`Failed to load friend requests: ${response.statusText}`);
         
         const data = await response.json();
