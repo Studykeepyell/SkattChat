@@ -1,3 +1,4 @@
+const mongoose = require('mongoose');
 const FriendRequest = require('../models/FriendRequest');
 const User = require('../models/User');
 const Room = require('../models/Room');
@@ -7,34 +8,50 @@ const { notifyUser } = require('../utils/socketUtils');
 
 
 
-// Send a friend request
 exports.sendFriendRequest = async (req, res) => {
-    const { senderId } = req.body;
-    const { receiverId } = req.params;
+    const senderId = req.user._id; // Authenticated user ID (ObjectId)
+    const { receiverId } = req.params; // Receiver ID from route params
+
+    console.log('[SEND FRIEND REQUEST] Sender ID:', senderId);
+    console.log('[SEND FRIEND REQUEST] Receiver ID:', receiverId);
 
     if (!senderId || !receiverId) {
         return res.status(400).json({ success: false, message: 'Sender and receiver IDs are required.' });
     }
 
     try {
-        const existingRequest = await FriendRequest.findOne({ senderId, receiverId, status: 'pending' });
+        // Check if the users are already friends
+        const sender = await User.findById(senderId);
+        if (sender.friends.includes(receiverId)) {
+            return res.status(400).json({ success: false, message: 'Users are already friends.' });
+        }
+    
+    
+        // Ensure receiverId is converted to ObjectId
+        const receiverObjectId = new mongoose.Types.ObjectId(receiverId);
+
+        // Check for existing friend request
+        const existingRequest = await FriendRequest.findOne({
+            sender: senderId,
+            receiver: receiverObjectId,
+            status: 'pending',
+        });
         if (existingRequest) {
             return res.status(400).json({ success: false, message: 'Friend request already sent.' });
         }
 
+        // Create a new friend request
         const friendRequest = new FriendRequest({
-            senderId,
-            receiverId,
-            requestId: uuidv4(),
+            sender: senderId, // ObjectId
+            receiver: receiverObjectId, // ObjectId
             status: 'pending',
         });
 
         await friendRequest.save();
 
-        notifyUser(receiverId, 'newFriendRequest', { senderId, receiverId, message: 'You have a new friend request' });
-
         res.status(201).json({ success: true, message: 'Friend request sent successfully.' });
     } catch (error) {
+        console.error('[SEND FRIEND REQUEST] Error:', error);
         res.status(500).json({ success: false, message: 'Error sending friend request.' });
     }
 };
@@ -42,59 +59,75 @@ exports.sendFriendRequest = async (req, res) => {
 // Respond to a friend request
 exports.respondToFriendRequest = async (req, res) => {
     const { requestId, status } = req.body;
-
+        // Validate input
     if (!requestId || !status) {
         return res.status(400).json({ success: false, message: 'Request ID and status are required.' });
     }
 
     try {
+        // Find and update the friend request status
         const friendRequest = await FriendRequest.findByIdAndUpdate(
             requestId,
             { status },
             { new: true }
-        );
+        ).populate('sender', 'username').populate('receiver', 'username');
 
+        // Handle missing friend request
         if (!friendRequest) {
             return res.status(404).json({ success: false, message: 'Friend request not found.' });
         }
 
+        // Log the updated friend request
+        console.log('Updated friend request:', friendRequest);
+
         if (status === 'accepted') {
-            const { senderId, receiverId } = friendRequest;
+            const { sender, receiver } = friendRequest;
+
+            // Generate a unique room ID
+            const roomId = `${sender._id}_${receiver._id}`;
+            const roomName = `Chat Room for ${sender.username} and ${receiver.username}`;
 
             // Create a new chat room
-            const roomId = `${senderId}_${receiverId}`;
             const newRoom = await Room.create({
                 roomId,
-                name: `Chat Room for ${senderId} and ${receiverId}`,
-                participants: [senderId, receiverId],
+                name: roomName,
+                participants: [sender._id, receiver._id],
             });
 
             // Add each user to the other's friend list
-            await User.findByIdAndUpdate(senderId, { $push: { friends: receiverId } });
-            await User.findByIdAndUpdate(receiverId, { $push: { friends: senderId } });
+            await User.findByIdAndUpdate(sender._id, { $push: { friends: receiver._id } });
+            await User.findByIdAndUpdate(receiver._id, { $push: { friends: sender._id } });
 
             // Notify both users about the new room
-            notifyUser(senderId, 'newChatRoom', newRoom);
-            notifyUser(receiverId, 'newChatRoom', newRoom);
+            notifyUser(sender._id, 'newChatRoom', newRoom);
+            notifyUser(receiver._id, 'newChatRoom', newRoom);
+
+            console.log(`Friendship established and chat room created: ${roomName}`);
         }
 
+        // Send success response
         res.json({ success: true, message: `Friend request ${status}.` });
     } catch (error) {
+        console.error('[RESPOND TO FRIEND REQUEST] Error:', error);
         res.status(500).json({ success: false, message: 'Error responding to friend request.' });
     }
 };
 
-// Get pending friend requests for a user
 exports.getPendingFriendRequests = async (req, res) => {
     const { userId } = req.params;
 
     try {
-        const pendingRequests = await FriendRequest.find({ receiverId: userId, status: 'pending' }).populate('senderId', 'username profileImage');
+        // Match receiver field and populate sender field correctly
+        const pendingRequests = await FriendRequest.find({ receiver: userId, status: 'pending' })
+            .populate('sender', 'username profileImage');
+
         res.json({ success: true, friendRequests: pendingRequests });
     } catch (error) {
+        console.error('[GET PENDING FRIEND REQUESTS] Error:', error);
         res.status(500).json({ success: false, message: 'Error fetching friend requests.' });
     }
 };
+ 
 
 // Get a user's friends
 exports.getFriends = async (req, res) => {

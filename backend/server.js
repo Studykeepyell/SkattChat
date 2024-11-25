@@ -8,7 +8,8 @@ const chatRoutes = require('./routes/chatRoutes');
 const friendRequestRoutes = require('./routes/friendRequestRoutes');
 const opinionRoutes = require('./routes/opinionRoutes');
 const fileRoutes = require('./routes/fileRoutes');
-const userRoutes = require('./routes/userRoutes'); 
+const userRoutes = require('./routes/userRoutes');
+const authRoutes = require('./routes/authRoutes'); 
 const { setupSocket } = require('./socket/index');
 const socketIO = require('socket.io'); // Add this line
 
@@ -50,6 +51,7 @@ app.use('/api/users', userRoutes);
 app.use('/api/chat', chatRoutes);
 app.use('/api/opinion', opinionRoutes);
 app.use('/api/files', fileRoutes);
+app.use('/api/auth', authRoutes);
 
 //servve static files
 app.use(express.static(path.join(__dirname, '../public')));

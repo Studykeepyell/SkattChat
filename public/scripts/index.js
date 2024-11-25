@@ -4,6 +4,9 @@ import { loadFriendRequests, respondToFriendRequest } from './friends/friends.js
 import { createChatRoom, sendMessage } from './chat/chat.js';
 import { joinChatRoom } from './chat/chat.js';
 import { fetchChatRooms } from './chat/chat.js';
+import { io } from 'socket.io-client';
+
+
 
 // Ensure socket initialization is global and done only once
 if (!window.socket) {

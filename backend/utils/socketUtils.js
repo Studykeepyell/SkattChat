@@ -1,4 +1,4 @@
-const { userSocketMap } = require('../server'); // Adjust based on your setup
+const { userSocketMap } = require('../socket/index'); // Adjust based on your setup
 
 exports.notifyUser = (userId, event, data) => {
     if (userSocketMap[userId]) {

@@ -1,3 +1,5 @@
+import { io } from "socket.io-client";
+const socket = io('http://localhost:3000'||"https://skattchat.online"); // Replace with your server URL
 
 
 export async function sendFriendRequest(receiverId) {
@@ -86,34 +88,33 @@ export async function loadFriendRequests() {
 
 
 export function displayFriendRequest(request) {
+    if (!request || !request.sender || !request.receiver) {
+        console.error('Invalid request object:', request);
+        return;
+    }
+
     const requestItem = document.createElement('li');
 
     // Display sender info
     const senderInfo = document.createElement('span');
-    senderInfo.innerText = `Friend request from ${request.senderId.username}`;
+    senderInfo.innerText = `Friend request from ${request.sender.username}`;
 
     // Accept button
     const acceptButton = document.createElement('button');
     acceptButton.innerText = 'Accept';
     acceptButton.addEventListener('click', async () => {
-        await respondToFriendRequest(request._id, 'accepted', request.senderId._id, request.receiverId);
-    
-        // Remove the request from the UI
-        requestItem.remove();
-    
-        console.log(`Friend request ${request._id} accepted and removed from UI.`);
+        await respondToFriendRequest(request._id, 'accepted', socket);
+        requestItem.remove(); // Remove the request from the UI
+        console.log(`Friend request ${request._id} accepted.`);
     });
 
     // Decline button
     const declineButton = document.createElement('button');
     declineButton.innerText = 'Decline';
     declineButton.addEventListener('click', async () => {
-        await respondToFriendRequest(request._id, 'declined', request.senderId._id, request.receiverId);
-    
-        // Remove the request from the UI
-        requestItem.remove();
-    
-        console.log(`Friend request ${request._id} accepted and removed from UI.`);
+        await respondToFriendRequest(request._id, 'declined', socket);
+        requestItem.remove(); // Remove the request from the UI
+        console.log(`Friend request ${request._id} declined.`);
     });
 
     // Append elements to the request item
@@ -123,24 +124,46 @@ export function displayFriendRequest(request) {
 
     // Append request item to the friend request list
     const friendRequestList = document.getElementById('friendRequestList');
-    friendRequestList.appendChild(requestItem);
-
-    console.log("Added friend request to the list:", request);
+    if (friendRequestList) {
+        friendRequestList.appendChild(requestItem);
+    } else {
+        console.error('friendRequestList element not found.');
+    }
 }
 
 
+
 export async function respondToFriendRequest(requestId, status, socket) {
+    const token = localStorage.getItem('authToken'); // Retrieve token from localStorage
+
+    if (!token) {
+        console.error('Missing token. User might not be authenticated.');
+        alert('You must be logged in to respond to friend requests.');
+        return;
+    }
+
     try {
-        const response = await fetch('/api/users/friends/respond', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+        const response = await fetch('/api/friendRequests/respond', {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`, // Include the token
+            },
             body: JSON.stringify({ requestId, status }),
         });
+
+        if (!response.ok) {
+            const errorMessage = await response.text();
+            throw new Error(`Failed to respond to friend request: ${errorMessage}`);
+        }
 
         const data = await response.json();
         if (data.success) {
             alert(`Friend request ${status}`);
             socket.emit('updateFriendList', { userId: localStorage.getItem('userId') });
+
+            // Reload friend requests to reflect changes
+            await loadFriendRequests();
         } else {
             alert('Failed to respond to friend request.');
         }
