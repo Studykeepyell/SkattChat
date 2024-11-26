@@ -14,17 +14,27 @@ exports.fetchMessages = async (req, res) => {
     }
 };
 
-// Fetch chat rooms for a user
 exports.fetchChatRooms = async (req, res) => {
-    const userId = req.user.id; // Assuming user ID is in the request (middleware)
+    const userId = req.user.id;
     try {
-        const rooms = await Room.find({ participants: userId });
-        res.json(rooms);
+        const rooms = await Room.find({ participants: userId }).populate('participants', 'username profileImage');
+        const formattedRooms = rooms.map(room => ({
+            roomId: room.roomId,
+            name: room.name,
+            participants: room.participants.map(participant => ({
+                id: participant._id,
+                username: participant.username,
+                profileImage: participant.profileImage,
+            })),
+        }));
+
+        res.json({ success: true, rooms: formattedRooms });
     } catch (error) {
         console.error('Error fetching chat rooms:', error);
         res.status(500).json({ success: false, message: 'Failed to fetch chat rooms' });
     }
 };
+
 
 // Send a message
 exports.sendMessage = async (req, res) => {

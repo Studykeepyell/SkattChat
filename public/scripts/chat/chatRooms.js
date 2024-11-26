@@ -1,9 +1,8 @@
 import { joinChatRoom } from "./chat.js";
-
 export const ChatRoom = {
     async create(roomName, userId, socket) {
         try {
-            const response = await fetch('/api/chat/chat/rooms', {
+            const response = await fetch('/api/chat/rooms', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ roomName, userId }),

@@ -41,6 +41,29 @@ if (!window.socket) {
         } catch (error) {
             console.error('Error during initialization:', error);
         }
+
+    document.getElementById('chat-form').addEventListener('submit', (event) => {
+            event.preventDefault(); // Prevent default form submission (page reload)
+        
+                event.preventDefault(); // Prevent default form submission
+
+                const messageInput = document.getElementById('messageInput');
+                const message = messageInput.value.trim();
+                const roomId = localStorage.getItem('currentRoom');
+                const userId = localStorage.getItem('userId');
+                const username = localStorage.getItem('username');
+                const timestamp = new Date().toISOString(); // Current timestamp
+
+                if (message && roomId && userId) {
+                    console.log(`Sending message to room ${roomId}:`, message);
+                    sendMessage(socket, roomId, userId, username, message, timestamp);
+                    messageInput.value = ''; // Clear input field
+                } else {
+                    console.error('Message, roomId, or userId is missing!');
+                }
+            });
+
+
     });
 
     // Function to handle switching chat rooms
@@ -90,26 +113,6 @@ if (!window.socket) {
         }
     }
 
-    // Handle sending chat messages
-    const chatForm = document.getElementById('chat-form');
-    if (chatForm) {
-        chatForm.addEventListener('submit', (event) => {
-            event.preventDefault(); // Prevent default form submission
-
-            const messageInput = document.getElementById('messageInput');
-            const message = messageInput.value.trim();
-            const roomId = localStorage.getItem('currentRoom');
-            const userId = localStorage.getItem('userId');
-            const username = localStorage.getItem('username');
-            const timestamp = new Date().toISOString(); // Current timestamp
-
-            if (message && roomId && userId) {
-                console.log(`Sending message to room ${roomId}:`, message);
-                sendMessage(socket, roomId, userId, username, message, timestamp);
-                messageInput.value = ''; // Clear input field
-            } else {
-                console.error('Message, roomId, or userId is missing!');
-            }
-        });
+  
     }
-}
+

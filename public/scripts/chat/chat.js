@@ -92,7 +92,7 @@ export function displayChatRoom(room, container) {
 
     roomElement.addEventListener('click', () => {
         localStorage.setItem('currentRoom', room.roomId);
-        location.reload();
+        joinChatRoom(socket, room.roomId); // Fetch and display chat room messages
     });
 
     container.appendChild(roomElement);
