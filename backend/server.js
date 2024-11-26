@@ -45,13 +45,12 @@ app.use((req, res, next) => {
 
 
 // Load user routes and pass io and userSocketMap
-
+app.use('/api/auth', authRoutes);
 app.use('/api/friendRequests', friendRequestRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/chat', chatRoutes);
 app.use('/api/opinion', opinionRoutes);
 app.use('/api/files', fileRoutes);
-app.use('/api/auth', authRoutes);
 
 //servve static files
 app.use(express.static(path.join(__dirname, '../public')));

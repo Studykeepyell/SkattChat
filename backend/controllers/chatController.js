@@ -14,6 +14,7 @@ exports.fetchMessages = async (req, res) => {
     }
 };
 
+
 exports.fetchChatRooms = async (req, res) => {
     const userId = req.user.id;
     try {

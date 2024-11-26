@@ -54,6 +54,12 @@ if (!window.socket) {
                 const username = localStorage.getItem('username');
                 const timestamp = new Date().toISOString(); // Current timestamp
 
+                if (!roomId) {
+                    alert('Please select a chat room first!');
+                    return;
+                }
+                
+
                 if (message && roomId && userId) {
                     console.log(`Sending message to room ${roomId}:`, message);
                     sendMessage(socket, roomId, userId, username, message, timestamp);
@@ -81,6 +87,7 @@ if (!window.socket) {
             return;
         }
         console.log(`Switching to room: ${roomId}`);
+        localStorage.setItem('currentRoom', roomId); // Save selected roomId
         joinChatRoom(socket, roomId); // Call joinChatRoom with the roomId
     }
 
