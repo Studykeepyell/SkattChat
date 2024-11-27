@@ -1,4 +1,3 @@
-require('dotenv').config({ path: './.env' });
 const express = require('express');
 const http = require('http');
 const cors = require('cors');
@@ -12,6 +11,7 @@ const userRoutes = require('./routes/userRoutes');
 const authRoutes = require('./routes/authRoutes'); 
 const { setupSocket } = require('./socket/index');
 const socketIO = require('socket.io'); // Add this line
+require('dotenv').config({ path: path.resolve(__dirname, './.env') });
 
 
 // App and Server Setup
@@ -56,8 +56,18 @@ app.use('/api/files', fileRoutes);
 app.use(express.static(path.join(__dirname, '../public')));
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
+
+//Serve the main HTML file for Electron
+app.get('*',(req,res)=>{
+    res.sendFile(path.join(__dirname,'../public/dist/index.html'));
+});
+
+
+
 //index Route
 app.get('/index', (req, res) => res.sendFile(path.join(__dirname, '../public', 'index.html')));
+
+
 
 //Socket.IO Intergration
 setupSocket(io);

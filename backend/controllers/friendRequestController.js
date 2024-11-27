@@ -9,7 +9,7 @@ const { notifyUser } = require('../utils/socketUtils');
 
 
 exports.sendFriendRequest = async (req, res) => {
-    const senderId = req.user._id; // Authenticated user ID (ObjectId)
+    const senderId = req.user?.id; // Authenticated user ID (ObjectId)
     const { receiverId } = req.params; // Receiver ID from route params
 
     console.log('[SEND FRIEND REQUEST] Sender ID:', senderId);
