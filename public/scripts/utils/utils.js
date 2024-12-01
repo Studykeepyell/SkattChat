@@ -11,8 +11,32 @@ export async function fetchProfileImage(userId) {
 }
 
 export function formatTimestamp(timestamp) {
-    const date = new Date(timestamp);
-    return date.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
+    try {
+        // Handle both string and number timestamps
+        const date = typeof timestamp === 'string' ? new Date(timestamp) : new Date(Number(timestamp));
+        if (date.toString() === 'Invalid Date') {
+            console.warn('Invalid timestamp:', timestamp);
+            return 'Invalid Date';
+        }
+        return date.toLocaleString();
+    } catch (error) {
+        console.error('Error formatting timestamp:', timestamp, error);
+        return 'Invalid Date';
+    }
+}
+
+export function formatMessageTime(timestamp) {
+    try {
+        const date = typeof timestamp === 'string' ? new Date(timestamp) : new Date(Number(timestamp));
+        if (date.toString() === 'Invalid Date') {
+            console.warn('Invalid timestamp:', timestamp);
+            return 'Invalid Date';
+        }
+        return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    } catch (error) {
+        console.error('Error formatting message time:', timestamp, error);
+        return 'Invalid Date';
+    }
 }
 
 export function formatMessageDate(timestamp) {

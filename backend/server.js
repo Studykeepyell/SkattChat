@@ -3,13 +3,14 @@ const http = require('http');
 const cors = require('cors');
 const path = require('path');
 const connectDB = require('./config/dbConfig');
-const chatRoutes = require('./routes/chatRoutes');
 const friendRequestRoutes = require('./routes/friendRequestRoutes');
 const opinionRoutes = require('./routes/opinionRoutes');
 const fileRoutes = require('./routes/fileRoutes');
 const userRoutes = require('./routes/userRoutes');
 const authRoutes = require('./routes/authRoutes'); 
 const { setupSocket } = require('./socket/index');
+
+
 const socketIO = require('socket.io'); // Add this line
 require('dotenv').config({ path: path.resolve(__dirname, './.env') });
 
@@ -42,6 +43,7 @@ app.use((req, res, next) => {
     next();
 });
 
+const chatRoutes = require('./routes/chatRoutes')(io);
 
 
 // Load user routes and pass io and userSocketMap

@@ -23,21 +23,37 @@ export const ChatRoom = {
     display(room, container, socket) {
         const roomElement = document.createElement('div');
         roomElement.className = 'chat-room';
-        roomElement.textContent = room.name;
+        roomElement.setAttribute('data-room-id', room.roomId); // Set data attribute
+        roomElement.innerHTML = `
+            <div class="room-info">
+                <span class="room-name">${room.name}</span>
+                <span class="room-timestamp">${new Date(room.lastMessageTime || room.updatedAt).toLocaleString()}</span>
+            </div>
+        `;
     
+        // Add click event listener to join the room
         roomElement.addEventListener('click', () => {
-            console.log(`Room clicked: ${room.name}, Room ID: ${room.roomId}`); // Debug log
             if (!room.roomId) {
-                console.error('Room ID is missing for the clicked room:', room);
+                console.error('Room ID is missing!');
                 return;
             }
     
-            localStorage.setItem('currentRoom', room.roomId);
-            joinChatRoom(socket, room.roomId); // Ensure `joinChatRoom` is correctly implemented
+            socket.emit('joinRoom', room.roomId); // Send room ID to the server
+            const chatHeading = document.getElementById('chat-heading');
+            chatHeading.textContent = `${room.name}`;
+            
+            // Mark the room as active
+            document.querySelectorAll('.chat-room').forEach((el) => el.classList.remove('active-room'));
+            roomElement.classList.add('active-room');
+    
+            // Remove the hint icon
+            const icon = roomElement.querySelector('.new-message-icon');
+            if (icon) icon.remove();
         });
     
         container.appendChild(roomElement);
     }
+    
     
     
 };

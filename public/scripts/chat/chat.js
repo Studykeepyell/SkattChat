@@ -1,9 +1,7 @@
-import { fetchProfileImage, formatTimestamp, formatMessageDate } from '../utils/utils.js';
+import { fetchProfileImage, formatTimestamp, formatMessageDate, formatMessageTime } from '../utils/utils.js';
 import { ChatRoom } from './chatRooms.js';
-let lastMessageDate = null;
 
 
-// Adds a new chat message to the DOM
 export async function addChatMessage(data) {
     const messagesList = document.getElementById('messages');
     if (!messagesList) {
@@ -11,35 +9,130 @@ export async function addChatMessage(data) {
         return;
     }
 
-    const messageElement = createMessageElement(data);
-    messagesList.appendChild(messageElement);
-    messagesList.scrollTop = messagesList.scrollHeight; // Scroll to latest message
-}
+    const lastDateSeparator = messagesList.querySelector('.date-separator:last-of-type')
+    const lastMessageDate = lastDateSeparator ? lastDateSeparator.textContent : null;
+    // Create the message element
+    const elements = createMessageElement(data,lastMessageDate);
+    if (!elements) {
+        console.error('Failed to create message element. Skipping:', data);
+        return;
+    }
 
-function createMessageElement(data) {
+   // Append all elements to the messages list
+   elements.forEach(element => messagesList.appendChild(element));
+   messagesList.scrollTop = messagesList.scrollHeight;
+};
+
+function createMessageElement(data,lastMessageDate) {
+    const { username, userId, content, timestamp } = data;
+    if (!username || !content || !timestamp) {
+        console.error('Invalid data for creating message element:', data);
+        return null;
+    }
+
+    const elements = [];
+    const currentMessageDate = formatMessageDate(timestamp);
+
+    if(currentMessageDate !== lastMessageDate){
+        const dateSeparator = document.createElement('div');
+        dateSeparator.className = 'data-separator';
+        dateSeparator.textContent = currentMessageDate;
+        elements.push(dateSeparator)
+    }
+
     const messageContainer = document.createElement('div');
     messageContainer.className = 'message-container';
 
-    const username = document.createElement('h2');
-    username.className = 'username';
-    username.textContent = data.username;
+    const usernameElement = document.createElement('h2');
+    usernameElement.className = 'username';
+    usernameElement.textContent = username;
 
-    const messageContent = document.createElement('div');
-    messageContent.className = 'message-content';
-    messageContent.textContent = data.message;
+    const messageContentElement = document.createElement('div');
+    messageContentElement.className = 'message-content';
+    messageContentElement.textContent = content;
 
-    const timestamp = document.createElement('div');
-    timestamp.className = 'timestamp';
-    timestamp.textContent = formatTimestamp(data.timestamp); // Use formatted timestamp
+    const timestampElement = document.createElement('div');
+    timestampElement.className = 'timestamp';
+    timestampElement.textContent = formatMessageTime(timestamp);
 
-    messageContainer.append(username, messageContent, timestamp);
-    return messageContainer;
+    messageContainer.append(usernameElement, messageContentElement, timestampElement);
+    elements.push(messageContainer);
+
+    return elements;
 }
 
 
-export async function fetchChatRooms(socket) {
+export async function updateRoomTimestamp(roomId, timestamp) {
+    const roomElement = document.querySelector(`[data-room-id="${roomId}"]`);
+    if (roomElement) {
+        let timestampElement = roomElement.querySelector('.room-timestamp');
+        if (!timestampElement) {
+            timestampElement = document.createElement('span');
+            timestampElement.className = 'room-timestamp';
+            roomElement.appendChild(timestampElement);
+        }
+        timestampElement.textContent = new Date(timestamp).toLocaleString();
+    
+        // Add notification icon for inactive rooms
+        if (!roomElement.classList.contains('active-room')) {
+            const roomNameElement = roomElement.querySelector('.room-name');
+            if (roomNameElement && !roomNameElement.querySelector('.new-message-icon')) {
+                roomNameElement.innerHTML += '<span class="new-message-icon" aria-label="New message">🔔</span>';
+            }
+        }
+    }
+}
+
+
+export async function fetchMessages(roomId) {
+    console.log('Fetching messages for room:', roomId);
+
     try {
-        const response = await fetch('/api/chat/rooms');
+        const response = await fetch(`/api/chat/rooms/${roomId}/messages`, {
+            method: 'GET',
+            headers: {
+                'Authorization': `Bearer ${localStorage.getItem('authToken')}`,
+                'Content-Type': 'application/json',
+            },
+        });
+
+        const data = await response.json();
+
+        if (data.success && data.messages) {
+            console.log('Fetched messages:', data.messages);
+            const messagesList = document.getElementById('messages');
+            if (messagesList) {
+                messagesList.innerHTML = ''; // Clear existing messages
+                data.messages.forEach((message) => {
+                    addChatMessage({
+                        username: message.username,
+                        content: message.message,
+                        timestamp: message.timestamp,
+                    });
+                });
+            }
+        } else {
+            console.warn('No messages found or fetch failed.');
+        }
+    } catch (error) {
+        console.error('Error fetching messages:', error);
+    }
+}
+
+
+
+export async function fetchChatRooms() {
+    console.log('Auth Token:', localStorage.getItem('authToken'));
+
+    try {
+        const response = await fetch('/api/chat/rooms', {
+            method: 'GET',
+            headers: {
+                'Authorization': `Bearer ${localStorage.getItem('authToken')}`,
+                'Content-Type': 'application/json',
+            },
+        });
+
         const data = await response.json();
 
         if (data.success && data.rooms) {
@@ -49,7 +142,7 @@ export async function fetchChatRooms(socket) {
                 container.innerHTML = ''; // Clear previous entries
                 data.rooms.forEach((room) => {
                     console.log(`Room rendered: ${room.name} with ID ${room.roomId}`); // Debug room details
-                    ChatRoom.display(room, container, socket);
+                    ChatRoom.display(room, container); // Adjust to your rendering logic
                 });
             }
         } else {
@@ -92,25 +185,54 @@ export function displayChatRoom(room, container) {
 
     roomElement.addEventListener('click', () => {
         localStorage.setItem('currentRoom', room.roomId);
+
         joinChatRoom(socket, room.roomId); // Fetch and display chat room messages
     });
 
     container.appendChild(roomElement);
 }
 
-export async function sendMessage(socket, roomId, userId, username, message) {
+export async function sendMessage(roomId, userId, username, message, timestamp) {
+    try {
+        // Validate inputs
+        if (!roomId || !userId || !message || !timestamp) {
+            throw new Error('All fields are required.');
+        }
 
-    console.log('Sending message:', { roomId, userId, username, message }); // Debug log
-    const timestamp = new Date().toISOString();
-    socket.emit('chat message', { roomId, userId, username, message, timestamp });
+        const payload = {
+            roomId,
+            userId,
+            username,
+            message,
+            timestamp,
+        };
 
-    if (message.startsWith('/ai')) {
-        const aiMessage = message.replace('/ai ', '');
-        const aiResponse = await getAIResponse(aiMessage, roomId, username);
-        console.log('AI response:', aiResponse); // Debug log
-        addChatMessage({ username: 'AI', message: aiResponse });
+        console.log('Sending message payload:', payload);
+
+        // Send the payload to the backend
+        const response = await fetch('/api/chat/send', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${localStorage.getItem('authToken')}`,
+            },
+            body: JSON.stringify(payload),
+        });
+
+        const data = await response.json();
+
+        if (response.ok) {
+            console.log('Message sent successfully:', data.message);
+        } else {
+            console.error('Failed to send message:', data.message);
+        }
+    } catch (error) {
+        console.error('Error in sendMessage:', error.message);
     }
 }
+
+
+
 
 
 
@@ -121,30 +243,10 @@ export async function joinChatRoom(socket, roomId) {
         return;
     }
 
-    console.log(`Joining room with ID: ${roomId}`); // Debug log
+    console.log(`Joining room with ID: ${roomId}`);
     socket.emit('joinRoom', roomId);
 
-    try {
-        const response = await fetch(`/api/chat/rooms/${roomId}/messages`);
-        const data = await response.json();
-
-        if (data.success && data.messages) {
-            console.log('Fetched chat history:', data.messages); // Debug fetched messages
-            const messagesList = document.getElementById('messages');
-            if (messagesList) messagesList.innerHTML = ''; // Clear old messages
-            data.messages.forEach((message) => addChatMessage(message));
-        } else {
-            console.warn('No chat history available.');
-        }
-    } catch (error) {
-        console.error('Error fetching chat history:', error);
-    }
+    // Fetch and display messages for the room
+    await fetchMessages(roomId);
 }
-
-
-
-
-
-
-
 

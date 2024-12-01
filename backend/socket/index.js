@@ -23,48 +23,42 @@ const setupSocket = (io) => {
         });
 
         socket.on('joinRoom', async (roomId) => {
-            const existingRoom = await Room.findOne({ roomId });
-            if (!existingRoom) {
-                console.error(`Room "${roomId}" does not exist in the database.`);
-                return; // Optionally send an error message to the client
+            if (!roomId) {
+                console.error('Room ID is missing!');
+                socket.emit('errorMessage', { error: 'Room ID is required to join the room.' });
+                return;
             }
         
-            socket.join(roomId);
-            console.log(`User ${socket.id} joined room: ${roomId}`);
-        
-            // Emit chat history for the joined room
             try {
-                const messages = await Message.find({ roomId }).sort({ timestamp: 1 });
-                socket.emit('chat history', messages);
+                const existingRoom = await Room.findOne({ roomId }).populate('messages');
+                if (!existingRoom) {
+                    console.error(`Room "${roomId}" does not exist!`);
+                    socket.emit('errorMessage', { error: `Room "${roomId}" does not exist.` });
+                    return;
+                }
+        
+                socket.join(roomId);
+                console.log(`User ${socket.id} joined room: ${roomId}`);
+        
+                // Combine chat history and room details into one event
+                socket.emit('roomUpdate', {
+                    roomId,
+                    roomName: existingRoom.name,
+                    messages: existingRoom.messages.map((msg) => ({
+                        sender: msg.username,
+                        content: msg.message,
+                        timestamp: msg.timestamp,
+                    })),
+                });
             } catch (error) {
-                console.error(`Error loading messages for room ${roomId}:`, error);
+                console.error(`Error loading messages for room "${roomId}":`, error);
+                socket.emit('errorMessage', { error: 'Failed to load room details.' });
             }
         });
         
         
-
-      // Listen for chat message
-    socket.on('chat message', async (data) => {
-        const { roomId, username, userId, message, timestamp } = data;
-
-        console.log('Chat message received:', data); // Debug log
-
-        if (!roomId || !username || !userId || !message) {
-            console.error('Invalid message data:', data);
-            return;
-        }
-
-        try {
-            const newMessage = await Message.create({ roomId, username, userId, message, timestamp });
-            console.log('Message saved to database:', newMessage); // Debug log
-
-            // Broadcast the message to the room
-            io.to(roomId).emit('chat message', newMessage);
-        } catch (error) {
-            console.error('Error saving message:', error);
-        }
-    });
-    });
-};
+        
+    }
+    )};
 
 module.exports = { setupSocket, userSocketMap };

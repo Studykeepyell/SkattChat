@@ -62,7 +62,7 @@ if (!window.socket) {
 
                 if (message && roomId && userId) {
                     console.log(`Sending message to room ${roomId}:`, message);
-                    sendMessage(socket, roomId, userId, username, message, timestamp);
+                    sendMessage(roomId, userId, username, message, timestamp); // Correct
                     messageInput.value = ''; // Clear input field
                 } else {
                     console.error('Message, roomId, or userId is missing!');

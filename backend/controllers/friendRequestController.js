@@ -56,38 +56,30 @@ exports.sendFriendRequest = async (req, res) => {
     }
 };
 
-// Respond to a friend request
 exports.respondToFriendRequest = async (req, res) => {
     const { requestId, status } = req.body;
-        // Validate input
+
     if (!requestId || !status) {
         return res.status(400).json({ success: false, message: 'Request ID and status are required.' });
     }
 
     try {
-        // Find and update the friend request status
         const friendRequest = await FriendRequest.findByIdAndUpdate(
             requestId,
             { status },
             { new: true }
         ).populate('sender', 'username').populate('receiver', 'username');
 
-        // Handle missing friend request
         if (!friendRequest) {
             return res.status(404).json({ success: false, message: 'Friend request not found.' });
         }
 
-        // Log the updated friend request
-        console.log('Updated friend request:', friendRequest);
-
         if (status === 'accepted') {
             const { sender, receiver } = friendRequest;
 
-            // Generate a unique room ID
+            // Create a new chat room
             const roomId = `${sender._id}_${receiver._id}`;
             const roomName = `Chat Room for ${sender.username} and ${receiver.username}`;
-
-            // Create a new chat room
             const newRoom = await Room.create({
                 roomId,
                 name: roomName,
@@ -99,19 +91,25 @@ exports.respondToFriendRequest = async (req, res) => {
             await User.findByIdAndUpdate(receiver._id, { $push: { friends: sender._id } });
 
             // Notify both users about the new room
-            notifyUser(sender._id, 'newChatRoom', newRoom);
-            notifyUser(receiver._id, 'newChatRoom', newRoom);
+            notifyUser(sender._id, 'newChatRoom', {
+                roomId: newRoom.roomId,
+                name: newRoom.name,
+            });
+            notifyUser(receiver._id, 'newChatRoom', {
+                roomId: newRoom.roomId,
+                name: newRoom.name,
+            });
 
             console.log(`Friendship established and chat room created: ${roomName}`);
         }
 
-        // Send success response
         res.json({ success: true, message: `Friend request ${status}.` });
     } catch (error) {
         console.error('[RESPOND TO FRIEND REQUEST] Error:', error);
         res.status(500).json({ success: false, message: 'Error responding to friend request.' });
     }
 };
+
 
 exports.getPendingFriendRequests = async (req, res) => {
     const { userId } = req.params;
