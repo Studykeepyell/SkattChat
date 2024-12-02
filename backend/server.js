@@ -61,7 +61,7 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 //Serve the main HTML file for Electron
 app.get('*',(req,res)=>{
-    res.sendFile(path.join(__dirname,'../public/dist/index.html'));
+    res.sendFile(path.join(__dirname,'../public/index.html'));
 });
 
 
