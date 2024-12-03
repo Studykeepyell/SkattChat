@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Profile Editor</title>
+    <script src="../scripts/account.js" defer></script>
+    <link rel="stylesheet" href="../styles/account.css">
+    
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Profile Editor</h1>
+        </header>
+        
+        <main>
+            <section class="profile-info">
+                <div class="button-container">
+                    <button class="back-to-home" onclick="window.location.href='chat.html';">Back to Home</button>
+                </div>
+
+                <div class="profile-picture">
+                    <form id="upload-form" enctype="multipart/form-data">
+                        <img src="account.svg" alt="Profile Picture" id="profile-img" onclick="document.getElementById('upload-img').click();">
+                        <input type="file" id="upload-img" accept="image/*" style="display: none;">
+                    </form>
+                </div>
+
+                <div class="profile-details">
+                    <div class="input-group">
+                        <label for="username">Username:</label>
+                        <input type="text" id="username" name="username" readonly>
+                    </div>
+                    <button id="save-profile">Save</button>
+                </div>
+            </section>
+            
+            <section class="friend-list">
+                <h2>Friends</h2>
+                <ul id="friends">
+                    <li>Friend 1</li>
+                    <li>Friend 2</li>
+                    <li>Friend 3</li>
+                    <li>Friend 4</li>
+                </ul>
+            </section>
+        </main>
+        
+        <footer>
+            <button id="logout">Log Out</button>
+
+            <script>
+                document.getElementById("logout").addEventListener("click", () => {
+                    window.location.href = "../pages/login.html";
+                });
+            </script>
+            
+                    </footer>
+    </div>
+</body>
+</html>

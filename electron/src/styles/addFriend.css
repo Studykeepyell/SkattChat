@@ -1,0 +1,125 @@
+/* Reset some default styling */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html {
+  font-size: 16px; /* Base font size of 16px */
+}
+
+body {
+  font-family: Arial, sans-serif;
+  background-color: #f0f0f0;
+  display: flex;
+  justify-content: flex-start;
+  align-items: stretch;
+  height: 100vh;
+  width: 100vw;
+}
+
+.container {
+  display: flex;
+  width: 100%;
+  height: 100%;
+}
+
+/* Taskbar Styling */
+.taskbar {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background-color: #333;
+  padding: 1rem 0; /* Padding using rem for better scalability */
+  width: 7.15%; /* Taskbar takes up 12% of the screen width */
+  min-width: 100px; /* Minimum width for the taskbar */
+  height: 100%;
+}
+
+.taskbar-button {
+  background: none;
+  border: none;
+  outline: none;
+  cursor: pointer;
+  margin: 1.5rem 0; /* Margin with rem for spacing */
+  transition: transform 0.2s ease;
+}
+
+.taskbar-button:hover {
+  transform: scale(1.1);
+}
+
+
+.button-icon {
+  width: 2rem; /* Set icon size using rem */
+  height: 2rem;
+  filter: invert(100%);
+}
+
+/* Main Content Section */
+.main-content {
+  flex-grow: 1; /* Allow the content area to take the remaining space */
+  padding: 2rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: stretch;
+  height: 100%;
+  overflow: auto;
+}
+
+/* Search Section Styling */
+.search-section {
+  margin-bottom: 2rem;
+}
+
+.search-form {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.search-box-container {
+  display: flex;
+  flex-grow: 1;
+  border: 1px solid #ddd;
+  border-radius: 0.25rem;
+  overflow: hidden;
+}
+
+.search-input {
+  flex-grow: 1;
+  padding: 0.5rem;
+  border: none;
+  outline: none;
+  font-size: 1rem;
+}
+
+.search-button {
+  background-color: #1e90ff;
+  color: white;
+  padding: 0.5rem 1rem;
+  border: none;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+  font-size: 1rem;
+}
+
+.search-button:hover {
+  background-color: #1c7ed6;
+}
+
+/* Results Container Styling */
+.results-container {
+  min-height: 200px;
+  margin-top: 2rem;
+}
+
+.results-container > * {
+  margin-bottom: 1.5rem;
+  padding: 1rem;
+  background-color: #f9f9f9;
+  border: 1px solid #ddd;
+  border-radius: 0.25rem;
+}
