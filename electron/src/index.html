@@ -3,14 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta http-equiv="Content-Security-Policy" 
-      content="default-src 'self'; 
-               connect-src 'self' http://localhost:3000 ws://localhost:3000/socket.io/ wss://localhost:3000/socket.io/;
-               script-src 'self' 'unsafe-inline';
-               style-src 'self' 'unsafe-inline'">
+      content="default-src 'self';
+               script-src 'self';
+               style-src 'self' 'unsafe-inline';
+               connect-src 'self' https://skattchat.online http://localhost:3000">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login</title>
     <link rel="stylesheet" href="./styles/index.css">
-    <script src="./dist/login.bundle.js" defer></script>
+    <script src="./scripts/login.js" defer></script>
 </head>
 <body>
     <div class="login-container">

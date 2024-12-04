@@ -91,19 +91,6 @@ if (!window.socket) {
         joinChatRoom(socket, roomId); // Call joinChatRoom with the roomId
     }
 
-    // Function to handle creating new chat rooms
-    function setupCreateRoomHandler(socket) {
-        const createRoomBtn = document.getElementById('createRoomBtn');
-        if (createRoomBtn) {
-            createRoomBtn.addEventListener('click', () => {
-                const roomName = prompt('Enter the room name:');
-                if (roomName) {
-                    createChatRoom(roomName, localStorage.getItem('userId'), socket);
-                }
-            });
-        }
-    }
-
     // Function to handle friend request responses
     function setupFriendRequestHandlers(socket) {
         const friendRequestList = document.getElementById('friendRequestList');
@@ -122,4 +109,3 @@ if (!window.socket) {
 
   
     }
-

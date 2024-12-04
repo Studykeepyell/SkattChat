@@ -1,30 +1,11 @@
 // chat.js
-const { fetchProfileImage, formatTimestamp, formatMessageDate, formatMessageTime } = require('../utils/utils.js');
-const { ChatRoom } = require('./chatRooms.js');
-const io = require('socket.io-client');
+import { fetchProfileImage, formatTimestamp, formatMessageDate, formatMessageTime } from '../utils/utils.js';
+import { ChatRoom } from './chatRooms.js';
+import { io } from 'socket.io-client';
+import { createMessageHandler } from './messageHandler.js';
+import { setupChatSocket } from './chatSocket.js';
 
-function addChatMessage(data) {
-    const messagesList = document.getElementById('messages');
-    if (!messagesList) {
-        console.error("Error: 'messages' element not found.");
-        return;
-    }
-
-    const lastDateSeparator = messagesList.querySelector('.date-separator:last-of-type')
-    const lastMessageDate = lastDateSeparator ? lastDateSeparator.textContent : null;
-    // Create the message element
-    const elements = createMessageElement(data,lastMessageDate);
-    if (!elements) {
-        console.error('Failed to create message element. Skipping:', data);
-        return;
-    }
-
-   // Append all elements to the messages list
-   elements.forEach(element => messagesList.appendChild(element));
-   messagesList.scrollTop = messagesList.scrollHeight;
-};
-
-function createMessageElement(data,lastMessageDate) {
+function createMessageElement(data, lastMessageDate) {
     const { username, userId, content, timestamp } = data;
     if (!username || !content || !timestamp) {
         console.error('Invalid data for creating message element:', data);
@@ -34,11 +15,11 @@ function createMessageElement(data,lastMessageDate) {
     const elements = [];
     const currentMessageDate = formatMessageDate(timestamp);
 
-    if(currentMessageDate !== lastMessageDate){
+    if (currentMessageDate !== lastMessageDate) {
         const dateSeparator = document.createElement('div');
         dateSeparator.className = 'data-separator';
         dateSeparator.textContent = currentMessageDate;
-        elements.push(dateSeparator)
+        elements.push(dateSeparator);
     }
 
     const messageContainer = document.createElement('div');
@@ -62,7 +43,6 @@ function createMessageElement(data,lastMessageDate) {
     return elements;
 }
 
-
 async function updateRoomTimestamp(roomId, timestamp) {
     const roomElement = document.querySelector(`[data-room-id="${roomId}"]`);
     if (roomElement) {
@@ -73,7 +53,7 @@ async function updateRoomTimestamp(roomId, timestamp) {
             roomElement.appendChild(timestampElement);
         }
         timestampElement.textContent = new Date(timestamp).toLocaleString();
-    
+
         // Add notification icon for inactive rooms
         if (!roomElement.classList.contains('active-room')) {
             const roomNameElement = roomElement.querySelector('.room-name');
@@ -84,21 +64,63 @@ async function updateRoomTimestamp(roomId, timestamp) {
     }
 }
 
+// Export the addChatMessage function at module level
+async function addChatMessage(data) {
+    const messagesList = document.getElementById('messages');
+    if (!messagesList) {
+        console.error("Error: 'messages' element not found.");
+        return;
+    }
 
+    const lastDateSeparator = messagesList.querySelector('.date-separator:last-of-type');
+    const lastMessageDate = lastDateSeparator ? lastDateSeparator.textContent : null;
+
+    const elements = createMessageElement(data, lastMessageDate);
+    if (!elements) return;
+
+    elements.forEach(element => messagesList.appendChild(element));
+    messagesList.scrollTop = messagesList.scrollHeight;
+}
+
+// Add this utility function for error messages
+const showErrorMessage = (message) => {
+    const errorDiv = document.getElementById('error-messages') || createErrorDiv();
+    errorDiv.textContent = message;
+    errorDiv.style.display = 'block';
+    setTimeout(() => errorDiv.style.display = 'none', 5000);
+};
+
+const createErrorDiv = () => {
+    const div = document.createElement('div');
+    div.id = 'error-messages';
+    div.className = 'error-message';
+    document.body.appendChild(div);
+    return div;
+};
+
+// Update fetch messages to use the correct API path
 async function fetchMessages(roomId) {
-    console.log('Fetching messages for room:', roomId);
-
+    const baseURL = window.location.hostname === 'localhost' 
+        ? 'http://localhost:3000'
+        : 'https://skattchat.online';
+    
     try {
-        const response = await fetch(`/api/chat/rooms/${roomId}/messages`, {
+        const response = await fetch(`${baseURL}/api/chat/rooms/${roomId}/messages`, {
             method: 'GET',
+            credentials: 'include',
             headers: {
-                'Authorization': `Bearer ${localStorage.getItem('authToken')}`,
                 'Content-Type': 'application/json',
-            },
+                'Accept': 'application/json',
+                'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+            }
         });
 
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
         const data = await response.json();
-
+        
         if (data.success && data.messages) {
             console.log('Fetched messages:', data.messages);
             const messagesList = document.getElementById('messages');
@@ -115,39 +137,56 @@ async function fetchMessages(roomId) {
         } else {
             console.warn('No messages found or fetch failed.');
         }
+        
     } catch (error) {
-        console.error('Error fetching messages:', error);
+        console.error(`Failed to fetch messages for room ${roomId}:`, error);
+        return [];
     }
 }
 
+let globalSocket = null;
+
+export const setSocket = (socket) => {
+    globalSocket = socket;
+};
+
 const fetchChatRooms = async () => {
-    const baseURL = process.env.NODE_ENV === 'development' 
-        ? 'http://localhost:3000' 
+    const baseURL = window.location.hostname === 'localhost' 
+        ? 'http://localhost:3000'
         : 'https://skattchat.online';
-        
+
     try {
-        console.log('Fetching chat rooms from:', `${baseURL}/api/chat/rooms`);
+        if (!globalSocket) {
+            throw new Error('Socket not initialized');
+        }
+
         const response = await fetch(`${baseURL}/api/chat/rooms`, {
-            method: 'GET',
-            credentials: 'include',
             headers: {
-                'Authorization': `Bearer ${localStorage.getItem('authToken')}`,
-                'Content-Type': 'application/json'
+                'Authorization': `Bearer ${localStorage.getItem('authToken')}`
             }
         });
-        
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
+
+        const data = await response.json();
+        if (data.success && data.rooms) {
+            console.log('Fetched rooms:', data.rooms); // Debug log
+            const container = document.getElementById('roomList');
+            if (container) {
+                container.innerHTML = ''; // Clear previous entries
+                data.rooms.forEach((room) => {
+                    console.log(`Room rendered: ${room.name} with ID ${room.roomId}`); // Debug room details
+                    ChatRoom.display(room, container); // Adjust to your rendering logic
+                });
+            }
+        } else {
+            console.warn('No rooms found or fetch failed.');
         }
-        
-        return await response.json();
     } catch (error) {
         console.error('Error fetching chat rooms:', error);
         throw error;
     }
 };
 
-async function createChatRoom(roomName, userId, socket) {
+const createChatRoom = async (roomName, userId) => {
     try {
         const response = await fetch('/api/chat/rooms', {
             method: 'POST',
@@ -167,6 +206,89 @@ async function createChatRoom(roomName, userId, socket) {
     }
 }
 
+// First fix the sendMessage function URL interpolation
+const sendMessage = async (roomId, userId, username, message,timestamp) => {
+    try {
+        if (!roomId || !userId || !message) {
+            throw new Error('Missing required fields for message');
+        }
+
+        const baseURL = window.location.hostname === 'localhost' 
+            ? 'http://localhost:3000'
+            : 'https://skattchat.online';
+
+
+            const payload = {
+                roomId,
+                userId,
+                username,
+                message,
+                timestamp,
+            };
+    
+            console.log('Sending message payload:', payload);
+
+        const response = await fetch(`${baseURL}/api/chat/send`, {
+            method: 'POST',
+            headers: { 
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+            },
+            body: JSON.stringify(payload),
+            });
+       
+            const data = await response.json();
+
+            if (response.ok) {
+                console.log('Message sent successfully:', data.message);
+            } else {
+                console.error('Failed to send message:', data.message);
+            }
+        } catch (error) {
+            console.error('Error in sendMessage:', error.message);
+        }
+};
+
+// Update joinChatRoom with debug logging
+async function joinChatRoom(socket, roomId) {
+    if (!roomId) {
+        console.error('Room ID is required to join a chat room.');
+        return;
+    }
+
+    console.log(`Joining room with ID: ${roomId}`);
+    socket.emit('joinRoom', roomId);
+
+    // Fetch and display messages for the room
+    await fetchMessages(roomId);
+}
+
+
+
+const setupSocket = () => {
+    const socketOptions = {
+        transports: ['websocket'],
+        reconnection: true,
+        reconnectionAttempts: 5,
+        reconnectionDelay: 1000,
+        path: '/socket.io/'
+    };
+
+    const serverUrl = window.location.hostname === 'localhost'
+        ? 'ws://localhost:3000'
+        : 'wss://skattchat.online';
+
+    try {
+        const socket = io(serverUrl, socketOptions);
+        const messageHandler = createMessageHandler();
+        setupChatSocket(socket, messageHandler);
+        return socket;
+    } catch (error) {
+        console.error('Socket initialization error:', error);
+        return null;
+    }
+};
+
 function displayChatRoom(room, container) {
     const roomElement = document.createElement('div');
     roomElement.className = 'chat-room';
@@ -181,113 +303,157 @@ function displayChatRoom(room, container) {
     container.appendChild(roomElement);
 }
 
-async function sendMessage(roomId, userId, username, message, timestamp) {
-    try {
-        // Validate inputs
-        if (!roomId || !userId || !message || !timestamp) {
-            throw new Error('All fields are required.');
-        }
 
-        const payload = {
-            roomId,
-            userId,
-            username,
-            message,
-            timestamp,
-        };
 
-        console.log('Sending message payload:', payload);
-
-        // Send the payload to the backend
-        const response = await fetch('/api/chat/send', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${localStorage.getItem('authToken')}`,
-            },
-            body: JSON.stringify(payload),
-        });
-
-        const data = await response.json();
-
-        if (response.ok) {
-            console.log('Message sent successfully:', data.message);
-        } else {
-            console.error('Failed to send message:', data.message);
-        }
-    } catch (error) {
-        console.error('Error in sendMessage:', error.message);
+// Helper function to create message container
+const createMessageContainer = () => {
+    const container = document.createElement('div');
+    container.id = 'chat-messages';
+    container.className = 'chat-messages';
+    
+    const messagesArea = document.querySelector('.message-display');
+    if (messagesArea) {
+        messagesArea.appendChild(container);
+    } else {
+        document.body.appendChild(container);
     }
-}
+    
+    return container;
+};
 
-async function joinChatRoom(roomId) {
-    if (!roomId) {
-        console.error('Room ID is required to join a chat room.');
-        return;
+// Utility function to sanitize HTML and prevent XSS
+const sanitizeHTML = (str) => {
+    const div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
+};
+
+// Utility function to get current user ID
+const getCurrentUserId = () => {
+    return localStorage.getItem('userId') || '';
+};
+
+// Add this new function to chat.js
+const updateChatUI = (room, roomId) => {
+    // Update chat heading
+    const chatHeading = document.getElementById('chat-heading');
+    if (chatHeading) {
+        const roomName = typeof room === 'object' && room.name 
+            ? room.name 
+            : `Room ${roomId}`;
+        chatHeading.textContent = roomName;
     }
 
-    console.log(`Joining room with ID: ${roomId}`);
-    socket.emit('joinRoom', roomId);
-
-    // Fetch and display messages for the room
-    await fetchMessages(roomId);
-}
-
-const setupSocket = () => {
-    const socketOptions = {
-        transports: ['websocket', 'polling'],
-        reconnection: true,
-        reconnectionAttempts: 5,
-        reconnectionDelay: 1000,
-        path: '/socket.io',
-        auth: {
-            token: localStorage.getItem('authToken')
+    // Update active room selection
+    const roomElements = document.querySelectorAll('.chat-room');
+    roomElements.forEach(el => {
+        el.classList.remove('active-room');
+        if (el.dataset.roomId === roomId) {
+            el.classList.add('active-room');
+            // Clear any notification indicators
+            const notificationIcon = el.querySelector('.new-message-icon');
+            if (notificationIcon) {
+                notificationIcon.remove();
+            }
         }
-    };
+    });
 
-    const serverUrl = process.env.NODE_ENV === 'development' 
-        ? 'http://localhost:3000' 
-        : 'https://skattchat.online';
+    // Clear message input
+    const messageInput = document.getElementById('messageInput');
+    if (messageInput) {
+        messageInput.value = '';
+    }
 
-    try {
-        const socket = io(serverUrl, socketOptions);
-        
-        socket.on('connect', () => {
-            console.log('Socket connected successfully');
-        });
+    // Store current room in localStorage
+    localStorage.setItem('currentRoom', roomId);
 
-        socket.on('connect_error', (error) => {
-            console.error('Socket connection error:', error.message);
-        });
-
-        return socket;
-    } catch (error) {
-        console.error('Socket initialization error:', error);
-        return null;
+    // Update room info section if it exists
+    const roomInfo = document.getElementById('room-info');
+    if (roomInfo && typeof room === 'object') {
+        roomInfo.innerHTML = `
+            <div class="room-details">
+                <h3>${sanitizeHTML(room.name)}</h3>
+                <span class="member-count">${room.memberCount || 0} members</span>
+            </div>
+        `;
     }
 };
 
-document.addEventListener('DOMContentLoaded', async () => {
-    try {
-        console.log('Initializing chat application...');
-        const socket = setupSocket();
-        if (!socket) throw new Error('Failed to initialize socket connection');
-        
-        const rooms = await fetchChatRooms();
-        console.log('Chat rooms loaded:', rooms);
-        
-        setupCreateRoomHandler(socket);
-        setupFriendRequestHandlers(socket);
-    } catch (error) {
-        console.error('Initialization error:', error);
+// Add this CSS for styling
+const style = document.createElement('style');
+style.textContent = `
+    .active-room {
+        background-color: #e3f2fd;
+        border-left: 4px solid #2196f3;
     }
-});
+    
+    .room-details {
+        padding: 10px;
+        border-bottom: 1px solid #eee;
+    }
+    
+    .member-count {
+        color: #666;
+        font-size: 0.9em;
+    }
+`;
+document.head.appendChild(style);
 
-module.exports = {
-    addChatMessage,
+// friends.js
+const setupSocketFriends = () => {
+    const baseURL = window.location.hostname === 'localhost' 
+        ? 'http://localhost:3000'
+        : 'https://skattchat.online';
+
+    return io(baseURL, {
+        transports: ['websocket'],
+        withCredentials: true,
+        autoConnect: true
+    });
+};
+
+const socketFriends = setupSocketFriends();
+
+async function sendFriendRequest(receiverId) {
+    const senderId = localStorage.getItem('userId');
+    const baseURL = window.location.hostname === 'localhost' 
+        ? 'http://localhost:3000'
+        : 'https://skattchat.online';
+
+    console.log("Sending friend request to:", receiverId);
+    console.log("Sender ID:", senderId);
+
+    if (!senderId || !receiverId) {
+        console.error("Error: Missing senderId or receiverId");
+        return;
+    }
+
+    try {
+        const response = await fetch(`${baseURL}/api/users/friends/${receiverId}`, {
+            method: 'POST',
+            headers: { 
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+            },
+            body: JSON.stringify({ senderId })
+        });
+        return await response.json();
+    } catch (error) {
+        console.error('Error sending friend request:', error);
+        throw error;
+    }
+}
+
+// Single export statement at the end
+export {
     createChatRoom,
     sendMessage,
     joinChatRoom,
     fetchChatRooms,
-    setupSocket
+    setupSocket,
+    displayChatRoom,
+    updateRoomTimestamp,
+    fetchMessages,
+    addChatMessage,  // Add this line
+    sendFriendRequest  // Add this line
 };

@@ -4,15 +4,26 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Chat Room</title>
+    
+    <!-- Update the CSP meta tag in chat.html -->
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self';
+       script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.socket.io;
+       script-src-elem 'self' 'unsafe-inline' https://cdn.socket.io;
+       style-src 'self' 'unsafe-inline';
+       connect-src 'self' https://skattchat.online http://localhost:3000 
+                  ws://localhost:3000/socket.io/ wss://localhost:3000/socket.io/ 
+                  https://skattchat.online/socket.io/ wss://skattchat.online/socket.io/;
+       img-src 'self' data: https:">
+    
     <link rel="stylesheet" href="../styles/chat.css">
-    <script src="../dist/chat.bundle.js" defer></script>
-    <script src ="../scripts/chat/chat-init.js" defer></script>
-    <script src="/socket.io/socket.io.js"></script>
-    <style> 
-      .no-background { background: none; color: white; height:0.1% } 
-      .dark-mode { filter: invert(1) hue-rotate(180deg); }
-    </style>
-
+    
+    <!-- Load Socket.IO -->
+    <script src="../scripts/chat/chat-init.js"></script>
+    
+    <!-- Load bundled file -->
+    <script type="module" src="../../dist/chat.bundle.js"></script>
+    <!-- Move inline styles to external stylesheet -->
+    <link rel="stylesheet" href="../styles/darkmode.css">
 </head>
 
   <body>
@@ -111,12 +122,9 @@
           </div>
 
           <!-- Message Display Area -->
-          <div
-            id="messages"
-            class="message-display"
-            aria-live="polite"
-            aria-atomic="true"
-          ></div>
+          <div id="messages" class="message-display" aria-live="polite" aria-atomic="true">
+            <div id="chat-messages" class="chat-messages"></div>
+          </div>
 
           <!-- Input Form -->
           <!-- Input Form -->

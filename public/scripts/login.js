@@ -18,53 +18,49 @@ document.addEventListener('DOMContentLoaded', () => {
         return username !== '' && password !== '';
     }
 
-    function login(username, password) {
+    async function login(username, password) {
+        // Base URL determination
         const baseURL = window.location.hostname === 'localhost' 
-        ? 'http://localhost:3000' 
-        : 'https://skattchat.online';
-    
-        const xhr = new XMLHttpRequest();
-        xhr.open('POST', `${baseURL}/api/users/login`, true);
-        xhr.setRequestHeader('Content-Type', 'application/json');
-    
-        xhr.onload = function() {
-            if (xhr.status === 200) {
-                try {
-                    console.log('Response received:', xhr.responseText);
-                    const response = JSON.parse(xhr.responseText);
-                    
-                    if (response.success) {
-                        console.log('Login was successful.');
-                        if (response.userId) {
-                            localStorage.setItem('userId', response.userId);
-                            localStorage.setItem('authToken', response.token);
-                            console.log('userId stored in localStorage:', localStorage.getItem('userId'));
-                            console.log('authToken stored in localStorage:', localStorage.getItem('authToken'));
+            ? 'http://localhost:3000' 
+            : 'https://skattchat.online';
 
-                        } else {
-                            console.warn('Warning: userId is missing in the response');
-                        }
+        try {
+            const response = await fetch(`${baseURL}/api/users/login`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ username, password }),
+                credentials: 'include' // For handling cookies if needed
+            });
 
-                        localStorage.setItem('username', username);
-                        window.location.href = '../pages/chat.html?username=' + encodeURIComponent(username);
-                    } else {
-                        alert(response.message || 'Invalid username or password');
-                    }
-                } catch (e) {
-                    console.error('Failed to parse JSON:', xhr.responseText);
-                    alert('An error occurred while processing the response');
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+
+            const data = await response.json();
+            
+            if (data.success) {
+                console.log('Login successful');
+                if (data.userId) {
+                    localStorage.setItem('userId', data.userId);
+                    localStorage.setItem('authToken', data.token);
+                    localStorage.setItem('username', username);
+                    window.location.href = '/pages/chat.html';
                 }
             } else {
-                console.error('Login failed:', xhr.status, xhr.responseText);
-                alert('An error occurred during login. Please try again later.');
+                throw new Error(data.message || 'Login failed');
             }
-        };
-        
-        xhr.onerror = function() {
-            alert('A network error occurred. Please check your connection.');
-        };
-
-        // Send JSON string as the request body
-        xhr.send(JSON.stringify({ username, password }));
+        } catch (error) {
+            console.error('Login error:', error);
+            // Show error to user
+            const errorMessage = document.getElementById('error-message');
+            if (errorMessage) {
+                errorMessage.textContent = error.message === 'Failed to fetch' 
+                    ? 'Network error - please check your connection'
+                    : error.message;
+                errorMessage.style.display = 'block';
+            }
+        }
     }
 });

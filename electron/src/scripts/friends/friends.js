@@ -1,9 +1,24 @@
 import { io } from "socket.io-client";
-const socket = io('http://localhost:3000'||"https://skattchat.online"); // Replace with your server URL
 
+const setupSocket = () => {
+    const baseURL = window.location.hostname === 'localhost' 
+        ? 'http://localhost:3000'
+        : 'https://skattchat.online';
+
+    return io(baseURL, {
+        transports: ['websocket'],
+        withCredentials: true,
+        autoConnect: true
+    });
+};
+
+const socket = setupSocket();
 
 export async function sendFriendRequest(receiverId) {
-    const senderId = localStorage.getItem('userId'); // Get the sender's userId
+    const senderId = localStorage.getItem('userId');
+    const baseURL = window.location.hostname === 'localhost' 
+        ? 'http://localhost:3000'
+        : 'https://skattchat.online';
 
     console.log("Sending friend request to:", receiverId);
     console.log("Sender ID:", senderId);
@@ -14,31 +29,20 @@ export async function sendFriendRequest(receiverId) {
     }
 
     try {
-        const response = await fetch(`/api/users/friends/${receiverId}`, {
+        const response = await fetch(`${baseURL}/api/users/friends/${receiverId}`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: { 
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+            },
             body: JSON.stringify({ senderId })
         });
-
-        if (!response.ok) {
-            const errorMessage = await response.text();
-            throw new Error(`HTTP error! Status: ${response.status} - ${errorMessage}`);
-        }
-
-        const data = await response.json();
-        console.log("Friend request response:", data);
-
-        if (data.success) {
-            alert('Friend request sent successfully!');
-        } else {
-            alert(data.message);
-        }
+        return await response.json();
     } catch (error) {
-        console.error("Error sending friend request:", error);
+        console.error('Error sending friend request:', error);
+        throw error;
     }
 }
-
-
 
 export async function loadFriendRequests() {
     const userId = localStorage.getItem('userId'); // Get the logged-in user's ID

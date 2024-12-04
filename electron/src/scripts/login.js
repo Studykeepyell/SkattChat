@@ -19,7 +19,8 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function login(username, password) {
-        const baseURL = process.env.NODE_ENV === 'development'
+        // Browser-safe environment detection
+        const baseURL = window.location.hostname === 'localhost' 
             ? 'http://localhost:3000'
             : 'https://skattchat.online';
 
@@ -37,6 +38,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     if (response.success) {
                         localStorage.setItem('userId', response.userId);
                         localStorage.setItem('authToken', response.token);
+                        localStorage.setItem('username', username);
                         window.location.href = './pages/chat.html';
                     } else {
                         showError('Invalid username or password');

@@ -1,59 +1,78 @@
 import { ChatRoom } from './chatRooms.js';
-import { addChatMessage } from './chat.js';
 import { updateRoomTimestamp } from './chat.js';
-
-const setupChatSocket = (socket) => {
+import { addChatMessage } from './chat.js';
+export const setupChatSocket = (socket) => {
     if (!socket) {
-        console.error('Socket not initialized');
-        return;
+        throw new Error('Socket connection required');
     }
 
-    // Room update handler
-    socket.on('roomUpdate', (data) => {
-        const { roomId, roomName, messages } = data;
-        if (!roomId || !roomName) {
-            console.error('Invalid room data:', data);
-            return;
+    const handlers = {
+        'chat message': (data) => {
+            try {
+                console.log('Received chat message:', data);
+                
+                // Create message element
+                const messageData = {
+                    username: data.username || 'Anonymous',
+                    userId: data.userId,
+                    content: data.message,
+                    timestamp: data.timestamp || new Date().toISOString()
+                };
+
+                addChatMessage(messageData);
+
+
+                // Update room timestamp if needed
+                if (data.roomId) {
+                    updateRoomTimestamp(data.roomId, messageData.timestamp);
+                }
+            } catch (error) {
+                console.error('Error handling chat message:', error);
+            }
+        },
+        'updateChatRoomList': (rooms) => {
+            console.log('Updated chat room list:', rooms);
+            const roomList = document.getElementById('roomList');
+            if (roomList) {
+                roomList.innerHTML = '';
+                rooms.forEach((room) => ChatRoom.display(room, roomList, socket));
+            }
+        },
+        'user joined': (data) => {
+            console.log('User joined:', data);
+            showSystemMessage(`${data.username} joined the chat`);
+        },
+        'user left': (data) => {
+            console.log('User left:', data);
+            showSystemMessage(`${data.username} left the chat`);
+        },
+        'error': (error) => {
+            console.error('Socket error:', error);
+            showErrorMessage(error.message || 'Connection error occurred');
         }
-        console.log(`Room updated: ${roomName} (${roomId})`);
-        // Update room UI
-        updateRoomDisplay(roomId, roomName, messages);
+    };
+
+    // Register all event handlers
+    Object.entries(handlers).forEach(([event, handler]) => {
+        socket.on(event, handler);
     });
-
-    // Message handler
-    socket.on('chat message', (data) => {
-        const { roomId, timestamp, userId, username, message } = data;
-        console.log('Received chat message:', data);
-        
-        addChatMessage({
-            username,
-            userId,
-            content: message,
-            timestamp
-        });
-
-        if (typeof updateRoomTimestamp === 'function') {
-            updateRoomTimestamp(roomId, timestamp);
-        }
-
-        // Play sound for others' messages
-        const currentUserId = localStorage.getItem('userId');
-        if (userId !== currentUserId) {
-            playNotificationSound();
-        }
-    });
 };
 
-const updateRoomDisplay = (roomId, roomName, messages) => {
-    // Implementation for updating room display
-    console.log('Updating room display:', roomId, roomName);
+const showSystemMessage = (message) => {
+    const chatMessages = document.getElementById('chat-messages');
+    if (chatMessages) {
+        const systemDiv = document.createElement('div');
+        systemDiv.className = 'system-message';
+        systemDiv.textContent = message;
+        chatMessages.appendChild(systemDiv);
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
 };
 
-const playNotificationSound = () => {
-    const audio = new Audio('/audio/notification.mp3');
-    audio.play().catch(error => console.error('Audio playback failed:', error));
-};
-
-module.exports = {
-    setupChatSocket
+const showErrorMessage = (message) => {
+    const errorDiv = document.createElement('div');
+    errorDiv.className = 'error-message';
+    errorDiv.textContent = message;
+    document.body.appendChild(errorDiv);
+    setTimeout(() => errorDiv.remove(), 5000);
 };
