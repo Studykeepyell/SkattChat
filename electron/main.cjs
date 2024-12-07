@@ -27,53 +27,47 @@ function createWindow() {
         height: 800,
         webPreferences: {
             preload: path.join(__dirname, 'preload.js'),
-            nodeIntegration: false,
-            contextIsolation: true,
-            webSecurity: true
+            nodeIntegration: true,
+            contextIsolation: true, // Enable context isolation
+            webSecurity: isDev ? false : true  // Disable only in development
         }
     });
 
-    // Disable cache while debugging
+    // Development specific settings
     if (isDev) {
         mainWindow.webContents.session.clearCache();
+        mainWindow.webContents.openDevTools();
     }
 
-    // Fix path resolution
-    const indexPath = path.resolve(__dirname, 'src', 'index.html');
+    // Fix path resolution for development
+    const indexPath = isDev 
+        ? path.join(__dirname, 'src', 'index.html')
+        : path.join(__dirname, 'dist', 'index.html');
+    
     console.log('Loading index from:', indexPath);
 
-    // Load file with error handling
+    // Set CSP for development
+    mainWindow.webContents.session.webRequest.onHeadersReceived((details, callback) => {
+        callback({
+            responseHeaders: {
+                ...details.responseHeaders,
+                'Content-Security-Policy': isDev ? [
+                    "default-src 'self'",
+                    "connect-src 'self' http://localhost:3000",
+                    "script-src 'self' 'unsafe-inline'",
+                    "style-src 'self' 'unsafe-inline'"
+                ].join('; ') : undefined
+            }
+        });
+    });
+
     mainWindow.loadFile(indexPath).catch(err => {
         console.error('Failed to load index.html:', err);
     });
 
-    // Add error logging
+    // Error handling
     mainWindow.webContents.on('did-fail-load', (_, code, desc) => {
         console.error('Page load failed:', code, desc);
-    });
-
-    // Set CSP header with development-specific rules
-    mainWindow.webContents.session.webRequest.onHeadersReceived((details, callback) => {
-        const csp = isDev ? 
-            "default-src 'self';" +
-            `connect-src 'self' ${API_URL} ws://${API_URL.replace('https://', '')} wss://${API_URL.replace('https://', '')};" +` +
-            "script-src 'self' 'unsafe-inline';" +
-            "style-src 'self' 'unsafe-inline';" +
-            "img-src 'self' data: https: blob:;" :
-            "default-src 'self';" +
-            "connect-src 'self' https://skattchat.online wss://skattchat.online;" +
-            "script-src 'self' 'unsafe-inline';" +
-            "style-src 'self' 'unsafe-inline';" +
-            "img-src 'self' data: https:;";
-
-        console.log('Setting CSP:', csp);
-
-        callback({
-            responseHeaders: {
-                ...details.responseHeaders,
-                'Content-Security-Policy': [csp]
-            }
-        });
     });
 
     // Open DevTools in development
@@ -81,18 +75,21 @@ function createWindow() {
         mainWindow.webContents.openDevTools();
     }
 
-    mainWindow.webContents.on('did-finish-load', () => {
-        if (!isDev) {
-            mainWindow.webContents.executeJavaScript(`
-                const downloadButton = document.createElement('button');
-                downloadButton.textContent = 'Download App';
-                downloadButton.onclick = () => {
-                    window.location.href = '/path/to/download';
-                };
-                document.body.appendChild(downloadButton);
-            `);
+    // Enhanced dev tools and logging for development
+    if (isDev) {
+        mainWindow.webContents.openDevTools();
+        console.log('Running in development mode');
+        console.log('API URL:', API_URL);
+        
+        try {
+            const electronReload = require('electron-reload');
+            electronReload(__dirname, {
+                electron: path.join(__dirname, 'node_modules', '.bin', 'electron')
+            });
+        } catch (error) {
+            console.warn('electron-reload not available:', error.message);
         }
-    });
+    }
 
     mainWindow.on('closed', () => {
         mainWindow = null;

@@ -1,37 +1,43 @@
 const jwt = require('jsonwebtoken');
-
+const User = require('../models/User');
 // Generate tokens during login/signup
 exports.login = async (req, res) => {
-    const { email, password } = req.body;
+    const { username, password } = req.body;
 
     try {
-        // Find the user in the database
-        const user = await User.findOne({ email });
-        if (!user || !(await user.isPasswordMatch(password))) {
-            return res.status(401).json({ error: 'Invalid credentials' });
+        // Find user by username or email
+        const user = await User.findOne({
+            $or: [
+                { username: username },
+                { email: username }
+            ]
+        });
+
+        if (!user) {
+            return res.status(401).json({ success: false, error: 'Invalid credentials' });
         }
 
-        // Generate tokens
-        const accessToken = jwt.sign(
+        const isMatch = await user.isPasswordMatch(password);
+        if (!isMatch) {
+            return res.status(401).json({ success: false, error: 'Invalid credentials' });
+        }
+
+        // Generate token
+        const token = jwt.sign(
             { id: user._id },
             process.env.JWT_SECRET,
-            { expiresIn: '12h' } // Access token lasts 1 hour
+            { expiresIn: '12h' }
         );
 
-        const refreshToken = jwt.sign(
-            { id: user._id },
-            process.env.JWT_REFRESH_SECRET,
-            { expiresIn: '7d' } // Refresh token lasts 7 days
-        );
-
-        // Optionally store refresh token in database if you need to revoke it later
-        user.refreshToken = refreshToken;
-        await user.save();
-
-        res.json({ accessToken, refreshToken });
+        res.json({
+            success: true,
+            userId: user._id,
+            token,
+            username: user.username
+        });
     } catch (error) {
         console.error('Login error:', error);
-        res.status(500).json({ error: 'Internal server error' });
+        res.status(500).json({ success: false, error: 'Internal server error' });
     }
 };
 

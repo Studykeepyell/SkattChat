@@ -5,24 +5,25 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Chat Room</title>
     
-    <!-- Update the CSP meta tag in chat.html -->
-    <meta http-equiv="Content-Security-Policy" content="default-src 'self';
-       script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.socket.io;
-       script-src-elem 'self' 'unsafe-inline' https://cdn.socket.io;
-       style-src 'self' 'unsafe-inline';
-       connect-src 'self' https://skattchat.online http://localhost:3000 
-                  ws://localhost:3000/socket.io/ wss://localhost:3000/socket.io/ 
-                  https://skattchat.online/socket.io/ wss://skattchat.online/socket.io/;
-       img-src 'self' data: https:">
-    
+      <!-- Add CSP meta tag -->
+      <meta http-equiv="Content-Security-Policy" 
+      content="default-src 'self';
+               script-src 'self' 'unsafe-inline' https://cdn.socket.io;
+               style-src 'self' 'unsafe-inline';
+               connect-src 'self' https://skattchat.online http://localhost:3000 
+                          ws://localhost:3000/socket.io/ wss://localhost:3000/socket.io/ 
+                          https://skattchat.online/socket.io/ wss://skattchat.online/socket.io/;
+               img-src 'self' data: https:">
+
     <link rel="stylesheet" href="../styles/chat.css">
     
-    <!-- Load Socket.IO -->
-    <script src="../scripts/chat/chat-init.js"></script>
+    <!-- Remove Socket.IO script and only use WebSocket implementation -->
+<!-- Fix socket.io script source -->
+<script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+
+<script src="../scripts/chat/chat-init.js" defer></script>
+    <script type="module" src="../scripts/chat-main.js"></script>
     
-    <!-- Load bundled file -->
-    <script type="module" src="../../dist/chat.bundle.js"></script>
-    <!-- Move inline styles to external stylesheet -->
     <link rel="stylesheet" href="../styles/darkmode.css">
 </head>
 

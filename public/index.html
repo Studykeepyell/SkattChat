@@ -8,9 +8,44 @@
   <title>Skattchat</title>
   <link rel="icon" href="./images/logo1.png">
   <link href="https://cdn.jsdelivr.net/npm/remixicon@2.5.0/fonts/remixicon.css" rel="stylesheet">
-  <link rel="stylesheet" href="./styles/mp.css" />
+  
+  <!-- Preload critical assets -->
+  <link rel="preload" href="/bundle.js" as="script">
+  <link rel="preload" href="/runtime.js" as="script">
+  <link rel="preload" href="/vendor.js" as="script">
+  <link rel="preload" href="/main.js" as="script">
+  <link rel="preload" href="./images/logo1.png" as="image">
+  
+  <!-- Update CSS paths to relative paths -->
+  <link rel="stylesheet" href="styles/mp.css">
+  <link rel="stylesheet" href="styles/download.css">
+  <link rel="stylesheet" href="styles/fonts.css">
+  
+  <script>
+    // Improved error handling for resources
+    window.addEventListener('error', function(e) {
+      if (e.target.tagName === 'LINK' || e.target.tagName === 'SCRIPT') {
+        console.warn(`Resource loading failed: ${e.target.src || e.target.href}`);
+      }
+    }, true);
+  </script>
+  
+  <!-- Update script references -->
+  <script defer src="/app.bundle.js"></script>
+  <script src="scripts/config.js"></script>
+  <script src="scripts/download-handler.js"></script>
 </head>
 
+<body>
+  <div id="loading-indicator">Loading...</div>
+  <style>
+      #loading-indicator {
+          display: none;
+      }
+      .loading #loading-indicator {
+          display: block;
+      }
+  </style>
   <div class="background">  
     <header>
       <section class="benefits__footer">
@@ -18,16 +53,19 @@
         <div class="benefits__footer-btn-group btn-group">
             <a href="#" class="btn btn--action btn--large btn--dark btn-group-btn">explore <span class="btn-group-btn-pill">something new</span></a>
     
-            <!-- Add download buttons with platform-specific links -->
-            <a href="https://skattchat.online/downloads/SkyChat-Setup.exe" download class="btn btn--action btn--large btn--dark btn-group-btn">
-                Download for Windows
-            </a>
-            <a href="https://skattchat.online/downloads/SkyChat.dmg" download class="btn btn--action btn--large btn--dark btn-group-btn">
-                Download for macOS
-            </a>
-            <a href="https://skattchat.online/downloads/SkyChat.AppImage" download class="btn btn--action btn--large btn--dark btn-group-btn">
-                Download for Linux
-            </a>
+            <!-- Updated download buttons -->
+            <button onclick="downloadHandler.downloadApp('windows')" 
+                    class="btn btn--action btn--large btn--dark btn-group-btn download-btn windows-dl">
+                <i class="ri-windows-fill"></i> Download for Windows
+            </button>
+            <button onclick="downloadHandler.downloadApp('mac')" 
+                    class="btn btn--action btn--large btn--dark btn-group-btn download-btn mac-dl">
+                <i class="ri-apple-fill"></i> Download for macOS
+            </button>
+            <button onclick="downloadHandler.downloadApp('linux')" 
+                    class="btn btn--action btn--large btn--dark btn-group-btn download-btn linux-dl">
+                <i class="ri-ubuntu-fill"></i> Download for Linux
+            </button>
         </div>
     </section>
     
@@ -187,15 +225,18 @@
           <div class="benefits__footer-btn-group btn-group">
             <a href="#" class="btn btn--action btn--large btn--dark btn-group-btn">explore <span
                 class="btn-group-btn-pill">something new</span></a>
-            <a href="https://skattchat.online/downloads/SkyChat-Setup.exe" download class="btn btn--action btn--large btn--dark btn-group-btn">
-                Download for Windows
-            </a>
-            <a href="https://skattchat.online/downloads/SkyChat.dmg" download class="btn btn--action btn--large btn--dark btn-group-btn">
-                Download for macOS
-            </a>
-            <a href="https://skattchat.online/downloads/SkyChat.AppImage" download class="btn btn--action btn--large btn--dark btn-group-btn">
-                Download for Linux
-            </a>
+            <button onclick="downloadHandler.downloadApp('windows')" 
+                    class="btn btn--action btn--large btn--dark btn-group-btn download-btn windows-dl">
+                <i class="ri-windows-fill"></i> Download for Windows
+            </button>
+            <button onclick="downloadHandler.downloadApp('mac')" 
+                    class="btn btn--action btn--large btn--dark btn-group-btn download-btn mac-dl">
+                <i class="ri-apple-fill"></i> Download for macOS
+            </button>
+            <button onclick="downloadHandler.downloadApp('linux')" 
+                    class="btn btn--action btn--large btn--dark btn-group-btn download-btn linux-dl">
+                <i class="ri-ubuntu-fill"></i> Download for Linux
+            </button>
           </div>
         </div>
 
@@ -222,16 +263,11 @@
     </section>
 
   </main>
-
-  
-  <script src="./scripts/app.js"></script>
+  <script src="/socket.io/socket.io.js"></script>
+  <script>
+    // Initialize download handler
+    const downloadHandler = new DownloadHandler();
+  </script>
 </body>
 
 </html>
-
-
-
-
-
-
-

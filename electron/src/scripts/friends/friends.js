@@ -1,24 +1,11 @@
-import { io } from "socket.io-client";
+import { initializeSocket } from '../lib/socket-client.js';
 
-const setupSocket = () => {
-    const baseURL = window.location.hostname === 'localhost' 
-        ? 'http://localhost:3000'
-        : 'https://skattchat.online';
+const baseURL = window.location.hostname === 'localhost' 
+    ? 'http://localhost:3000'
+    : 'https://skattchat.online';
 
-    return io(baseURL, {
-        transports: ['websocket'],
-        withCredentials: true,
-        autoConnect: true
-    });
-};
-
-const socket = setupSocket();
-
-export async function sendFriendRequest(receiverId) {
+ async function sendFriendRequest(receiverId) {
     const senderId = localStorage.getItem('userId');
-    const baseURL = window.location.hostname === 'localhost' 
-        ? 'http://localhost:3000'
-        : 'https://skattchat.online';
 
     console.log("Sending friend request to:", receiverId);
     console.log("Sender ID:", senderId);
@@ -44,8 +31,8 @@ export async function sendFriendRequest(receiverId) {
     }
 }
 
-export async function loadFriendRequests() {
-    const userId = localStorage.getItem('userId'); // Get the logged-in user's ID
+ async function loadFriendRequests() {
+    const userId = localStorage.getItem('userId');
     const token = localStorage.getItem('authToken');
 
     if (!userId || !token) {
@@ -54,90 +41,75 @@ export async function loadFriendRequests() {
     }
 
     try {
-        const response = await fetch(`/api/friendRequests/requests/${userId}`, {
+        const response = await fetch(`${baseURL}/api/friendRequests/requests/${userId}`, {
             method: 'GET',
             headers: {
                 'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`, // Add the token to the request
+                'Authorization': `Bearer ${token}`,
             },
         });
 
         if (!response.ok) throw new Error(`Failed to load friend requests: ${response.statusText}`);
         
         const data = await response.json();
-        const friendRequestList = document.getElementById('friendRequestList');
-
-        // Log to confirm the friend request list is being accessed
-        console.log("Friend request list element:", friendRequestList);
-
-        if (friendRequestList) {
-            friendRequestList.innerHTML = ''; // Clear any existing requests
-        } else {
-            console.error("friendRequestList element not found in the DOM.");
-            return;
-        }
-
-        // Log to confirm the number of requests retrieved
-        console.log("Number of friend requests received:", data.friendRequests.length);
-
-        // Loop through each friend request and display it
-        data.friendRequests.forEach(request => {
-            displayFriendRequest(request); // Use existing function to display each request
-        });
+        updateFriendRequestsUI(data.friendRequests);
+        
     } catch (error) {
         console.error("Error loading friend requests:", error);
     }
 }
 
+function updateFriendRequestsUI(requests) {
+    const friendRequestList = document.getElementById('friendRequestList');
+    if (!friendRequestList) {
+        console.error("friendRequestList element not found in the DOM.");
+        return;
+    }
 
+    friendRequestList.innerHTML = '';
+    requests.forEach(request => displayFriendRequest(request));
+}
 
-export function displayFriendRequest(request) {
+ function displayFriendRequest(request) {
     if (!request || !request.sender || !request.receiver) {
         console.error('Invalid request object:', request);
         return;
     }
 
-    const requestItem = document.createElement('li');
-
-    // Display sender info
-    const senderInfo = document.createElement('span');
-    senderInfo.innerText = `Friend request from ${request.sender.username}`;
-
-    // Accept button
-    const acceptButton = document.createElement('button');
-    acceptButton.innerText = 'Accept';
-    acceptButton.addEventListener('click', async () => {
-        await respondToFriendRequest(request._id, 'accepted', socket);
-        requestItem.remove(); // Remove the request from the UI
-        console.log(`Friend request ${request._id} accepted.`);
-    });
-
-    // Decline button
-    const declineButton = document.createElement('button');
-    declineButton.innerText = 'Decline';
-    declineButton.addEventListener('click', async () => {
-        await respondToFriendRequest(request._id, 'declined', socket);
-        requestItem.remove(); // Remove the request from the UI
-        console.log(`Friend request ${request._id} declined.`);
-    });
-
-    // Append elements to the request item
-    requestItem.appendChild(senderInfo);
-    requestItem.appendChild(acceptButton);
-    requestItem.appendChild(declineButton);
-
-    // Append request item to the friend request list
+    const requestItem = createRequestElement(request);
     const friendRequestList = document.getElementById('friendRequestList');
     if (friendRequestList) {
         friendRequestList.appendChild(requestItem);
-    } else {
-        console.error('friendRequestList element not found.');
     }
 }
 
+function createRequestElement(request) {
+    const requestItem = document.createElement('li');
+    const senderInfo = document.createElement('span');
+    senderInfo.innerText = `Friend request from ${request.sender.username}`;
 
+    const buttonContainer = document.createElement('div');
+    buttonContainer.className = 'friend-request-buttons';
+    
+    const acceptButton = createActionButton('Accept', 'accept', request._id);
+    const declineButton = createActionButton('Decline', 'decline', request._id);
 
-export async function respondToFriendRequest(requestId, status, socket) {
+    buttonContainer.appendChild(acceptButton);
+    buttonContainer.appendChild(declineButton);
+    requestItem.append(senderInfo, buttonContainer);
+
+    return requestItem;
+}
+
+function createActionButton(text, action, requestId) {
+    const button = document.createElement('button');
+    button.innerText = text;
+    button.className = action;
+    button.dataset.requestId = requestId;
+    return button;
+}
+
+ async function respondToFriendRequest(requestId, status, socket) {
     const token = localStorage.getItem('authToken'); // Retrieve token from localStorage
 
     if (!token) {
@@ -175,3 +147,10 @@ export async function respondToFriendRequest(requestId, status, socket) {
         console.error('Error responding to friend request:', error);
     }
 }
+
+export {
+    loadFriendRequests,
+    displayFriendRequest,
+    sendFriendRequest,
+    respondToFriendRequest
+};

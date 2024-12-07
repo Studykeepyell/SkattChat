@@ -1,16 +1,18 @@
+@import url('https://fonts.googleapis.com/css2?family=Open+Sans:wght@300;400;700&display=swap');
+
 @font-face {
   font-family: "whitney";
-  src: url("../../fonts/whitneylight.woff") format("woff");
+  src: url("../fonts/whitneylight.woff") format("woff");
   font-weight: 300;
 }
 @font-face {
   font-family: "whitney";
-  src: url("../../fonts/whitneybook.woff") format("woff");
+  src: url("../fonts/whitneybook.woff") format("woff");
   font-weight: 400;
 }
 @font-face {
   font-family: "whitney";
-  src: url("../../fonts/whitneybold.woff") format("woff");
+  src: url("../fonts/whitneybold.woff") format("woff");
   font-weight: 800;
 }
 :root {
@@ -28,7 +30,7 @@
   --font-size-large: clamp(2rem, 4vw, 4rem);
   --number-of-columns: 4;
   --page-gutter: 2.4rem;
-  --whitney-font: "whitney", "Helvetica", sans-serif;
+  --whitney-font: "Open Sans", "Helvetica", sans-serif;
 }
 @media screen and (min-width: 48em) {
   :root {

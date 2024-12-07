@@ -1,7 +1,6 @@
 // chat.js
 import { fetchProfileImage, formatTimestamp, formatMessageDate, formatMessageTime } from '../utils/utils.js';
 import { ChatRoom } from './chatRooms.js';
-import { io } from 'socket.io-client';
 import { createMessageHandler } from './messageHandler.js';
 import { setupChatSocket } from './chatSocket.js';
 
@@ -146,7 +145,7 @@ async function fetchMessages(roomId) {
 
 let globalSocket = null;
 
-export const setSocket = (socket) => {
+const setSocket = (socket) => {
     globalSocket = socket;
 };
 
@@ -207,57 +206,30 @@ const createChatRoom = async (roomName, userId) => {
 }
 
 // First fix the sendMessage function URL interpolation
-const sendMessage = async (roomId, userId, username, message,timestamp) => {
-    try {
-        if (!roomId || !userId || !message) {
-            throw new Error('Missing required fields for message');
-        }
+const sendMessage = async (roomId, userId, username, message, timestamp) => {
+    if (!globalSocket) {
+        console.error('Socket connection not available');
+        return;
+    }
 
-        const baseURL = window.location.hostname === 'localhost' 
-            ? 'http://localhost:3000'
-            : 'https://skattchat.online';
-
-
-            const payload = {
-                roomId,
-                userId,
-                username,
-                message,
-                timestamp,
-            };
-    
-            console.log('Sending message payload:', payload);
-
-        const response = await fetch(`${baseURL}/api/chat/send`, {
-            method: 'POST',
-            headers: { 
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${localStorage.getItem('authToken')}`
-            },
-            body: JSON.stringify(payload),
-            });
-       
-            const data = await response.json();
-
-            if (response.ok) {
-                console.log('Message sent successfully:', data.message);
-            } else {
-                console.error('Failed to send message:', data.message);
-            }
-        } catch (error) {
-            console.error('Error in sendMessage:', error.message);
-        }
+    globalSocket.emit('message', {
+        roomId,
+        userId,
+        username,
+        message,
+        timestamp
+    });
 };
 
 // Update joinChatRoom with debug logging
 async function joinChatRoom(socket, roomId) {
-    if (!roomId) {
-        console.error('Room ID is required to join a chat room.');
+    if (!socket || !roomId) {
+        console.error('Socket and Room ID are required to join a chat room.');
         return;
     }
 
     console.log(`Joining room with ID: ${roomId}`);
-    socket.emit('joinRoom', roomId);
+    socket.emit('joinRoom', { roomId }); // Use emit instead of send
 
     // Fetch and display messages for the room
     await fetchMessages(roomId);
@@ -266,23 +238,12 @@ async function joinChatRoom(socket, roomId) {
 
 
 const setupSocket = () => {
-    const socketOptions = {
-        transports: ['websocket'],
-        reconnection: true,
-        reconnectionAttempts: 5,
-        reconnectionDelay: 1000,
-        path: '/socket.io/'
-    };
-
     const serverUrl = window.location.hostname === 'localhost'
         ? 'ws://localhost:3000'
         : 'wss://skattchat.online';
 
     try {
-        const socket = io(serverUrl, socketOptions);
-        const messageHandler = createMessageHandler();
-        setupChatSocket(socket, messageHandler);
-        return socket;
+        return new WebSocket(serverUrl);
     } catch (error) {
         console.error('Socket initialization error:', error);
         return null;
@@ -399,29 +360,12 @@ style.textContent = `
 `;
 document.head.appendChild(style);
 
-// friends.js
-const setupSocketFriends = () => {
-    const baseURL = window.location.hostname === 'localhost' 
-        ? 'http://localhost:3000'
-        : 'https://skattchat.online';
-
-    return io(baseURL, {
-        transports: ['websocket'],
-        withCredentials: true,
-        autoConnect: true
-    });
-};
-
-const socketFriends = setupSocketFriends();
-
+// Use WebSocket for friend requests
 async function sendFriendRequest(receiverId) {
     const senderId = localStorage.getItem('userId');
     const baseURL = window.location.hostname === 'localhost' 
         ? 'http://localhost:3000'
         : 'https://skattchat.online';
-
-    console.log("Sending friend request to:", receiverId);
-    console.log("Sender ID:", senderId);
 
     if (!senderId || !receiverId) {
         console.error("Error: Missing senderId or receiverId");
@@ -437,14 +381,24 @@ async function sendFriendRequest(receiverId) {
             },
             body: JSON.stringify({ senderId })
         });
-        return await response.json();
+        
+        const data = await response.json();
+        
+        // Use WebSocket to notify about friend request
+        if (globalSocket && data.success) {
+            globalSocket.send(JSON.stringify({
+                type: 'friendRequest',
+                payload: { senderId, receiverId }
+            }));
+        }
+        
+        return data;
     } catch (error) {
         console.error('Error sending friend request:', error);
         throw error;
     }
 }
 
-// Single export statement at the end
 export {
     createChatRoom,
     sendMessage,
@@ -454,6 +408,7 @@ export {
     displayChatRoom,
     updateRoomTimestamp,
     fetchMessages,
-    addChatMessage,  // Add this line
+    addChatMessage,
+    setSocket,
     sendFriendRequest  // Add this line
 };

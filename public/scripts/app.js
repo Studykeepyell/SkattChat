@@ -1,38 +1,50 @@
-const openIcon = document.querySelector('.btn--open');
-const closeIcon = document.querySelector('.btn--close');
-const navMenu = document.querySelector('.nav__menu');
-const bodyEl = document.body;
+import '../styles/index.css';
 
-const openMenu = () => {
-    navMenu.classList.add('nav__menu--active');
-    bodyEl.style.overflow = "hidden";
-    addBackdrop();
-}
+// Main application entry point
 
-const closeMenu = () => {
-    navMenu.classList.remove('nav__menu--active');
-    bodyEl.style.overflow = "";
-    removeBackdrop();
-}
+// Main application logic
+console.log('App initialized');
 
-const addBackdrop = () => {
-    const backdrop = document.createElement('div');
-    const navEl = document.querySelector('.nav');
-    backdrop.classList.add('nav__backdrop');
+// Your app initialization code here
+document.addEventListener('DOMContentLoaded', () => {
+    // DOM-ready code here
 
-    navEl.insertBefore(backdrop, navMenu);
-}
+    const openIcon = document.querySelector('.btn--open');
+    const closeIcon = document.querySelector('.btn--close');
+    const navMenu = document.querySelector('.nav__menu');
+    const bodyEl = document.body;
 
-const removeBackdrop = () => {
-    document.querySelector('.nav__backdrop').remove();
-}
-
-const closeMenuOutside = e => {
-    if(e.target.classList.contains('nav__backdrop')){
-        closeMenu();
+    const openMenu = () => {
+        navMenu.classList.add('nav__menu--active');
+        bodyEl.style.overflow = "hidden";
+        addBackdrop();
     }
-}
 
-openIcon.addEventListener('click', openMenu);
-closeIcon.addEventListener('click', closeMenu);
-window.addEventListener('click', closeMenuOutside);
+    const closeMenu = () => {
+        navMenu.classList.remove('nav__menu--active');
+        bodyEl.style.overflow = "";
+        removeBackdrop();
+    }
+
+    const addBackdrop = () => {
+        const backdrop = document.createElement('div');
+        const navEl = document.querySelector('.nav');
+        backdrop.classList.add('nav__backdrop');
+
+        navEl.insertBefore(backdrop, navMenu);
+    }
+
+    const removeBackdrop = () => {
+        document.querySelector('.nav__backdrop').remove();
+    }
+
+    const closeMenuOutside = e => {
+        if(e.target.classList.contains('nav__backdrop')){
+            closeMenu();
+        }
+    }
+
+    openIcon.addEventListener('click', openMenu);
+    closeIcon.addEventListener('click', closeMenu);
+    window.addEventListener('click', closeMenuOutside);
+});

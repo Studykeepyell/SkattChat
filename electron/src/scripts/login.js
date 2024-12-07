@@ -1,4 +1,14 @@
 document.addEventListener('DOMContentLoaded', () => {
+    // Force development mode for Electron app
+    const ENV = {
+        isDev: true,  // Always use development mode for now
+        apiUrl: 'http://localhost:3000'  // Always connect to localhost
+    };
+
+    console.log('Environment:', ENV);
+    console.log('Protocol:', window.location.protocol);
+    console.log('Hostname:', window.location.hostname);
+
     document.getElementById('login-form').addEventListener('submit', function(event) {
         console.log('Login form submitted'); // Debugging line
         event.preventDefault();
@@ -19,30 +29,23 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function login(username, password) {
-        // Browser-safe environment detection
-        const baseURL = window.location.hostname === 'localhost' 
-            ? 'http://localhost:3000'
-            : 'https://skattchat.online';
+        const apiUrl = ENV.apiUrl;
+        console.log('Attempting login to:', apiUrl);
 
         const xhr = new XMLHttpRequest();
-        xhr.open('POST', `${baseURL}/api/users/login`, true);
+        xhr.open('POST', `${apiUrl}/api/auth/login`, true);
+        xhr.withCredentials = true; // Add this line
         xhr.setRequestHeader('Content-Type', 'application/json');
         
-        // Add timeout
         xhr.timeout = 5000;
         
         xhr.onload = function() {
+            console.log('Login response status:', xhr.status);
             if (xhr.status === 200) {
                 try {
                     const response = JSON.parse(xhr.responseText);
-                    if (response.success) {
-                        localStorage.setItem('userId', response.userId);
-                        localStorage.setItem('authToken', response.token);
-                        localStorage.setItem('username', username);
-                        window.location.href = './pages/chat.html';
-                    } else {
-                        showError('Invalid username or password');
-                    }
+                    console.log('Login response:', response);
+                    handleLoginResponse(response);
                 } catch (e) {
                     showError('Server response error');
                     console.error('Parse error:', e);
@@ -67,6 +70,17 @@ document.addEventListener('DOMContentLoaded', () => {
         } catch (e) {
             showError('Failed to send request');
             console.error('Send error:', e);
+        }
+    }
+
+    function handleLoginResponse(data) {
+        if (data.success) {
+            localStorage.setItem('userId', data.userId);
+            localStorage.setItem('authToken', data.token);
+            localStorage.setItem('username', username);
+            window.location.href = './pages/chat.html';
+        } else {
+            showError('Invalid username or password');
         }
     }
 

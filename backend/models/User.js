@@ -1,5 +1,5 @@
 const mongoose = require('mongoose');
-const bcrypt = require('bcrypt');
+const bcrypt = require('bcryptjs');
 
 const userSchema = new mongoose.Schema({
     username: { type: String, unique: true, required: true },
@@ -8,6 +8,14 @@ const userSchema = new mongoose.Schema({
     profileImage: { type: String } // New field for profile image URL
 });
 
+// Add password comparison method
+userSchema.methods.isPasswordMatch = async function(password) {
+    try {
+        return await bcrypt.compare(password, this.password);
+    } catch (error) {
+        throw new Error(error);
+    }
+};
 
 // Pre-save middleware to hash the password
 userSchema.pre('save', async function(next) {
@@ -22,9 +30,11 @@ userSchema.pre('save', async function(next) {
         next(err);
     }
 });
+
 // Method to compare the entered password with the hashed password
 userSchema.methods.comparePassword = async function(candidatePassword) {
     return await bcrypt.compare(candidatePassword, this.password);
 };
+
 const User = mongoose.model('User', userSchema);
 module.exports = User;

@@ -5,4 +5,18 @@ electron/node_modules/
 /public/Games/node_modules
 temp
 .env
-dist/
+.env.*
+dist
+
+.temp
+*.swp
+*~
+
+# Optional npm cache directory
+.npm
+
+# Optional eslint cache
+.eslintcache
+
+# Optional REPL history
+.node_repl_history

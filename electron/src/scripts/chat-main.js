@@ -1,5 +1,7 @@
 // chat-main.js
+// Option 1: Import from node_modules (preferred)
 import { io } from 'socket.io-client';
+
 import { setupChatSocket } from './chat/chatSocket.js';
 import { setupFriendSocket } from './friends/friendSocket.js';
 import { loadFriendRequests } from './friends/friends.js';
@@ -13,23 +15,44 @@ import {
 
 let socket = null;
 
-const setupSocket = () => {
-    const baseURL = window.location.hostname === 'localhost' 
-        ? 'http://localhost:3000'
-        : 'https://skattchat.online';
+const setupSocket = async () => {
+    try {
+        const baseURL = window.location.hostname === 'localhost' 
+            ? 'http://localhost:3000'
+            : 'https://skattchat.online';
 
-    return io(baseURL, {
-        transports: ['websocket'],
-        withCredentials: true
-    });
+        // Try to use imported io
+        return io(baseURL, {
+            transports: ['websocket'],
+            withCredentials: true
+        });
+    } catch (error) {
+        console.error('Socket.io import failed, falling back to CDN:', error);
+        // Load from CDN if import fails
+        await loadSocketIOFromCDN();
+        return window.io(baseURL, {
+            transports: ['websocket'],
+            withCredentials: true
+        });
+    }
 };
+
+function loadSocketIOFromCDN() {
+    return new Promise((resolve, reject) => {
+        const script = document.createElement('script');
+        script.src = 'https://cdn.socket.io/4.7.4/socket.io.min.js';
+        script.onload = resolve;
+        script.onerror = reject;
+        document.head.appendChild(script);
+    });
+}
 
 // Single initialization point
 document.addEventListener('DOMContentLoaded', async () => {
     console.log('Initializing chat application...');
 
     try {
-        socket = setupSocket();
+        socket = await setupSocket();
         if (!socket) throw new Error('Failed to initialize socket');
 
         setSocket(socket);

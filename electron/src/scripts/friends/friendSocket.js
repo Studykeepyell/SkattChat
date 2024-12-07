@@ -1,27 +1,36 @@
+import { loadFriendRequests, displayFriendRequest } from './friends.js';
+
 export function setupFriendSocket(socket) {
+    if (!socket) {
+        console.error('Socket connection required for friend system');
+        return;
+    }
+
     socket.on('friendRequestReceived', (data) => {
-        console.log("Friend request received from:", data.senderId); // Log request
-        displayFriendRequest(data.senderId);
-    });
-    
-    socket.on('newFriendRequest', (data) => {
-        console.log("Received new friend request:", data.message); // Log notification
-        loadFriendRequests(); // Refresh the friend request list
+        console.log("Friend request received:", data);
+        displayFriendRequest(data);
     });
 
-    
     socket.on('friendRequestAccepted', (data) => {
-        alert(`${data.senderId} accepted your friend request!`);
-        socket.emit('updateFriendList', { userId: data.receiverId });
+        console.log("Friend request accepted:", data);
+        loadFriendRequests(); // Refresh the list
     });
 
-    socket.on('friendListUpdated', (friends) => {
-        const friendListContainer = document.getElementById('friendList');
-        friendListContainer.innerHTML = ''; // Clear current list
-        friends.forEach((friend) => {
-            const friendItem = document.createElement('li');
-            friendItem.textContent = friend.username;
-            friendListContainer.appendChild(friendItem);
-        });
+    socket.on('friendListUpdated', (data) => {
+        console.log("Friend list updated:", data);
+        updateFriendsList(data.friends);
+    });
+}
+
+function updateFriendsList(friends) {
+    const friendListContainer = document.getElementById('friendsList');
+    if (!friendListContainer) return;
+
+    friendListContainer.innerHTML = '';
+    friends.forEach(friend => {
+        const friendElement = document.createElement('div');
+        friendElement.className = 'friend-item';
+        friendElement.textContent = friend.username;
+        friendListContainer.appendChild(friendElement);
     });
 }

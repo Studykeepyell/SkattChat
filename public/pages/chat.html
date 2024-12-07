@@ -8,7 +8,6 @@
 
 
      <!-- Fix socket.io script source -->
-     <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
 
      <!-- Add CSP meta tag -->
      <meta http-equiv="Content-Security-Policy" 
@@ -213,7 +212,16 @@
       };
 
     </script>
-    <script src="../dist/bundle.js"></script>
-    <script src="../scripts/index.js"></script>
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+      // Add Socket.IO connection error handling
+      window.addEventListener('load', () => {
+        if (typeof io === 'undefined') {
+          console.error('Socket.IO failed to load');
+          alert('Chat connection failed. Please refresh the page.');
+        }
+      });
+    </script>
+    <script type="/module" src="../scripts/index.js"></script>
   </body>
 </html>

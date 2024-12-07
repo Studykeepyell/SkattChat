@@ -1,6 +1,6 @@
 import { joinChatRoom } from "./chat.js";
-export const ChatRoom = {
-    async create(roomName, userId, socket) {
+export class ChatRoom {
+    static async create(roomName, userId, socket) {
         try {
             const response = await fetch('/api/chat/rooms', {
                 method: 'POST',
@@ -18,9 +18,9 @@ export const ChatRoom = {
         } catch (error) {
             console.error('Error creating chat room:', error);
         }
-    },
+    }
 
-    display(room, container, socket) {
+    static display(room, container, socket) {
         const roomElement = document.createElement('div');
         roomElement.className = 'chat-room';
         roomElement.setAttribute('data-room-id', room.roomId); // Set data attribute
@@ -30,15 +30,20 @@ export const ChatRoom = {
                 <span class="room-timestamp">${new Date(room.lastMessageTime || room.updatedAt).toLocaleString()}</span>
             </div>
         `;
-    
+
         // Add click event listener to join the room
         roomElement.addEventListener('click', () => {
             if (!room.roomId) {
                 console.error('Room ID is missing!');
                 return;
             }
-    
-            socket.emit('joinRoom', room.roomId); // Send room ID to the server
+
+            if (socket) {
+                // Use send instead of emit
+                socket.send('joinRoom', { roomId: room.roomId });
+                localStorage.setItem('currentRoom', room.roomId);
+            }
+
             const chatHeading = document.getElementById('chat-heading');
             chatHeading.textContent = `${room.name}`;
             
@@ -50,10 +55,7 @@ export const ChatRoom = {
             const icon = roomElement.querySelector('.new-message-icon');
             if (icon) icon.remove();
         });
-    
+
         container.appendChild(roomElement);
     }
-    
-    
-    
-};
+}
