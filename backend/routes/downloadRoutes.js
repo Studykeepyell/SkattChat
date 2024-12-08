@@ -13,7 +13,7 @@ if (!fs.existsSync(DOWNLOADS_DIR)) {
 
 // Update platform mapping to match electron-builder output naming
 const platformMap = {
-    'windows': 'Skychat-Setup-1.0.0.exe',
+    'windows': 'SkattChat-Setup-1.0.0.exe',
     'mac': 'Skychat.dmg',
     'linux': 'Skychat.AppImage'
 };

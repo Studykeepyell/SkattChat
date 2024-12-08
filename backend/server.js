@@ -61,11 +61,19 @@ app.use((req, res, next) => {
     next();
 });
 
+// Add this before your static routes
+app.use((req, res, next) => {
+  if (req.path.includes('/assets/images/')) {
+    console.log('Image request:', req.path);
+  }
+  next();
+});
+
 const chatRoutes = require('./routes/chatRoutes')(io);
 
 // Set up static routes before API routes
-app.use('/', express.static(path.join(__dirname, '../dist/web')));
-app.use('/images', express.static(path.join(__dirname, '../public/images')));
+app.use('/', express.static(path.join(__dirname, '../public')));
+app.use('/assets', express.static(path.join(__dirname, '../public/assets')));
 app.use('/styles', express.static(path.join(__dirname, '../public/styles')));
 app.use('/scripts', express.static(path.join(__dirname, '../public/scripts')));
 app.use('/pages', express.static(path.join(__dirname, '../public/pages')));
@@ -106,7 +114,7 @@ app.use(express.static(path.join(__dirname, '../public/index.html')));
 // SPA support - should be after API routes
 app.get('*', (req, res) => {
     if (req.headers.accept && req.headers.accept.includes('text/html')) {
-        res.sendFile(path.join(__dirname, '../dist/web/index.html'));
+        res.sendFile(path.join(__dirname, '../public/index.html'));
     } else {
         res.status(404).send('Not found');
     }

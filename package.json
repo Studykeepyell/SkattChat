@@ -3,39 +3,27 @@
     "version": "1.0.0",
     "author": "SkyJin",
     "description": "An Electron chat app with both web and desktop versions.",
-    "main": "dist/app/main.cjs",
+    "main": "electron/dist/main.bundle.cjs",
     "scripts": {
-        "dev": "concurrently \"npm run dev:web\" \"npm run dev:electron\"",
-        "web-dev": "webpack serve --config webpack.web.config.js --mode development",
-        "start": "cross-env NODE_ENV=production node backend/server.js",
-        "setup": "node scripts/setup-dirs.js",
-        "prepare-downloads": "node scripts/prepare-downloads.js",
-        "postinstall": "electron-builder install-app-deps",
-        "prebuild": "rimraf dist/app dist/releases",
-        "build:web": "webpack --config webpack.web.config.js",
-        "build:electron": "webpack --config webpack.build.config.js",
-        "build:installer": "electron-builder build --config electron-builder.config.js",
-        "build": "webpack --config webpack.build.config.js",
-        "build:releases": "cross-env CSC_IDENTITY_AUTO_DISCOVERY=false ELECTRON_BUILDER_CACHE=./temp electron-builder --config electron-builder.yml",
-        "build:win": "cross-env CSC_IDENTITY_AUTO_DISCOVERY=false ELECTRON_BUILDER_CACHE=./temp electron-builder --win --config electron-builder.yml",
-        "build:all": "npm run prebuild && npm run build && npm run build:releases && rimraf ./temp",
-        "dist:win": "electron-builder --config electron-builder.config.js --win",
-        "dist:mac": "npm run build && electron-builder --mac",
-        "dist:linux": "npm run build && electron-builder --linux",
-        "dist:all": "npm run build && electron-builder -mwl",
-        "clean:cache": "rimraf %LOCALAPPDATA%\\electron-builder\\cache && rimraf ./temp",
-        "prebuild:releases": "npm run clean:cache && mkdir temp",
-        "serve-downloads": "node backend/server.js",
-        "dev:web": "webpack --config webpack.web.config.js --watch",
-        "dev:electron": "webpack --config webpack.electron.config.js --watch",
-        "start:dev": "electron dist/app/main.cjs --dev",
-        "rebuild": "npx @electron/rebuild",
-        "prepare": "husky install"
+        "build:web": "webpack --config webpack/webpack.web.config.js",
+        "build:electron": "webpack --config webpack/webpack.electron.config.js",
+        "start": "electron ./electron/dist/main.bundle.js",
+        "start:electron": "npm run build:electron && electron ./electron/dist/main.bundle.js",
+        "start:web": "npm run build:web && serve ./public/dist",
+        "dev:web": "webpack --config webpack/webpack.web.config.js --watch",
+        "dev:electron": "webpack --config webpack/webpack.electron.config.js --watch",
+        "build": "webpack --config webpack/webpack.electron.config.js",
+        "package": "electron-builder -c electron-builder.config.js",
+        "dist": "npm run build && npm run package",
+        "test": "jest --config jest.config.js",
+        "test:watch": "jest --config jest.config.js --watch",
+        "test:e2e": "playwright test --config playwright.config.js",
+        "test:unit": "jest --config jest.config.js",
+        "start:test": "cross-env NODE_ENV=test electron ."
     },
     "dependencies": {
-        "axios": "^1.7.8",
+        "axios": "^1.7.9",
         "cors": "^2.8.5",
-        "express": "^4.21.1",
         "socket.io-client": "^4.8.1",
         "ws": "^8.18.0"
     },
@@ -43,6 +31,8 @@
         "@babel/core": "^7.26.0",
         "@babel/plugin-transform-runtime": "^7.25.9",
         "@babel/preset-env": "^7.26.0",
+        "@electron/rebuild": "^3.6.0",
+        "@playwright/test": "^1.49.0",
         "babel-loader": "^9.2.1",
         "buffer": "^6.0.3",
         "clean-webpack-plugin": "^4.0.0",
@@ -54,11 +44,14 @@
         "dotenv": "^10.0.0",
         "electron": "^33.2.1",
         "electron-builder": "^25.1.8",
+        "electron-playwright-helpers": "^1.7.1",
         "electron-rebuild": "^3.2.9",
         "electron-reload": "^2.0.0-alpha.1",
-        "express": "^4.21.1",
+        "express": "^4.21.2",
         "fs-extra": "^11.2.0",
         "html-loader": "^4.2.0",
+        "html-webpack-plugin": "^5.6.3",
+        "husky": "^8.0.3",
         "image-minimizer-webpack-plugin": "^3.8.3",
         "imagemin": "^8.0.1",
         "imagemin-gifsicle": "^7.0.0",
@@ -66,33 +59,39 @@
         "imagemin-optipng": "^8.0.0",
         "imagemin-pngquant": "^10.0.0",
         "imagemin-svgo": "^10.0.1",
+        "jest": "^29.7.0",
+        "jest-environment-node": "^29.0.0",
         "node-gyp": "^9.4.1",
         "nodemon": "^3.1.7",
+        "path": "^0.12.7",
         "path-browserify": "^1.0.1",
         "process": "^0.11.10",
         "rimraf": "^5.0.10",
         "source-map-loader": "^5.0.0",
+        "spectron": "^19.0.0",
         "stream-browserify": "^3.0.0",
         "style-loader": "^3.3.4",
         "util": "^0.12.5",
-        "webpack": "^5.96.1",
+        "webpack": "^5.97.1",
         "webpack-cli": "^5.1.4",
         "webpack-dev-middleware": "^7.4.2",
         "webpack-dev-server": "^5.1.0",
         "webpack-hot-middleware": "^2.26.1",
         "webpack-merge": "^5.10.0",
-        "ws": "^8.18.0",
-        "@electron/rebuild": "^3.6.0",
-        "husky": "^8.0.3"
+        "ws": "^8.18.0"
     },
     "build": {
         "appId": "com.skattchat.app",
-        "files": ["dist/**/*"],
+        "files": [
+            "dist/**/*"
+        ],
         "directories": {
             "buildResources": "assets",
             "output": "release"
         },
-        "extraResources": ["./assets/**"],
+        "extraResources": [
+            "./assets/**"
+        ],
         "npmRebuild": false,
         "nodeGypRebuild": false
     },
@@ -100,7 +99,10 @@
         "forge": {
             "rebuildConfig": {
                 "force": true,
-                "onlyModules": ["utf-8-validate", "bufferutil"]
+                "onlyModules": [
+                    "utf-8-validate",
+                    "bufferutil"
+                ]
             }
         }
     }

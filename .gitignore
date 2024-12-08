@@ -7,7 +7,7 @@ temp
 .env
 .env.*
 dist
-
+release
 .temp
 *.swp
 *~

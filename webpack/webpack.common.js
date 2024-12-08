@@ -11,34 +11,28 @@ module.exports = {
             {
                 test: /\.js$/,
                 exclude: /node_modules/,
-                use: {
-                    loader: 'babel-loader',
-                    options: {
-                        presets: ['@babel/preset-env']
-                    }
-                }
+                use: 'babel-loader',
             },
             {
                 test: /\.css$/i,
-                use: ['style-loader', 'css-loader']
+                use: ['style-loader', 'css-loader'],
+            },
+            {
+                test: /\.(png|jpg|gif|svg|woff|woff2|eot|ttf|otf)$/,
+                type: 'asset/resource',
             }
         ]
     },
     resolve: {
-        extensions: ['.js'],
+        extensions: ['.js', '.json'],
         fallback: {
             "path": require.resolve("path-browserify"),
-            "fs": false,
-            "crypto": false
+            "fs": false
         }
     },
     plugins: [
         new webpack.DefinePlugin({
             'process.env': JSON.stringify(env)
-        }),
-        new webpack.ProvidePlugin({
-            Buffer: ['buffer', 'Buffer'],
-            process: 'process/browser'
         })
     ]
 };
