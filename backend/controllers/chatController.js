@@ -3,7 +3,12 @@ const Room = require('../models/Room');
 
 // Fetch messages for a room
 exports.fetchMessages = async (req, res) => {
-    const { roomId } = req.params;
+    let { roomId } = req.params;
+    
+    // Handle case where roomId might be an object
+    if (typeof roomId === 'object' && roomId.roomId) {
+        roomId = roomId.roomId;
+    }
 
     try {
         const messages = await Message.find({ roomId }).sort({ timestamp: 1 });
@@ -69,7 +74,12 @@ exports.markMessagesAsRead = async (req, res) => {
 
 // Send a message
 exports.sendMessage = async (io, req, res) => {
-    const { roomId, username, userId, message, timestamp } = req.body;
+    let { roomId, username, userId, message, timestamp } = req.body;
+    
+    // Handle case where roomId might be an object
+    if (typeof roomId === 'object' && roomId.roomId) {
+        roomId = roomId.roomId;
+    }
 
     // Validate required fields
     if (!roomId || !username || !userId || !message) {

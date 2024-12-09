@@ -147,6 +147,7 @@ let globalSocket = null;
 
 const setSocket = (socket) => {
     globalSocket = socket;
+    setupMessageHandlers();
 };
 
 const fetchChatRooms = async () => {
@@ -167,17 +168,35 @@ const fetchChatRooms = async () => {
 
         const data = await response.json();
         if (data.success && data.rooms) {
-            console.log('Fetched rooms:', data.rooms); // Debug log
+            console.log('Fetched rooms:', data.rooms);
             const container = document.getElementById('roomList');
             if (container) {
-                container.innerHTML = ''; // Clear previous entries
+                container.innerHTML = '';
                 data.rooms.forEach((room) => {
-                    console.log(`Room rendered: ${room.name} with ID ${room.roomId}`); // Debug room details
-                    ChatRoom.display(room, container); // Adjust to your rendering logic
+                    // Format room name for private chats
+                    if (room.isPrivate) {
+                        const currentUserId = localStorage.getItem('userId');
+                        const otherUserId = room.roomId.split('_').find(id => id !== currentUserId);
+                        
+                        // Fetch other user's name
+                        fetch(`${baseURL}/api/users/${otherUserId}`, {
+                            headers: {
+                                'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+                            }
+                        })
+                        .then(res => res.json())
+                        .then(userData => {
+                            if (userData.success) {
+                                room.name = `Chat with ${userData.user.username}`;
+                                ChatRoom.display(room, container);
+                            }
+                        })
+                        .catch(err => console.error('Error fetching user details:', err));
+                    } else {
+                        ChatRoom.display(room, container);
+                    }
                 });
             }
-        } else {
-            console.warn('No rooms found or fetch failed.');
         }
     } catch (error) {
         console.error('Error fetching chat rooms:', error);
@@ -212,6 +231,7 @@ const sendMessage = async (roomId, userId, username, message, timestamp) => {
         return;
     }
 
+    // Emit message event
     globalSocket.emit('message', {
         roomId,
         userId,
@@ -219,7 +239,57 @@ const sendMessage = async (roomId, userId, username, message, timestamp) => {
         message,
         timestamp
     });
+
+    // Call updateRoom endpoint
+    try {
+        const baseURL = window.location.hostname === 'localhost' 
+            ? 'http://localhost:3000'
+            : 'https://skattchat.online';
+            
+        await fetch(`${baseURL}/api/chat/rooms/${roomId}/update`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+            },
+            body: JSON.stringify({ lastActivity: timestamp })
+        });
+    } catch (error) {
+        console.error('Failed to update room status:', error);
+    }
 };
+
+// Add real-time message handler
+const setupMessageHandlers = () => {
+    if (!globalSocket) return;
+
+    globalSocket.off('message').on('message', (data) => {
+        console.log('Received message:', data);
+        addChatMessage({
+            username: data.username,
+            content: data.message,
+            timestamp: data.timestamp
+        });
+        updateRoomTimestamp(data.roomId, data.timestamp);
+    });
+
+    globalSocket.off('roomUpdate').on('roomUpdate', (data) => {
+        console.log('Room updated:', data);
+        updateChatUI(data, data.roomId);
+    });
+};
+
+// Add message listener
+if (globalSocket) {
+    globalSocket.on('message', (data) => {
+        console.log('Received message:', data);
+        addChatMessage({
+            username: data.username,
+            content: data.message,
+            timestamp: data.timestamp
+        });
+    });
+}
 
 // Update joinChatRoom with debug logging
 async function joinChatRoom(socket, roomId) {
@@ -229,10 +299,12 @@ async function joinChatRoom(socket, roomId) {
     }
 
     console.log(`Joining room with ID: ${roomId}`);
-    socket.emit('joinRoom', { roomId }); // Use emit instead of send
+    socket.emit('joinRoom', roomId.toString()); // Use emit instead of send
 
     // Fetch and display messages for the room
     await fetchMessages(roomId);
+
+
 }
 
 

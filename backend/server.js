@@ -32,27 +32,47 @@ const io = new Server(server, {
     cors: {
         origin: ['http://localhost:3000', 'https://skattchat.online', 'app://skattchat'],
         methods: ['GET', 'POST'],
-        credentials: true
-    }
+        credentials: true,
+        transports: ['websocket', 'polling']
+    },
+    allowEIO3: true,
+    pingTimeout: 60000,
+    maxHttpBufferSize: 1e8
 });
 
 // Middleware
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// CORS middleware - place this before routes
+// Update CORS middleware
 app.use((req, res, next) => {
-    res.header('Access-Control-Allow-Origin', '*');
-    res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-    res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-    next();
+  const origin = req.headers.origin;
+  // Allow Electron app URLs
+  if (origin && (origin.startsWith('app://') || 
+      origin.startsWith('http://localhost') || 
+      origin.startsWith('https://skattchat.online'))) {
+    res.header('Access-Control-Allow-Origin', origin);
+  }
+  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  next();
 });
 
 //Centralized CORS
 const corsOptions = require('./config/corsConfig');
 app.use(cors(corsOptions));
 
-// Remove CSP middleware entirely
+// Add CSP headers middleware
+app.use((req, res, next) => {
+    res.setHeader(
+        'Content-Security-Policy',
+        "default-src 'self'; " +
+        "connect-src 'self' ws: wss: http: https:; " +
+        "script-src 'self' 'unsafe-inline' https://cdn.socket.io; " +
+        "style-src 'self' 'unsafe-inline';"
+    );
+    next();
+});
 
 //Debugging middleware
 app.use((req, res, next) => {
@@ -80,44 +100,59 @@ app.use('/pages', express.static(path.join(__dirname, '../public/pages')));
 app.use('/fonts', express.static(path.join(__dirname, '../public/fonts')));
 app.use('/downloads', express.static(DOWNLOADS_DIR));
 
-// Load user routes and pass io and userSocketMap
+// Add API version prefix
+const API_PREFIX = '/api/v1';
+
+// Update route definitions with API prefix and leading slashes
 app.use('/api/auth', authRoutes);
 app.use('/api/friendRequests', friendRequestRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/chat', chatRoutes);
 app.use('/api/opinion', opinionRoutes);
 app.use('/api/files', fileRoutes);
-app.use('/api/downloads', downloadRoutes); // Changed from /downloads to /api/downloads
+app.use('/api/downloads', downloadRoutes);
 
 // Add these routes before the SPA support
 app.get('/api/health', (req, res) => {
     res.json({ status: 'ok' });
 });
 
-app.get('/api/messages', (req, res) => {
-    // Return recent messages since the given ID
-    const since = parseInt(req.query.since) || 0;
-    // You'll need to implement message storage/retrieval logic
-    res.json([]);
-});
-
-app.post('/api/message', (req, res) => {
-    const { type, payload } = req.body;
-    // Broadcast the message via Socket.IO
-    io.emit(type, payload);
-    res.json({ success: true });
-});
-
 // Serve static files based on environment
-app.use(express.static(path.join(__dirname, '../public/index.html')));
+app.use(express.static(path.join(__dirname, '../public/dist/index.html')));
+
+// Update static file paths
+app.use('/', express.static(path.join(__dirname, '../public')));
+app.use('/', express.static(path.join(__dirname, '../electron/src')));  // Serve from electron/src root
+app.use('/pages', express.static(path.join(__dirname, '../electron/src/pages')));
 
 // SPA support - should be after API routes
 app.get('*', (req, res) => {
     if (req.headers.accept && req.headers.accept.includes('text/html')) {
-        res.sendFile(path.join(__dirname, '../public/index.html'));
+        const filePath = req.path.startsWith('/pages/') ? req.path.slice(7) : req.path;
+        const paths = [
+            path.join(__dirname, '../public', req.path),
+            path.join(__dirname, '../electron/dist/pages', filePath),
+            path.join(__dirname, '../electron/dist', req.path)
+        ];
+
+        for (const tryPath of paths) {
+            if (fs.existsSync(tryPath)) {
+                return res.sendFile(tryPath);
+            }
+        }
+        res.status(404).send('Not found');
     } else {
         res.status(404).send('Not found');
     }
+});
+
+// Add Electron-specific error handling
+app.use((err, req, res, next) => {
+  console.error(err.stack);
+  res.status(err.status || 500).json({
+    error: isDevelopment ? err.message : 'Internal Server Error',
+    details: isDevelopment ? err.stack : undefined
+  });
 });
 
 //Socket.IO Intergration

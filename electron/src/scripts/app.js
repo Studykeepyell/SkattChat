@@ -1,38 +1,74 @@
-const openIcon = document.querySelector('.btn--open');
-const closeIcon = document.querySelector('.btn--close');
-const navMenu = document.querySelector('.nav__menu');
-const bodyEl = document.body;
+document.addEventListener('DOMContentLoaded', () => {
+    // Taskbar navigation
+    const setupTaskbarNavigation = () => {
+        document.querySelectorAll('.taskbar button[data-target]').forEach((button) => {
+            button.addEventListener('click', (e) => {
+                const target = e.currentTarget.getAttribute('data-target');
+                if (target) window.location.href = target;
+            });
+        });
+    };
 
-const openMenu = () => {
-    navMenu.classList.add('nav__menu--active');
-    bodyEl.style.overflow = "hidden";
-    addBackdrop();
-}
+    // Bubble menu handler
+    const setupBubbleMenu = () => {
+        const hamburgerMenu = document.getElementById('hamburger-menu');
+        const bubbleMenu = document.getElementById('bubble-menu');
 
-const closeMenu = () => {
-    navMenu.classList.remove('nav__menu--active');
-    bodyEl.style.overflow = "";
-    removeBackdrop();
-}
+        if (hamburgerMenu && bubbleMenu) {
+            hamburgerMenu.addEventListener('click', () => {
+                bubbleMenu.classList.toggle('active');
+                bubbleMenu.setAttribute('aria-hidden', !bubbleMenu.classList.contains('active'));
+            });
+        }
+    };
 
-const addBackdrop = () => {
-    const backdrop = document.createElement('div');
-    const navEl = document.querySelector('.nav');
-    backdrop.classList.add('nav__backdrop');
+    // Dark mode handler
+    const setupDarkMode = () => {
+        const darkModeButton = document.getElementById('darkModeButton');
+        if (darkModeButton) {
+            darkModeButton.addEventListener('click', () => {
+                document.body.classList.toggle('dark-mode');
+                localStorage.setItem('darkMode', document.body.classList.contains('dark-mode'));
+            });
+        }
 
-    navEl.insertBefore(backdrop, navMenu);
-}
+        // Load saved dark mode preference
+        if (JSON.parse(localStorage.getItem('darkMode'))) {
+            document.body.classList.add('dark-mode');
+        }
+    };
 
-const removeBackdrop = () => {
-    document.querySelector('.nav__backdrop').remove();
-}
+    // Emoji picker handler
+    const setupEmojiPicker = () => {
+        const emojiButton = document.getElementById('emoji-button');
+        const emojiPicker = document.getElementById('emoji-picker');
+        const messageInput = document.getElementById('messageInput');
 
-const closeMenuOutside = e => {
-    if(e.target.classList.contains('nav__backdrop')){
-        closeMenu();
-    }
-}
+        emojiButton?.addEventListener('click', () => {
+            emojiPicker.style.display = emojiPicker.style.display === 'none' ? 'block' : 'none';
+        });
 
-openIcon.addEventListener('click', openMenu);
-closeIcon.addEventListener('click', closeMenu);
-window.addEventListener('click', closeMenuOutside);
+        document.querySelectorAll('.emoji').forEach((emoji) => {
+            emoji.addEventListener('click', () => {
+                messageInput.value += emoji.textContent;
+                emojiPicker.style.display = 'none';
+            });
+        });
+    };
+
+    // Profile image handler
+    const loadProfileImage = () => {
+        const savedImage = sessionStorage.getItem('profileImage');
+        if (savedImage) {
+            const profileImg = document.getElementById('taskbar-profile-img');
+            if (profileImg) profileImg.src = savedImage;
+        }
+    };
+
+    // Initialize all UI components
+    setupTaskbarNavigation();
+    setupBubbleMenu();
+    setupDarkMode();
+    setupEmojiPicker();
+    loadProfileImage();
+});

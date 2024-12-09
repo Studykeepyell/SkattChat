@@ -5,66 +5,61 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Chat Room</title>
     
-      <!-- Add CSP meta tag -->
-      <meta http-equiv="Content-Security-Policy" 
-      content="default-src 'self';
-               script-src 'self' 'unsafe-inline' https://cdn.socket.io;
-               style-src 'self' 'unsafe-inline';
-               connect-src 'self' https://skattchat.online http://localhost:3000 
-                          ws://localhost:3000/socket.io/ wss://localhost:3000/socket.io/ 
-                          https://skattchat.online/socket.io/ wss://skattchat.online/socket.io/;
-               img-src 'self' data: https:">
-
     <link rel="stylesheet" href="../styles/chat.css">
-    
-    <!-- Remove Socket.IO script and only use WebSocket implementation -->
-<!-- Fix socket.io script source -->
-<script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
-
-<script src="../scripts/chat/chat-init.js" defer></script>
-    <script type="module" src="../scripts/chat-main.js"></script>
-    
     <link rel="stylesheet" href="../styles/darkmode.css">
-</head>
+    
+    <!-- Add Socket.IO client before other scripts -->
+    <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+    
+    <!-- Existing scripts -->
+    <script defer src="../chat.bundle.js"></script>
+    <script defer src="../app.bundle.js"></script> 
+  </head>
 
   <body>
     <div class="container">
-      <!-- Taskbar Section -->
-      <nav class="taskbar" aria-label="Main navigation">
-        <button
-          data-target="account.html"
-          class="account-button"
-          aria-label="Account"
-        >
-          <img
-            src="../images/account.svg"
-            class="button-icon"
-            alt="Account"
-            id="taskbar-profile-img"
-          />
-        </button>
-        <button
-          data-target="addFriend.html"
-          aria-label="Add Friend"
-          id="addFriendButton"
-        >
-          <img src="../images/add-friend.svg" class="button-icon" alt="Add Friend" />
-        </button>
-        <button data-target="" aria-label="Chat">
-          <img src="../images/chat.svg" class="button-icon" alt="Chat" />
-        </button>
-        <button data-target="index.html" aria-label="Navigate">
-          <img src="../images/compass.svg" class="button-icon" alt="Navigate" />
-        </button>
-        <button
-          class="hamburger-icon"
-          id="hamburger-menu"
-          aria-label="More options"
-        >
-          <span class="bar"></span>
-          <span class="bar"></span>
-          <span class="bar"></span>
-        </button>
+      <!-- Add required elements for app.js -->
+     
+      <nav class="nav">
+        <div class="nav__menu">
+          <!-- Taskbar Section -->
+          <nav class="taskbar" aria-label="Main navigation">
+            <button
+              data-target="account.html"
+              class="account-button"
+              aria-label="Account"
+            >
+              <img
+                src="../assets/images/account.svg"
+                class="button-icon"
+                alt="Account"
+                id="taskbar-profile-img"
+              />
+            </button>
+            <button
+              data-target="addFriend.html"
+              aria-label="Add Friend"
+              id="addFriendButton"
+            >
+              <img src="../assets/images/add-friend.svg" class="button-icon" alt="Add Friend" />
+            </button>
+            <button data-target="" aria-label="Chat">
+              <img src="../assets/images/chat.svg" class="button-icon" alt="Chat" />
+            </button>
+            <button data-target="index.html" aria-label="Navigate">
+              <img src="../assets/images/compass.svg" class="button-icon" alt="Navigate" />
+            </button>
+            <button
+              class="hamburger-icon"
+              id="hamburger-menu"
+              aria-label="More options"
+            >
+              <span class="bar"></span>
+              <span class="bar"></span>
+              <span class="bar"></span>
+            </button>
+          </nav>
+        </div>
       </nav>
 
       <!-- Bubble Menu Section -->
@@ -128,23 +123,26 @@
           </div>
 
           <!-- Input Form -->
-          <!-- Input Form -->
           <div class="message-input-container">
-            <form id="chat-form" aria-label="Chat Form" >
-              <input id="messageInput" type="text" placeholder="" autocomplete="off" aria-label="Message Input" />
+            <form id="chat-form" aria-label="Chat Form">
+              <input 
+                  id="messageInput" 
+                  type="text" 
+                  placeholder="Type a message..." 
+                  autocomplete="off" 
+                  aria-label="Message Input"
+              />
               <button type="submit" aria-label="Send Message">Send</button>
               <button type="button" id="emoji-button" aria-label="Emoji Picker">
-                😊
+                  😊
               </button>
               <div id="emoji-picker" style="display: none">
-                <!-- Add some example emojis -->
-                <span class="emoji">😀</span>
-                <span class="emoji">😂</span>
-                <span class="emoji">😍</span>
-                <span class="emoji">😎</span>
-                <span class="emoji">😢</span>
-                <span class="emoji">😃</span>
-                <!-- Add more emojis as needed -->
+                  <span class="emoji">😀</span>
+                  <span class="emoji">😂</span>
+                  <span class="emoji">😍</span>
+                  <span class="emoji">😎</span>
+                  <span class="emoji">😢</span>
+                  <span class="emoji">😃</span>
               </div>
             </form>
           </div>

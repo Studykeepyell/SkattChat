@@ -1,7 +1,5 @@
 // chat-main.js
-// Option 1: Import from node_modules (preferred)
-import { io } from 'socket.io-client';
-
+import { createSocket } from './lib/socket-client';
 import { setupChatSocket } from './chat/chatSocket.js';
 import { setupFriendSocket } from './friends/friendSocket.js';
 import { loadFriendRequests } from './friends/friends.js';
@@ -17,41 +15,42 @@ let socket = null;
 
 const setupSocket = async () => {
     try {
-        const baseURL = window.location.hostname === 'localhost' 
-            ? 'http://localhost:3000'
-            : 'https://skattchat.online';
+        if (typeof io === 'undefined') {
+            throw new Error('Socket.IO not loaded');
+        }
 
-        // Try to use imported io
-        return io(baseURL, {
-            transports: ['websocket'],
-            withCredentials: true
+        const baseURL = 'http://localhost:3000';
+        const socket = io(baseURL, {
+            transports: ['websocket', 'polling'],
+            reconnection: true,
+            reconnectionAttempts: 5,
+            secure: true
         });
+
+        // Setup basic socket event handlers
+        socket.on('connect', () => {
+            console.log('Socket connected successfully');
+        });
+
+        socket.on('connect_error', (error) => {
+            console.error('Socket connection error:', error);
+        });
+
+        return socket;
     } catch (error) {
-        console.error('Socket.io import failed, falling back to CDN:', error);
-        // Load from CDN if import fails
-        await loadSocketIOFromCDN();
-        return window.io(baseURL, {
-            transports: ['websocket'],
-            withCredentials: true
-        });
+        console.error('Socket setup failed:', error);
+        throw error;
     }
 };
-
-function loadSocketIOFromCDN() {
-    return new Promise((resolve, reject) => {
-        const script = document.createElement('script');
-        script.src = 'https://cdn.socket.io/4.7.4/socket.io.min.js';
-        script.onload = resolve;
-        script.onerror = reject;
-        document.head.appendChild(script);
-    });
-}
 
 // Single initialization point
 document.addEventListener('DOMContentLoaded', async () => {
     console.log('Initializing chat application...');
 
     try {
+  
+        
+        // Initialize socket after Socket.IO is loaded
         socket = await setupSocket();
         if (!socket) throw new Error('Failed to initialize socket');
 
@@ -64,44 +63,62 @@ document.addEventListener('DOMContentLoaded', async () => {
         setupFriendRequestHandlers(socket);
         setupChatFormHandler();
 
+        // Setup socket error handling
+        socket.on('connect_error', (error) => {
+            console.error('Connection error:', error);
+            alert('Failed to connect to chat server. Please check your connection.');
+        });
+
+        socket.on('reconnect_failed', () => {
+            alert('Unable to reconnect to chat server. Please refresh the page.');
+        });
+
         console.log('Chat application fully initialized.');
     } catch (error) {
         console.error('Initialization error:', error);
+        alert('Failed to initialize chat. Please refresh the page.');
     }
 });
 
 function setupChatFormHandler() {
-    const chatForm = document.getElementById('chat-form');
-    if (!chatForm) {
-        console.error('Chat form not found');
+    const chatForm = document.querySelector('#chat-form');
+    const messageInput = document.querySelector('#messageInput');
+
+    if (!chatForm || !messageInput) {
+        console.error('Chat form or message input not found');
         return;
     }
 
-    chatForm.addEventListener('submit', (event) => {
+    // Define the handler function
+    function handleSubmit(event) {
         event.preventDefault();
-
-        const messageInput = document.getElementById('messageInput');
-        if (!messageInput) return;
 
         const message = messageInput.value.trim();
         const roomId = localStorage.getItem('currentRoom');
         const userId = localStorage.getItem('userId');
         const username = localStorage.getItem('username');
-        const timestamp = new Date().toISOString(); // Current timestamp
 
-        if (!message || !roomId || !userId) {
-            console.error('Missing required data for sending message');
+        if (!message) {
+            console.warn('Message is empty');
             return;
         }
 
-        if (message && roomId && userId) {
-            console.log(`Sending message to room ${roomId}:`, message);
-            sendMessage(roomId, userId, username, message, timestamp); // Correct
-            messageInput.value = ''; // Clear input field
-        } else {
-            console.error('Message, roomId, or userId is missing!');
+        if (!roomId || !userId) {
+            console.error('Missing room ID or user ID');
+            return;
         }
-    });
+
+        console.log('Sending message:', message);
+        const timestamp = new Date().toISOString();
+        sendMessage(roomId, userId, username, message, timestamp);
+        messageInput.value = '';
+        messageInput.focus();
+    }
+
+    // Remove existing listener if any
+    chatForm.removeEventListener('submit', handleSubmit);
+    // Attach the event listener
+    chatForm.addEventListener('submit', handleSubmit);
 }
 
 // Function to handle switching chat rooms
@@ -119,8 +136,9 @@ function handleRoomSwitch(e) {
         return;
     }
     console.log(`Switching to room: ${roomId}`);
-    localStorage.setItem('currentRoom', roomId); // Save selected roomId
-    joinChatRoom(socket, roomId); // Call joinChatRoom with the roomId
+    localStorage.setItem('currentRoom', roomId);
+    // Ensure roomId is passed as a string
+    joinChatRoom(socket, roomId.toString());
 }
 
 // Function to handle creating new chat rooms
@@ -149,5 +167,4 @@ function setupFriendRequestHandlers(socket) {
                 respondToFriendRequest(requestId, 'declined', socket);
             }
         });
-    }
-}
+    }}

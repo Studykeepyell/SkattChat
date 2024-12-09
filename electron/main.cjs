@@ -1,5 +1,5 @@
 require('dotenv').config();
-const { app, BrowserWindow, protocol } = require('electron');
+const { app, BrowserWindow } = require('electron');
 const path = require('path');
 const { exec } = require('child_process');
 
@@ -27,7 +27,7 @@ function createWindow() {
         height: 800,
         webPreferences: {
             preload: path.join(__dirname, 'preload.js'),
-            nodeIntegration: true,
+            nodeIntegration: false,
             contextIsolation: true, // Enable context isolation
             webSecurity: isDev ? false : true  // Disable only in development
         }
@@ -39,12 +39,16 @@ function createWindow() {
         mainWindow.webContents.openDevTools();
     }
 
-    // Fix path resolution for development
+    // Fix path resolution
     const indexPath = isDev 
-        ? path.join(__dirname, 'src', 'index.html')
-        : path.join(__dirname, 'dist', 'index.html');
+        ? path.join(__dirname, 'src', 'pages/login.html')
+        : path.join(__dirname,  'pages/login.html');  // Update path
     
     console.log('Loading index from:', indexPath);
+
+    mainWindow.loadFile(indexPath).catch(err => {
+        console.error('Failed to load index.html:', err);
+    });
 
     // Set CSP for development
     mainWindow.webContents.session.webRequest.onHeadersReceived((details, callback) => {
@@ -59,10 +63,6 @@ function createWindow() {
                 ].join('; ') : undefined
             }
         });
-    });
-
-    mainWindow.loadFile(indexPath).catch(err => {
-        console.error('Failed to load index.html:', err);
     });
 
     // Error handling
@@ -114,7 +114,7 @@ app.on('window-all-closed', () => {
 });
 
 app.on('activate', () => {
-    if (mainWindow === null) {
+    if (BrowserWindow.getAllWindows().length === 0) {
         createWindow();
     }
 });

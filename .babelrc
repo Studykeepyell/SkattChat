@@ -1,9 +1,15 @@
 {
-    "presets": [
-        ["@babel/preset-env", {
-            "targets": {
-                "browsers": ">0.25%, not dead"
-            }
-        }]
-    ]
+  "presets": [
+    ["@babel/preset-env", {
+      "targets": {
+        "electron": "25.2.0"
+      },
+      "useBuiltIns": "usage",
+      "corejs": 3
+    }]
+  ],
+  "plugins": [
+    "@babel/plugin-transform-runtime",
+    "@babel/plugin-transform-modules-commonjs"
+  ]
 }

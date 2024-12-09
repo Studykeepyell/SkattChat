@@ -1,8 +1,11 @@
-const corsOptions = {
-    origin: ['http://localhost:3000', 'https://skattchat.online', 'app://skattchat'],
-    credentials: true,
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization']
+module.exports = {
+  origin: [
+    'http://localhost:3000',
+    'https://skattchat.online',
+    'app://.',
+    'app://skattchat'
+  ],
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  credentials: true,
+  allowedHeaders: ['Content-Type', 'Authorization']
 };
-
-module.exports = corsOptions;

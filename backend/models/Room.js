@@ -3,6 +3,10 @@ const mongoose = require('mongoose');
 const roomSchema = new mongoose.Schema({
     roomId: { type: String, required: true, unique: true },
     name: { type: String, required: true },
+    isPrivate: {
+        type: Boolean,
+        default: false
+    },
     participants: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
     messages: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Message' }],
     unreadMessages: [
