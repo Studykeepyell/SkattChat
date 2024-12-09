@@ -24,7 +24,7 @@ export function setupChatSocket(socket) {
 
     const currentUserId = localStorage.getItem('userId');
     if (userId !== currentUserId) {
-        const audio = new Audio('/audio/skattchat.promot.guitar.mp3');
+        const audio = new Audio('/assets/skattchat.promot.guitar.mp3');
         audio.play().catch(error => console.error('Audio playback failed:', error));
     }
     },
@@ -41,24 +41,7 @@ export function setupChatSocket(socket) {
     console.log(`Room updated: ${roomName} (${roomId})`);
 
     // Update the chat heading
-    const chatHeading = document.getElementById('chat-heading');
-    chatHeading.textContent = `${roomName}`;
-
-    // Render messages in the message list
-    const messageContainer = document.getElementById('messages');
-    if (messageContainer) {
-        messageContainer.innerHTML = ''; // Clear old messages
-        messages.forEach((message) => {
-            const messageElement = document.createElement('div');
-            messageElement.classList.add('message');
-            messageElement.innerHTML = `
-                <strong>${message.sender}:</strong>
-                <p>${message.content}</p>
-                <small>${new Date(message.timestamp).toLocaleString()}</small>
-            `;
-            messageContainer.appendChild(messageElement);
-        });
-    }
+  
         },
         'updateChatRoomList': (rooms) => {
             console.log('Updated chat room list:', rooms); // Debug log

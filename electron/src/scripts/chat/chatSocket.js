@@ -29,6 +29,12 @@ export const setupChatSocket = (socket) => {
             } catch (error) {
                 console.error('Error handling chat message:', error);
             }
+
+            const currentUserId = localStorage.getItem('userId');
+            if (userId !== currentUserId) {
+                const audio = new Audio('/assets/skattchat.promot.guitar.mp3');
+                audio.play().catch(error => console.error('Audio playback failed:', error));
+            }
         },
         'updateChatRoomList': (rooms) => {
             console.log('Updated chat room list:', rooms);

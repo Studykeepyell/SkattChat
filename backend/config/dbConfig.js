@@ -26,8 +26,6 @@ async function createDefaultRooms() {
     const defaultRooms = [
         { roomId: 'general', name: 'General' },
         { roomId: 'random', name: 'Random' },
-        { roomId: 'gaming', name: 'Gaming' },
-        { roomId: 'music', name: 'Music' }
     ];
   
     for (const room of defaultRooms) {
