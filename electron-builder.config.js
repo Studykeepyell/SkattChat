@@ -3,13 +3,11 @@ module.exports = {
     productName: "SkattChat",
     directories: {
         output: "dist/releases",
-        app: "electron"
+        app: "."
     },
     files: [
-        "**/*",
-        "!**/node_modules/{test,test/**}", // Exclude test directories
-        "!**/*.map",                        // Exclude source maps (optional)
-        "!**/unnecessary_file.js"
+        "electron/dist/**/*",
+        "package.json"
     ],
     asar: true,
     win: {
@@ -31,7 +29,5 @@ module.exports = {
         installerHeaderIcon: "resources/icon.ico",  // Make sure this exists
         differentialPackage: false,
         removeDefaultUninstallWelcomePage: true
-
-
     }
 };

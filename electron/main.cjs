@@ -39,16 +39,33 @@ function createWindow() {
         mainWindow.webContents.openDevTools();
     }
 
-    // Fix path resolution
-    const indexPath = isDev 
-        ? path.join(__dirname, 'src', 'pages/login.html')
-        : path.join(__dirname,  'pages/login.html');  // Update path
-    
+    // Updated path resolution logic
+    let indexPath;
+    if (isDev) {
+        indexPath = path.join(__dirname, 'src', 'pages', 'login.html');
+    } else {
+        // Look in dist folder for production
+        indexPath = path.join(__dirname, 'pages', 'login.html');
+    }
+
+    console.log('App path:', app.getAppPath());
     console.log('Loading index from:', indexPath);
 
-    mainWindow.loadFile(indexPath).catch(err => {
-        console.error('Failed to load index.html:', err);
-    });
+    // Add error handling for file loading
+    mainWindow.loadFile(indexPath)
+        .catch(err => {
+            console.error('Failed to load login.html:', err);
+            // Show error in window
+            mainWindow.loadURL(`data:text/html;charset=utf-8,
+                <html>
+                    <body>
+                        <h2>Error loading application</h2>
+                        <p>Failed to load login page. Please check the console for details.</p>
+                        <pre>${err.message}</pre>
+                    </body>
+                </html>
+            `);
+        });
 
     // Set CSP for development
     mainWindow.webContents.session.webRequest.onHeadersReceived((details, callback) => {

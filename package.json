@@ -8,7 +8,7 @@
         "build:web": "webpack --config webpack/webpack.web.config.js",
         "build:electron": "webpack --config webpack/webpack.electron.config.js",
         "start": "electron ./electron/dist/main.bundle.cjs",
-        "start:electron": "npm run build:electron && electron ./electron/dist/main.bundle.js",
+        "start:electron": "npm run build:electron && electron ./electron/dist/main.bundle.cjs",
         "start:web": "npm run build:web && serve ./public/dist",
         "dev:web": "webpack --config webpack/webpack.web.config.js --watch",
         "dev:electron": "webpack --config webpack/webpack.electron.config.js --watch",
@@ -84,19 +84,16 @@
         "ws": "^8.18.0"
     },
     "build": {
-        "appId": "com.skattchat.app",
+        "appId": "your.app.id",
         "files": [
-            "dist/**/*"
+            "electron/dist/**/*",
+            "package.json"
         ],
         "directories": {
-            "buildResources": "assets",
-            "output": "release"
+            "output": "release",
+            "buildResources": "resources"
         },
-        "extraResources": [
-            "./assets/**"
-        ],
-        "npmRebuild": false,
-        "nodeGypRebuild": false
+        "asar": false
     },
     "config": {
         "forge": {
