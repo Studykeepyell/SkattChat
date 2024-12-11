@@ -74,6 +74,7 @@
         "spectron": "^10.0.1",
         "stream-browserify": "^3.0.0",
         "style-loader": "^3.3.4",
+        "typescript": "^5.7.2",
         "util": "^0.12.5",
         "webpack": "^5.97.1",
         "webpack-cli": "^5.1.4",
