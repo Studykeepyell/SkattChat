@@ -1,5 +1,22 @@
 document.addEventListener('DOMContentLoaded', () => {
-    document.getElementById('login-form').addEventListener('submit', function(event) {
+    const loginButton = document.getElementById('login-button');
+    const loginForm = document.getElementById('login-form');
+
+    loginButton.addEventListener('click', async () => {
+        const username = document.getElementById('username').value;
+        const password = document.getElementById('password').value;
+        
+        // Your login logic here
+        try {
+            // Handle login API call
+            // If successful, navigate to chat page
+            window.location.href = 'chat.html';
+        } catch (error) {
+            console.error('Login failed:', error);
+        }
+    });
+
+    loginForm.addEventListener('submit', function(event) {
         console.log('Login form submitted'); // Debugging line
         event.preventDefault();
         

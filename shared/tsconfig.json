@@ -1,0 +1,21 @@
+{
+  "compilerOptions": {
+    "target": "ES2020",
+    "module": "ESNext",
+    "moduleResolution": "node",
+    "declaration": true,
+    "outDir": "../dist/shared",
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "baseUrl": ".",
+    "paths": {
+      "@shared/*": ["./core/*"],
+      "@electron/*": ["../electron/src/*"],
+      "@web/*": ["../public/*"]
+    }
+  },
+  "include": ["core/**/*"],
+  "exclude": ["node_modules", "dist"]
+} 

@@ -5,16 +5,16 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Login - SkattChat</title>
     <link rel="stylesheet" href="../styles/index.css">
-    <script src="../login.bundle.js" defer></script>
+    <script src="login.bundle.js" defer></script>
     
 </head>
 <body>
     <div class="login-container">
         <h2>Login</h2>
-        <form id="login-form">
+        <form id="login-form" onsubmit="return false">
             <input type="text" id="username" placeholder="Username" required>
             <input type="password" id="password" placeholder="Password" required>
-            <button type="submit">Login</button>
+            <button type="button" id="login-button">Login</button>
         </form>
         <p>Don't have an account? <a href="../pages/register.html">Register here</a></p>
     </div>

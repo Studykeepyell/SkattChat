@@ -2,14 +2,17 @@
   "presets": [
     ["@babel/preset-env", {
       "targets": {
-        "electron": "25.2.0"
+        "node": "current",
+        "electron": "25"
       },
+      "modules": false,
       "useBuiltIns": "usage",
       "corejs": 3
-    }]
+    }],
+    "@babel/preset-typescript"
   ],
   "plugins": [
     "@babel/plugin-transform-runtime",
-    "@babel/plugin-transform-modules-commonjs"
+    "@babel/plugin-proposal-class-properties"
   ]
 }

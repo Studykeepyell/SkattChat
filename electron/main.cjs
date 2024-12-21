@@ -42,10 +42,10 @@ function createWindow() {
     // Updated path resolution logic
     let indexPath;
     if (isDev) {
-        indexPath = path.join(__dirname, 'src', 'pages', 'login.html');
+        indexPath = path.join(__dirname,  'pages', 'login.html');
     } else {
         // Look in dist folder for production
-        indexPath = path.join(__dirname, 'pages', 'login.html');
+        indexPath = path.join(__dirname, 'dist', 'pages', 'login.html');  // Updated path
     }
 
     console.log('App path:', app.getAppPath());

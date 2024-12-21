@@ -1,35 +1,52 @@
 // webpack.web.config.js
-const path = require('path');
-const { merge } = require('webpack-merge');
-const common = require('./webpack.common.js');
-const CopyWebpackPlugin = require('copy-webpack-plugin');
-const HtmlWebpackPlugin = require('html-webpack-plugin');
-const webpack = require('webpack');
+import path from 'path';
+import { merge } from 'webpack-merge';
+import common from './webpack.common.js';
+import CopyWebpackPlugin from 'copy-webpack-plugin';
+import HtmlWebpackPlugin from 'html-webpack-plugin';
+import webpack from 'webpack';
 
-module.exports = merge(common, {
-  mode: 'production', // Use 'development' for development build
+export default merge(common, {
+  mode: 'development',
   entry: {
-    app: path.resolve(__dirname, '../public/scripts/index.js'),
+    index: path.resolve(process.cwd(), 'public/scripts/index.ts'),
+    login: path.resolve(process.cwd(), 'public/scripts/login.ts'),
+    register: path.resolve(process.cwd(), 'public/scripts/register.ts'),
+    chat: path.resolve(process.cwd(), 'public/scripts/chat/chat.ts'),
+    account: path.resolve(process.cwd(), 'public/scripts/account.ts'),
   },
   output: {
-    path: path.resolve(__dirname, '../public/dist'),
+    path: path.resolve(process.cwd(), 'public/dist'),
     filename: '[name].bundle.js',
-    clean: true, // Clean the output directory before emit
+    clean: true,
   },
   target: 'web',
+  devtool: 'source-map',
+  module: {
+    rules: [
+      {
+        test: /\.tsx?$/,
+        use: 'ts-loader',
+        exclude: /node_modules/,
+      },
+    ],
+  },
+  resolve: {
+    extensions: ['.tsx', '.ts', '.js'],
+  },
   plugins: [
     new HtmlWebpackPlugin({
-      template: path.resolve(__dirname, '../public/index.html'),
+      template: path.resolve(process.cwd(), 'public/index.html'),
       filename: 'index.html',
     }),
     new CopyWebpackPlugin({
       patterns: [
         {
-          from: path.resolve(__dirname, '../public/assets'),
+          from: path.resolve(process.cwd(), 'public/assets'),
           to: 'assets',
         },
         {
-          from: path.resolve(__dirname, '../public/styles'),
+          from: path.resolve(process.cwd(), 'public/styles'),
           to: 'styles',
         },
       ],
