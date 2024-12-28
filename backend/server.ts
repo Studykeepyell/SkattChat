@@ -47,28 +47,27 @@ const io = new Server(httpServer, {
     maxHttpBufferSize: 1e8
 });
 
-// Middleware
-app.use(cors());
+// Unified CORS configuration
+const corsOptions = {
+    origin: function (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) {
+        const allowedOrigins = ['http://localhost:3000', 'https://skattchat.online', 'app://skattchat'];
+        if (!origin || allowedOrigins.includes(origin)) {
+            callback(null, true);
+        } else {
+            callback(new Error('Not allowed by CORS'));
+        }
+    },
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'Accept'],
+    credentials: true
+};
+
+// Apply CORS middleware once
+app.use(cors(corsOptions));
+
+// Body parsing middleware
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-
-// Update CORS middleware
-app.use((req, res, next) => {
-  const origin = req.headers.origin;
-  // Allow Electron app URLs
-  if (origin && (origin.startsWith('app://') || 
-      origin.startsWith('http://localhost') || 
-      origin.startsWith('https://skattchat.online'))) {
-    res.header('Access-Control-Allow-Origin', origin);
-  }
-  res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-  res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization');
-  next();
-});
-
-//Centralized CORS
-import corsOptions from './config/corsConfig.js';
-app.use(cors(corsOptions));
 
 // Add CSP headers middleware
 app.use((req, res, next) => {
@@ -86,6 +85,7 @@ app.use((req, res, next) => {
 app.use((req, res, next) => {
     console.log(`[${req.method}] ${req.path}`);
     if (Object.keys(req.body).length) console.log('Body:', req.body);
+    if (req.headers.authorization) console.log('Auth header present');
     next();
 });
 
@@ -100,22 +100,49 @@ app.use((req, res, next) => {
 const chatRoutes = chatRoutesFactory(io);
 
 // Set up static routes before API routes
-app.use('/', express.static(join(__dirname, '../../public')));
-app.use('/assets', express.static(join(__dirname, '../../public/assets')));
-app.use('/styles', express.static(join(__dirname, '../../public/styles')));
-app.use('/scripts', express.static(join(__dirname, '../../public/scripts')));
-app.use('/pages', express.static(join(__dirname, '../../public/pages')));
-app.use('/fonts', express.static(join(__dirname, '../../public/fonts')));
+app.use('/', express.static(join(__dirname, '../public')));
+app.use('/assets', express.static(join(__dirname, '../public/assets')));
+app.use('/styles', express.static(join(__dirname, '../public/styles')));
+app.use('/scripts', express.static(join(__dirname, '../public/scripts')));
+app.use('/pages', express.static(join(__dirname, '../public/pages')));
+app.use('/fonts', express.static(join(__dirname, '../public/fonts')));
+app.use('/dist', express.static(join(__dirname, '../dist')));
 app.use('/downloads', express.static(DOWNLOADS_DIR));
 
-// Add API version prefix
-const API_PREFIX = '/api/v1';
-
-// Update route definitions with API prefix and leading slashes
+// API routes with proper error handling
 app.use('/api/auth', authRoutes);
 app.use('/api/friendRequests', friendRequestRoutes);
 app.use('/api/users', userRoutes);
-app.use('/api/chat', chatRoutes);
+app.use('/api/chat', (req, res, next) => {
+    console.log('\n[CHAT ROUTE] Request details:', {
+        path: req.path,
+        method: req.method,
+        headers: {
+            ...req.headers,
+            authorization: req.headers.authorization ? 
+                `${req.headers.authorization.substring(0, 20)}...` : 
+                'none'
+        },
+        query: req.query,
+        body: req.body
+    });
+
+    // Check token format
+    const authHeader = req.headers.authorization;
+    if (authHeader) {
+        const [type, token] = authHeader.split(' ');
+        console.log('[CHAT ROUTE] Auth header analysis:', {
+            type,
+            tokenPresent: !!token,
+            tokenLength: token?.length,
+            tokenStart: token ? `${token.substring(0, 20)}...` : 'none'
+        });
+    } else {
+        console.log('[CHAT ROUTE] No authorization header present');
+    }
+
+    next();
+}, chatRoutes);
 app.use('/api/files', fileRoutes);
 app.use('/api/downloads', downloadRoutes);
 
@@ -138,7 +165,7 @@ app.get('*', (req, res) => {
 
 // Add Electron-specific error handling
 const errorHandler: ErrorRequestHandler = (err, req, res, next) => {
-  console.error(err.stack);
+  console.error('Error occurred:', err);
   res.status(err.status || 500).json({
     error: isDevelopment ? err.message : 'Internal Server Error',
     details: isDevelopment ? err.stack : undefined
@@ -147,7 +174,7 @@ const errorHandler: ErrorRequestHandler = (err, req, res, next) => {
 
 app.use(errorHandler);
 
-//Socket.IO Intergration
+//Socket.IO Integration
 setupSocket(io);
 
 // Connect to MongoDB

@@ -25,20 +25,27 @@ document.addEventListener('DOMContentLoaded', () => {
             : 'https://skattchat.online';
 
         try {
-            const response = await fetch(`${baseURL}/api/users/login`, {
+            console.log('Attempting login with:', { username, baseURL });
+            const response = await fetch(`${baseURL}/api/auth/login`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
+                    'Accept': 'application/json'
                 },
                 body: JSON.stringify({ username, password }),
                 credentials: 'include' // For handling cookies if needed
             });
 
+            console.log('Login response status:', response.status);
+
             if (!response.ok) {
+                const errorText = await response.text();
+                console.error('Login error response:', errorText);
                 throw new Error(`HTTP error! status: ${response.status}`);
             }
 
             const data = await response.json();
+            console.log('Login response data:', data);
             
             if (data.success) {
                 console.log('Login successful');
@@ -46,6 +53,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     localStorage.setItem('userId', data.userId);
                     localStorage.setItem('authToken', data.token);
                     localStorage.setItem('username', username);
+                    console.log('Stored credentials, redirecting to chat...');
                     window.location.href = '/pages/chat.html';
                 }
             } else {

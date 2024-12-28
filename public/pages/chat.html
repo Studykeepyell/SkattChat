@@ -214,13 +214,53 @@
     </script>
     <script src="/socket.io/socket.io.js"></script>
     <script>
-      // Add Socket.IO connection error handling
+      // Only handle UI-related functionality in chat.html
       window.addEventListener('load', () => {
-        if (typeof io === 'undefined') {
-          console.error('Socket.IO failed to load');
-          alert('Chat connection failed. Please refresh the page.');
-        }
+        // Dark mode handling
+        const isDarkMode = JSON.parse(localStorage.getItem('darkMode')); 
+        if (isDarkMode) { 
+          document.body.classList.add('dark-mode'); 
+        } 
+
+        // Setup dark mode toggle
+        document.getElementById('darkModeButton')?.addEventListener('click', function() {
+          document.body.classList.toggle('dark-mode');
+          const isDarkMode = document.body.classList.contains('dark-mode'); 
+          localStorage.setItem('darkMode', isDarkMode);
+        });
+
+        // Taskbar navigation
+        document.querySelectorAll(".taskbar button[data-target]").forEach((button) => {
+          button.addEventListener("click", (e) => {
+            const target = e.currentTarget.getAttribute("data-target");
+            window.location.href = target;
+          });
+        });
+
+        // Toggle the emoji picker display
+        document.getElementById("emoji-button")?.addEventListener("click", () => {
+          const emojiPicker = document.getElementById("emoji-picker");
+          if (emojiPicker) {
+            emojiPicker.style.display = emojiPicker.style.display === "none" ? "block" : "none";
+          }
+        });
+
+        // Insert emoji into message input
+        document.querySelectorAll(".emoji").forEach((emoji) => {
+          emoji.addEventListener("click", () => {
+            const messageInput = document.getElementById("messageInput");
+            if (messageInput) {
+              messageInput.value += emoji.textContent;
+              const emojiPicker = document.getElementById("emoji-picker");
+              if (emojiPicker) {
+                emojiPicker.style.display = "none";
+              }
+            }
+          });
+        });
       });
     </script>
-<script src="../dist/app.bundle.js"></script>  </body>
+    <script src="/dist/runtime.bundle.js"></script>
+    <script src="/dist/vendors.bundle.js"></script>
+    <script src="/dist/index.bundle.js"></script>  </body>
 </html>

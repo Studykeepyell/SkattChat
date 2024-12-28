@@ -1,6 +1,12 @@
 import { fetchProfileImage, formatTimestamp, formatMessageDate, formatMessageTime } from '../utils/utils';
 import { ChatRoom } from './chatRooms';
 
+// Add type declaration for window.chatSocket
+declare global {
+    interface Window {
+        chatSocket: any;
+    }
+}
 
 export async function addChatMessage(data: { username: string, userId?: string, content: string, timestamp: string }) {
     const messagesList = document.getElementById('messages');
@@ -122,38 +128,105 @@ export async function fetchMessages(roomId: string) {
 
 
 export async function fetchChatRooms(socket: any) {
-    console.log('Auth Token:', localStorage.getItem('authToken'));
+    console.log('Starting fetchChatRooms...');
+    
+    // Verify authentication
+    const authToken = localStorage.getItem('authToken');
+    const userId = localStorage.getItem('userId');
+    
+    if (!authToken || !userId) {
+        console.error('Missing authentication credentials');
+        return;
+    }
+    
+    console.log('Auth credentials found:', { 
+        userId,
+        tokenExists: !!authToken,
+        tokenLength: authToken?.length,
+        tokenStart: authToken?.substring(0, 20) + '...'
+    });
+
+    // Determine base URL
+    const baseURL = window.location.hostname === 'localhost' 
+        ? 'http://localhost:3000' 
+        : 'https://skattchat.online';
 
     try {
-        const response = await fetch('/api/chat/rooms', {
+        // Verify socket connection
+        if (!socket || !socket.connected) {
+            console.error('Socket not connected. Attempting to reconnect...');
+            if (socket) {
+                socket.connect();
+                await new Promise((resolve) => {
+                    const timeout = setTimeout(() => {
+                        console.error('Socket reconnection timeout');
+                        resolve(false);
+                    }, 5000);
+                    
+                    socket.once('connect', () => {
+                        clearTimeout(timeout);
+                        resolve(true);
+                    });
+                });
+            }
+            
+            if (!socket || !socket.connected) {
+                throw new Error('No valid socket connection available');
+            }
+        }
+
+        console.log('Making API request to /api/chat/rooms with token:', authToken.substring(0, 20) + '...');
+        const authHeader = `Bearer ${authToken}`;
+        console.log('Authorization header:', authHeader.substring(0, 40) + '...');
+        
+        const response = await fetch(`${baseURL}/api/chat/rooms`, {
             method: 'GET',
             headers: {
-                'Authorization': `Bearer ${localStorage.getItem('authToken')}`,
+                'Authorization': authHeader,
                 'Content-Type': 'application/json',
+                'Accept': 'application/json'
             },
+            credentials: 'include'
         });
 
+        console.log('API Response status:', response.status);
+        
+        if (!response.ok) {
+            const errorText = await response.text();
+            console.error('API Error Response:', errorText);
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
         const data = await response.json();
+        console.log('API Response data:', data);
 
         if (data.success && data.rooms) {
-            console.log('Fetched rooms:', data.rooms); // Debug log
+            console.log('Successfully fetched rooms:', data.rooms);
             const container = document.getElementById('roomList');
             if (container) {
                 container.innerHTML = ''; // Clear previous entries
                 data.rooms.forEach((room: { name: string, roomId: string }) => {
-                    console.log(`Room rendered: ${room.name} with ID ${room.roomId}`);
+                    console.log(`Rendering room: ${room.name} with ID ${room.roomId}`);
                     ChatRoom.display({ 
                         ...room, 
                         lastMessageTime: '', 
                         updatedAt: '' 
                     }, container, socket);
                 });
+            } else {
+                console.error('Room list container not found');
             }
         } else {
-            console.warn('No rooms found or fetch failed.');
+            console.warn('No rooms found or fetch failed:', data);
         }
     } catch (error) {
-        console.error('Error fetching rooms:', error);
+        console.error('Error in fetchChatRooms:', error);
+        // Attempt to reconnect socket if that was the issue
+        if (socket && !socket.connected) {
+            console.log('Attempting to reconnect socket...');
+            socket.connect();
+        }
+        throw error;
     }
 }
 

@@ -6,7 +6,6 @@ interface CustomSocket extends Socket {
 
 const userSocketMap: { [key: string]: string } = {};
 
-
 import { Server } from 'socket.io';
 import Room from '../models/Room.js';
 import User from '../models/User.js';
@@ -19,6 +18,7 @@ const setupSocket = (io: Server) => {
         // Handle user login
         socket.on('login', (userId: string) => {
             userSocketMap[userId as keyof typeof userSocketMap] = socket.id;
+            socket.userId = userId;
             console.log(`User ${userId} connected with socket ${socket.id}`);
         });
 
@@ -32,8 +32,47 @@ const setupSocket = (io: Server) => {
             }
         });
 
-        socket.on('joinRoom', async (roomId) => {
+        // Handle room list requests
+        socket.on('requestRooms', async () => {
+            console.log('Room list requested by socket:', socket.id);
             try {
+                if (!socket.userId) {
+                    console.error('User not authenticated');
+                    socket.emit('error', { message: 'User not authenticated' });
+                    return;
+                }
+
+                const rooms = await Room.find({
+                    $or: [
+                        { participants: socket.userId },
+                        { participants: { $size: 0 } }
+                    ]
+                }).populate('participants', 'username profileImage').lean();
+
+                const formattedRooms = rooms.map(room => ({
+                    roomId: room.roomId,
+                    name: room.name,
+                    lastMessageTime: room.lastMessageTime || room.updatedAt,
+                    updatedAt: room.updatedAt,
+                    participants: room.participants.map((p: any) => ({
+                        id: p._id,
+                        username: p.username,
+                        profileImage: p.profileImage
+                    }))
+                }));
+
+                console.log('Sending room list:', formattedRooms);
+                socket.emit('roomList', formattedRooms);
+            } catch (error) {
+                console.error('Error fetching rooms:', error);
+                socket.emit('error', { message: 'Failed to fetch rooms' });
+            }
+        });
+
+        socket.on('joinRoom', async (data) => {
+            try {
+                const roomId = typeof data === 'object' ? data.roomId : data;
+                
                 // Input validation
                 if (!roomId) {
                     throw new Error('Room ID is required');
@@ -110,7 +149,7 @@ const setupSocket = (io: Server) => {
                 });
             
             } catch (error: any) {
-                console.error(`Error in room "${roomId}":`, error);
+                console.error(`Error in room "${data}":`, error);
                 socket.emit('errorMessage', { 
                     error: 'Failed to load room details.',
                     details: error.message,

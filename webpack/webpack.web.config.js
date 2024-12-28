@@ -9,30 +9,49 @@ import webpack from 'webpack';
 export default merge(common, {
   mode: 'development',
   entry: {
-    index: path.resolve(process.cwd(), 'public/scripts/index.ts'),
-    login: path.resolve(process.cwd(), 'public/scripts/login.ts'),
-    register: path.resolve(process.cwd(), 'public/scripts/register.ts'),
-    chat: path.resolve(process.cwd(), 'public/scripts/chat/chat.ts'),
-    account: path.resolve(process.cwd(), 'public/scripts/account.ts'),
+    app: path.resolve(process.cwd(), 'public/src/index.tsx'),
   },
   output: {
     path: path.resolve(process.cwd(), 'public/dist'),
     filename: '[name].bundle.js',
     clean: true,
+    publicPath: '/'
   },
   target: 'web',
   devtool: 'source-map',
   module: {
     rules: [
       {
-        test: /\.tsx?$/,
+        test: /\.(ts|tsx)$/,
         use: 'ts-loader',
         exclude: /node_modules/,
+      },
+      {
+        test: /\.css$/,
+        use: ['style-loader', 'css-loader'],
+      },
+      {
+        test: /\.(png|svg|jpg|jpeg|gif)$/i,
+        type: 'asset/resource',
       },
     ],
   },
   resolve: {
-    extensions: ['.tsx', '.ts', '.js'],
+    extensions: ['.tsx', '.ts', '.js', '.jsx'],
+    alias: {
+      '@': path.resolve(process.cwd(), 'public/src'),
+    },
+  },
+  devServer: {
+    historyApiFallback: true,
+    hot: true,
+    port: 3000,
+    static: {
+      directory: path.join(process.cwd(), 'public'),
+    },
+    proxy: {
+      '/api': 'http://localhost:3000',
+    },
   },
   plugins: [
     new HtmlWebpackPlugin({
@@ -52,6 +71,7 @@ export default merge(common, {
       ],
     }),
     new webpack.DefinePlugin({
+      'process.env': JSON.stringify(process.env),
       IS_ELECTRON: JSON.stringify(false),
     }),
   ],
