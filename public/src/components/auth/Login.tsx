@@ -100,7 +100,7 @@ const Login: React.FC = () => {
                         Register here
                     </a>
                 </p>
-            </form>
+            </form>o
         </div>
     );
 };
