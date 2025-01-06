@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Add Friends</title>
+    <link rel="stylesheet" href="../styles/addFriend.css">
+</head>
+<body>
+    <!-- Taskbar Section -->
+    <nav class="taskbar">
+        <button data-target="account.html" class="taskbar-button">
+            <img src="../assets/images/account.svg" class="button-icon" alt="Account"> 
+        </button>        
+        <button data-target="addFriend.html" class="taskbar-button">
+            <img src="../assets/images/add-friend.svg" class="button-icon" alt="Add Friend"> 
+        </button>
+        <button data-target="chat.html" class="taskbar-button">
+            <img src="../assets/images/chat.svg" class="button-icon" alt="Chat"> 
+        </button>        
+        <button data-target="navigate.html" class="taskbar-button">
+            <img src="../assets/images/compass.svg" class="button-icon" alt="Navigate">
+        </button>
+    </nav>
+    
+    <!-- Main Content Section -->
+    <div class="main-content">
+        <section class="search-section">
+            <form id="searchForm" class="search-form">
+                <div class="search-box-container">
+                    <input type="text" 
+                           id="searchInput" 
+                           class="search-input"
+                           placeholder="Search by username..."
+                           required>
+                    <button type="submit" class="search-button">
+                        Search
+                    </button>
+                </div>
+            </form>
+
+            <section id="resultsContainer" class="results-container">
+                <!-- Search results will be dynamically added here -->
+            </section>
+        </section>
+    </div>
+
+    <script type="module" src="../scripts/pages/friends/addFriend.js"></script>
+</body>
+</html>

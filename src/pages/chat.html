@@ -1,0 +1,164 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Chat Room</title>
+    <link rel="stylesheet" href="../styles/chat.css">
+
+
+     <!-- Fix socket.io script source -->
+
+     <!-- Add CSP meta tag -->
+     <meta http-equiv="Content-Security-Policy" 
+           content="default-src 'self';
+                    script-src 'self' 'unsafe-inline' https://cdn.socket.io;
+                    style-src 'self' 'unsafe-inline';
+                    connect-src 'self' https://skattchat.online http://localhost:3000 
+                               ws://localhost:3000/socket.io/ wss://localhost:3000/socket.io/ 
+                               https://skattchat.online/socket.io/ wss://skattchat.online/socket.io/;
+                    img-src 'self' data: https:">
+ 
+
+    <style> 
+      .no-background { background: none; color: white; height:0.1% } 
+      .dark-mode { filter: invert(1) hue-rotate(180deg); }
+    </style>
+
+</head>
+
+  <body>
+    <div class="container">
+      <!-- Taskbar Section -->
+      <nav class="taskbar" aria-label="Main navigation">
+        <button
+          data-target="account.html"
+          class="account-button"
+          aria-label="Account"
+        >
+          <img
+            src="../assets/images/account.svg"
+            class="button-icon"
+            alt="Account"
+            id="taskbar-profile-img"
+          />
+        </button>
+        <button
+          data-target="addFriend.html"
+          aria-label="Add Friend"
+          id="addFriendButton"
+        >
+          <img src="../assets/images/add-friend.svg" class="button-icon" alt="Add Friend" />
+        </button>
+        <button data-target="" aria-label="Chat">
+          <img src="../assets/images/chat.svg" class="button-icon" alt="Chat" />
+        </button>
+        <button data-target="index.html" aria-label="Navigate">
+          <img src="../assets/images/compass.svg" class="button-icon" alt="Navigate" />
+        </button>
+        <button
+          class="hamburger-icon"
+          id="hamburger-menu"
+          aria-label="More options"
+        >
+          <span class="bar"></span>
+          <span class="bar"></span>
+          <span class="bar"></span>
+        </button>
+      </nav>
+
+      <!-- Bubble Menu Section -->
+      <div class="bubble-menu" id="bubble-menu" aria-hidden="true">
+        <ul>
+          <li><a href="../pages/settings.html">Settings</a></li>
+          <li><a href="../pages/login.html">Log Out</a></li>
+          <li><a href="../pages/account.html">Profile</a></li>
+          <li><a href="#">Notifications</a></li>
+          <li><button id="darkModeButton" class="no-background">Darkmode</button></li>        </ul>
+      </div>
+
+      <div class="room-select">
+        <h3>Chats</h3>
+        <button id="createRoomBtn">Create Room</button>
+        <!-- Chat Rooms -->
+        <section
+          class="chat-room-section"
+          aria-labelledby="public-chats"
+          id="roomList"
+        >
+
+        
+        </section>
+
+        <!-- Friend Requests Section -->
+        <div id="friendRequests">
+          <h3>Pending Friend Requests</h3>
+          <ul id="friendRequestList" class="friend-request-list"></ul>            
+          <!-- Friend requests will be dynamically added here -->
+          </ul>
+        </div>
+
+        <div id="friendsList">
+          <h3>Your Friends</h3>
+          <!-- Friends will be dynamically added here -->
+        </div>
+      </div>
+
+      <!-- Chat Content Section -->
+      <main class="content" aria-labelledby="chat-heading">
+        <div class="chatContainer">
+          <h2 id="chat-heading">Welcome to the Chat Room</h2>
+          <ul id="welcomeMessage"></ul>
+
+          <!-- Action Buttons -->
+          <div class="button-container">
+           
+            <button
+              id="playWordGame"
+              style="margin-top: 10px"
+              onclick="window.location.href='./Games/wordGameStart.html'"
+            >
+              Word Game
+            </button>
+          </div>
+
+          <!-- Message Display Area -->
+          <div
+            id="messages"
+            class="message-display"
+            aria-live="polite"
+            aria-atomic="true"
+          ></div>
+
+          <!-- Input Form -->
+          <!-- Input Form -->
+          <div class="message-input-container">
+            <form id="chat-form" aria-label="Chat Form" >
+              <input id="messageInput" type="text" placeholder="" autocomplete="off" aria-label="Message Input" />
+              <button type="submit" aria-label="Send Message">Send</button>
+              <button type="button" id="emoji-button" aria-label="Emoji Picker">
+                😊
+              </button>
+              <div id="emoji-picker" style="display: none">
+                <!-- Add some example emojis -->
+                <span class="emoji">😀</span>
+                <span class="emoji">😂</span>
+                <span class="emoji">😍</span>
+                <span class="emoji">😎</span>
+                <span class="emoji">😢</span>
+                <span class="emoji">😃</span>
+                <!-- Add more emojis as needed -->
+              </div>
+            </form>
+          </div>
+        </div>
+      </main>
+    </div>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script type="module" src="../scripts/pages/chat/chat-main.ts"></script>
+    <script src="/dist/runtime.bundle.js"></script>
+    <script src="/dist/vendors.bundle.js"></script>
+    <script src="/dist/index.bundle.js"></script>
+  </body>
+</html>
