@@ -1,27 +1,64 @@
-import { ChatModule } from '../features/chat/index.js';
-import { FriendModule } from '../features/friend/index.js';
-import { SocketService } from '../core/socketService.js';
-import { ErrorHandler } from '../core/errorHandler.js';
-import { Constants } from '../core/constants.js';
-import { EventBus } from '../core/eventBus.js';
+import { ChatModule } from '../features/chat/index';
+import { FriendModule } from '../features/friend/index';
+import { SocketService } from '../core/socketService';
+import { ErrorHandler } from '../core/errorHandler';
+import { Constants } from '../core/constants';
+import { EventBus } from '../core/eventBus';
+import { StorageService } from '../core/storageService';
 
 export class ChatPage {
     private chatModule!: ChatModule;
     private friendModule!: FriendModule;
+    private currentUser: any;
 
     constructor() {
         this.initialize();
     }
 
-    private initialize() {
+    private async initialize() {
         try {
+            await this.checkAuthentication();
             this.initializeCore();
             this.initializeModules();
             this.setupEventListeners();
             this.setupUI();
             this.loadSavedSettings();
+            this.loadUserProfile();
         } catch (error) {
             ErrorHandler.handle(error);
+            // Redirect to login if there's an authentication error
+            window.location.href = '../pages/login.html';
+        }
+    }
+
+    private async checkAuthentication() {
+        const token = StorageService.get(Constants.STORAGE_KEYS.AUTH_TOKEN);
+        const userId = StorageService.get(Constants.STORAGE_KEYS.USER_ID);
+        
+        if (!token || !userId) {
+            throw new Error('Not authenticated');
+        }
+
+        this.currentUser = {
+            id: userId,
+            token: token,
+            profile: StorageService.get(Constants.STORAGE_KEYS.USER_PROFILE)
+        };
+    }
+
+    private loadUserProfile() {
+        if (this.currentUser?.profile) {
+            // Update profile image
+            const profileImg = document.getElementById("taskbar-profile-img") as HTMLImageElement;
+            if (profileImg && this.currentUser.profile.avatar) {
+                profileImg.src = this.currentUser.profile.avatar;
+            }
+
+            // Update username if displayed
+            const usernameElement = document.getElementById("username-display");
+            if (usernameElement && this.currentUser.profile.username) {
+                usernameElement.textContent = this.currentUser.profile.username;
+            }
         }
     }
 
@@ -31,24 +68,17 @@ export class ChatPage {
         if (isDarkMode) {
             document.body.classList.add('dark-mode');
         }
-
-        // Load profile image
-        const savedImage = sessionStorage.getItem("profileImage");
-        if (savedImage) {
-            const profileImg = document.getElementById("taskbar-profile-img");
-            if (profileImg) {
-                (profileImg as HTMLImageElement).src = savedImage;
-            }
-        }
     }
 
     private initializeCore() {
-        // Initialize socket connection
-        SocketService.initialize();
+        // Initialize socket connection with auth token
+        SocketService.initialize(this.currentUser.token);
         
-        // Check authentication status
-        const isAuthenticated = !!localStorage.getItem(Constants.STORAGE_KEYS.AUTH_TOKEN);
-        EventBus.publish(Constants.EVENTS.AUTH_CHANGE, { isAuthenticated });
+        // Publish authentication status
+        EventBus.publish(Constants.EVENTS.AUTH_CHANGE, { 
+            isAuthenticated: true,
+            user: this.currentUser
+        });
     }
 
     private initializeModules() {
@@ -68,14 +98,28 @@ export class ChatPage {
 
     private setupEventListeners() {
         EventBus.subscribe(Constants.EVENTS.AUTH_CHANGE, this.handleAuthChange.bind(this));
+        EventBus.subscribe(Constants.EVENTS.PROFILE_UPDATE, this.handleProfileUpdate.bind(this));
     }
 
-    private handleAuthChange({ isAuthenticated }: { isAuthenticated: boolean }) {
-        const authElements = document.querySelectorAll('[data-auth]');
-        authElements.forEach(element => {
-            const shouldShow = element.getAttribute('data-auth') === (isAuthenticated ? 'true' : 'false');
-            (element as HTMLElement).style.display = shouldShow ? 'block' : 'none';
-        });
+    private handleAuthChange({ isAuthenticated, user }: { isAuthenticated: boolean, user?: any }) {
+        if (!isAuthenticated) {
+            // Handle logout
+            window.location.href = '../pages/login.html';
+            return;
+        }
+
+        if (user) {
+            this.currentUser = user;
+            this.loadUserProfile();
+        }
+    }
+
+    private handleProfileUpdate(profile: any) {
+        if (this.currentUser) {
+            this.currentUser.profile = profile;
+            StorageService.set(Constants.STORAGE_KEYS.USER_PROFILE, profile);
+            this.loadUserProfile();
+        }
     }
 
     // UI Methods moved from scripts.ts

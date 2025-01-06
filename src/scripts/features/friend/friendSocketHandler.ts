@@ -1,8 +1,8 @@
-import { SocketService } from '../../core/socketService.js';
-import { EventBus } from '../../core/eventBus.js';
-import { Constants } from '../../core/constants.js';
-import { API_CONFIG } from '../../core/api.config.js';
-import { ErrorHandler } from '../../core/errorHandler.js';
+import { SocketService } from '../../core/socketService';
+import { EventBus } from '../../core/eventBus';
+import { Constants } from '../../core/constants';
+import { API_CONFIG } from '../../core/api.config';
+import { ErrorHandler } from '../../core/errorHandler';
 
 export class FriendSocketHandler {
     private socket = SocketService.getInstance();

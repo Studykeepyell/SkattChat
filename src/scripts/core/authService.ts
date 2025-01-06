@@ -1,7 +1,7 @@
-import { API_CONFIG } from './api.config.js';
-import { HttpService } from './httpService.js';
-import { Constants } from './constants.js';
-import { EventBus } from './eventBus.js';
+import { API_CONFIG } from './api.config';
+import { HttpService } from './httpService';
+import { Constants } from './constants';
+import { EventBus } from './eventBus';
 
 export class AuthService {
     static async login(username: string, password: string) {

@@ -1,9 +1,9 @@
-import { API_CONFIG } from '../../core/api.config.js';
-import { HttpService } from '../../core/httpService.js';
-import { EventBus } from '../../core/eventBus.js';
-import { Constants } from '../../core/constants.js';
-import { ErrorHandler } from '../../core/errorHandler.js';
-import { StorageService } from '../../core/storageService.js';
+import { API_CONFIG } from '../../core/api.config';
+import { HttpService } from '../../core/httpService';
+import { EventBus } from '../../core/eventBus';
+import { Constants } from '../../core/constants';
+import { ErrorHandler } from '../../core/errorHandler';
+import { StorageService } from '../../core/storageService';
 
 export interface LoginResponse {
     success: boolean;

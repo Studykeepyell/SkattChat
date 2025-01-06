@@ -1,8 +1,8 @@
-import { API_CONFIG } from '../../core/api.config.js';
-import { HttpService } from '../../core/httpService.js';
-import { ErrorHandler } from '../../core/errorHandler.js';
-import { EventBus } from '../../core/eventBus.js';
-import { Constants } from '../../core/constants.js';
+import { API_CONFIG } from '../../core/api.config';
+import { HttpService } from '../../core/httpService';
+import { ErrorHandler } from '../../core/errorHandler';
+import { EventBus } from '../../core/eventBus';
+import { Constants } from '../../core/constants';
 
 export interface ChatRoomData {
     name: string;

@@ -1,0 +1,55 @@
+
+.download-progress {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    background: #2f3136;
+    padding: 15px;
+    border-radius: 8px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+    z-index: 1000;
+    width: 300px;
+}
+
+.progress-inner {
+    background: #202225;
+    border-radius: 4px;
+    overflow: hidden;
+}
+
+.progress-bar {
+    height: 4px;
+    background: #5865f2;
+    width: 0;
+    transition: width 0.3s ease;
+}
+
+.progress-text {
+    color: #ffffff;
+    font-size: 14px;
+    margin-top: 8px;
+    text-align: center;
+}
+
+.success-message, .error-message {
+    color: #ffffff;
+    padding: 10px;
+    border-radius: 4px;
+}
+
+.success-message {
+    background: #43b581;
+}
+
+.error-message {
+    background: #f04747;
+}
+
+.download-progress button {
+    float: right;
+    background: none;
+    border: none;
+    color: white;
+    cursor: pointer;
+    padding: 4px 8px;
+}

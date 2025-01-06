@@ -1,4 +1,4 @@
-import { API_CONFIG } from "./api.config.js";
+import { API_CONFIG } from "./api.config";
 
 // Base HTTP service for making API calls
 export class HttpService {

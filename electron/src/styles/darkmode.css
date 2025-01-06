@@ -1,9 +1,0 @@
-.no-background { 
-    background: none; 
-    color: white; 
-    height: 0.1%;
-}
-
-.dark-mode { 
-    filter: invert(1) hue-rotate(180deg);
-}

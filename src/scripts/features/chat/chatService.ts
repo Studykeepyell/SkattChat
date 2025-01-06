@@ -1,12 +1,12 @@
-import { API_CONFIG } from '../../core/api.config.js';
-import { HttpService } from '../../core/httpService.js';
-import { EventBus } from '../../core/eventBus.js';
-import { Constants } from '../../core/constants.js';
-import { SocketService } from '../../core/socketService.js';
-import { StorageService } from '../../core/storageService.js';
-import { ErrorHandler } from '../../core/errorHandler.js';
-import { MessageService } from './messageService.js';
-import { ChatUIService } from './chatUIService.js';
+import { API_CONFIG } from '../../core/api.config';
+import { HttpService } from '../../core/httpService';
+import { EventBus } from '../../core/eventBus';
+import { Constants } from '../../core/constants';
+import { SocketService } from '../../core/socketService';
+import { StorageService } from '../../core/storageService';
+import { ErrorHandler } from '../../core/errorHandler';
+import { MessageService } from './messageService';
+import { ChatUIService } from './chatUIService';
 
 export class ChatService {
     private socket = SocketService.getInstance();

@@ -161,21 +161,38 @@ export default [
             // Copy assets
             new CopyWebpackPlugin({
                 patterns: [
+                    // Copy src to electron dist
+                    {
+                        from: path.resolve(process.cwd(), '../src'),
+                        to: path.resolve(process.cwd(), '../electron/dist'),
+                        globOptions: {
+                            ignore: ['**/node_modules/**']
+                        }
+                    },
+                    // Copy src to public
+                    {
+                        from: path.resolve(process.cwd(), '../src'),
+                        to: path.resolve(process.cwd(), '../public'),
+                        globOptions: {
+                            ignore: ['**/node_modules/**']
+                        }
+                    },
+                    // Preserve existing patterns
                     {
                         from: path.resolve(process.cwd(), '../electron/src/assets'),
-                        to: path.resolve(process.cwd(), '../electron/dist/assets')  // Absolute path
+                        to: path.resolve(process.cwd(), '../electron/dist/assets')
                     },
                     {
-                        from: path.resolve(process.cwd(), '../electron/src/scripts'),  // Fixed 'form' to 'from'
-                        to: path.resolve(process.cwd(), '../electron/dist/scripts')  // Absolute path
+                        from: path.resolve(process.cwd(), '../electron/src/scripts'),
+                        to: path.resolve(process.cwd(), '../electron/dist/scripts')
                     },
                     {
                         from: path.resolve(process.cwd(), '../electron/src/styles'),
-                        to: path.resolve(process.cwd(), '../electron/dist/styles')  // Absolute path
+                        to: path.resolve(process.cwd(), '../electron/dist/styles')
                     },
                     {
                         from: path.resolve(process.cwd(), '../electron/preload.js'),
-                        to: path.resolve(process.cwd(), '../electron/dist/preload.js')  // Absolute path
+                        to: path.resolve(process.cwd(), '../electron/dist/preload.js')
                     }
                 ],
             }),

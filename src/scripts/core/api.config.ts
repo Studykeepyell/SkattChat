@@ -1,6 +1,7 @@
 // Base API configuration used throughout the application
 export const API_CONFIG = {
-    BASE_URL: window.location.origin,
+    BASE_URL: 'http://localhost:3000',
+    SOCKET_URL: 'http://localhost:3000',
     ENDPOINTS: {
         AUTH: {
             LOGIN: '/api/auth/login',
@@ -9,37 +10,31 @@ export const API_CONFIG = {
         },
         CHAT: {
             SEND: '/api/chat/send',
-            MESSAGES: (roomId: string) => `/api/chat/rooms/${roomId}/messages`,
+            MESSAGES: (roomId: string) => `/api/chat/messages/${roomId}`,
             ROOMS: '/api/chat/rooms',
             MARK_READ: (roomId: string) => `/api/chat/rooms/${roomId}/read`
         },
         FRIEND_REQUESTS: {
-            // Match backend routes exactly
-            SEND: (receiverId: string) => `/api/friendRequests/send/${receiverId}`,
-            RESPOND: '/api/friendRequests/respond',
-            PENDING: (userId: string) => `/api/friendRequests/requests/${userId}`,
-            FRIENDS: (userId: string) => `/api/friendRequests/friends/${userId}`,
-            ROOMS: (userId: string) => `/api/friendRequests/rooms/${userId}`
+            SEND: '/api/friends/requests/send',
+            ACCEPT: '/api/friends/requests/accept',
+            REJECT: '/api/friends/requests/reject',
+            LIST: '/api/friends/requests'
         },
         USER: {
-            PROFILE: '/api/users/profile'
+            PROFILE: '/api/users/profile',
+            UPDATE: '/api/users/update'
         }
     },
     HEADERS: {
-        JSON: { 'Content-Type': 'application/json' }
+        'Content-Type': 'application/json'
     },
     SOCKET: {
         EVENTS: {
             CONNECT: 'connect',
             DISCONNECT: 'disconnect',
             MESSAGE: 'message',
-            JOIN_ROOM: 'joinRoom',
-            ROOM_UPDATE: 'roomUpdate',
-            ROOM_LIST: 'roomList',
-            REQUEST_ROOMS: 'requestRooms',
-            FRIEND_REQUEST_RECEIVED: 'friendRequestReceived',
-            FRIEND_REQUEST_ACCEPTED: 'friendRequestAccepted',
-            FRIEND_LIST_UPDATED: 'friendListUpdated'
+            JOIN_ROOM: 'join_room',
+            LEAVE_ROOM: 'leave_room'
         }
     }
 }; 

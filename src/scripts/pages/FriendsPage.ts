@@ -1,8 +1,8 @@
-import { FriendModule } from '../features/friend/index.js';
-import { ErrorHandler } from '../core/errorHandler.js';
-import { HttpService } from '../core/httpService.js';
-import { API_CONFIG } from '../core/api.config.js';
-import { StorageService } from '../core/storageService.js';
+import { FriendModule } from '../features/friend/index';
+import { ErrorHandler } from '../core/errorHandler';
+import { HttpService } from '../core/httpService';
+import { API_CONFIG } from '../core/api.config';
+import { StorageService } from '../core/storageService';
 
 export class FriendsPage {
     private friendModule!: FriendModule;

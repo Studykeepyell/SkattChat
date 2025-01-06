@@ -1,5 +1,5 @@
-import { FriendService } from './friendService.js';
-import { FriendSocketHandler } from './friendSocketHandler.js';
+import { FriendService } from './friendService';
+import { FriendSocketHandler } from './friendSocketHandler';
 
 export class FriendModule {
     private friendService: FriendService;

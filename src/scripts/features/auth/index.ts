@@ -1,5 +1,5 @@
-import { AuthService } from './authService.js';
-import { AuthUIService } from './authUIService.js';
+import { AuthService } from './authService';
+import { AuthUIService } from './authUIService';
 
 export class AuthModule {
     private authService: AuthService;

@@ -1,7 +1,7 @@
-import { fetchProfileImage, formatTimestamp, formatMessageDate, formatMessageTime } from '../../utils/utils.js';
-import { ErrorHandler } from '../../core/errorHandler.js';
-import { EventBus } from '../../core/eventBus.js';
-import { Constants } from '../../core/constants.js';
+import { fetchProfileImage, formatTimestamp, formatMessageDate, formatMessageTime } from '../../utils/utils';
+import { ErrorHandler } from '../../core/errorHandler';
+import { EventBus } from '../../core/eventBus';
+import { Constants } from '../../core/constants';
 
 export class MessageService {
     async addChatMessage(data: { 

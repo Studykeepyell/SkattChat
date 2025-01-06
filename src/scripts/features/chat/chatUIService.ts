@@ -1,6 +1,6 @@
-import { ErrorHandler } from '../../core/errorHandler.js';
-import { EventBus } from '../../core/eventBus.js';
-import { Constants } from '../../core/constants.js';
+import { ErrorHandler } from '../../core/errorHandler';
+import { EventBus } from '../../core/eventBus';
+import { Constants } from '../../core/constants';
 
 export class ChatUIService {
     private messageInput: HTMLTextAreaElement | null;

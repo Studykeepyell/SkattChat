@@ -1,8 +1,8 @@
-import { ChatService } from './chatService.js';
-import { ChatRoomService } from './chatRoomService.js';
-import { ChatSocketHandler } from './chatSocketHandler.js';
-import { MessageService } from './messageService.js';
-import { ChatUIService } from './chatUIService.js';
+import { ChatService } from './chatService';
+import { ChatRoomService } from './chatRoomService';
+import { ChatSocketHandler } from './chatSocketHandler';
+import { MessageService } from './messageService';
+import { ChatUIService } from './chatUIService';
 
 export class ChatModule {
     private chatService: ChatService;

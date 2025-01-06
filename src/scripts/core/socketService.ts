@@ -1,42 +1,72 @@
-import { io, Socket } from 'socket.io-client';
-import { Constants } from './constants.js';
+import { io, Socket, ManagerOptions } from 'socket.io-client';
+import { Constants } from './constants';
+import { API_CONFIG } from './api.config';
+import { ErrorHandler } from './errorHandler';
+
+interface SocketOptions {
+    auth?: {
+        token: string;
+    };
+    transports?: string[];
+    autoConnect?: boolean;
+}
 
 export class SocketService {
-    private static instance: Socket;
+    private static socket: Socket | null = null;
 
-    static initialize(): Socket {
-        if (!this.instance) {
-            this.instance = io({
+    static initialize(token?: string) {
+        if (!this.socket) {
+            const options: Partial<ManagerOptions & SocketOptions> = {
+                transports: ['websocket'],
+                autoConnect: true,
                 reconnection: true,
-                reconnectionAttempts: Constants.TIMEOUTS.SOCKET_RECONNECT,
-                auth: {
-                    token: localStorage.getItem(Constants.STORAGE_KEYS.AUTH_TOKEN)
-                }
-            });
+                reconnectionAttempts: Constants.TIMEOUTS.SOCKET_RECONNECT
+            };
 
+            if (token) {
+                options.auth = { token };
+            }
+
+            this.socket = io(API_CONFIG.SOCKET_URL, options);
             this.setupBaseHandlers();
         }
-        return this.instance;
+        return this.socket;
     }
 
     private static setupBaseHandlers() {
-        this.instance.on('connect', () => {
-            console.log('Socket connected successfully');
-            this.instance.emit('authenticate', {
-                token: localStorage.getItem(Constants.STORAGE_KEYS.AUTH_TOKEN),
-                userId: localStorage.getItem(Constants.STORAGE_KEYS.USER_ID)
-            });
+        if (!this.socket) return;
+
+        this.socket.on('connect', () => {
+            console.log('Socket connected');
         });
 
-        this.instance.on('connect_error', (error) => {
-            console.error('Socket connection error:', error);
+        this.socket.on('disconnect', () => {
+            console.log('Socket disconnected');
+        });
+
+        this.socket.on('error', (error: Error) => {
+            ErrorHandler.handle(error);
         });
     }
 
-    static getInstance(): Socket {
-        if (!this.instance) {
-            return this.initialize();
+    static emit(event: string, data: any) {
+        if (!this.socket) {
+            throw new Error('Socket not initialized');
         }
-        return this.instance;
+        this.socket.emit(event, data);
+    }
+
+    static on(event: string, callback: (data: any) => void) {
+        if (!this.socket) {
+            throw new Error('Socket not initialized');
+        }
+        this.socket.on(event, callback);
+    }
+
+    static disconnect() {
+        if (this.socket) {
+            this.socket.disconnect();
+            this.socket = null;
+        }
     }
 } 

@@ -1,4 +1,4 @@
-import { AuthPage } from './AuthPage.js';
+import { AuthPage } from './AuthPage';
 
 export class RegisterPage extends AuthPage {
     constructor() {

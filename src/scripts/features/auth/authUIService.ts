@@ -1,7 +1,7 @@
-import { ErrorHandler } from '../../core/errorHandler.js';
-import { EventBus } from '../../core/eventBus.js';
-import { Constants } from '../../core/constants.js';
-import { AuthService } from './authService.js';
+import { ErrorHandler } from '../../core/errorHandler';
+import { EventBus } from '../../core/eventBus';
+import { Constants } from '../../core/constants';
+import { AuthService } from './authService';
 
 export class AuthUIService {
     private authService: AuthService;
@@ -39,7 +39,7 @@ export class AuthUIService {
                 : await this.authService.register(username, password);
 
             if (response.success) {
-                window.location.href = '/chat.html';
+                window.location.href = '../pages/chat.html';
             } else {
                 this.showError(response.message || 'Authentication failed');
             }
