@@ -12,42 +12,74 @@ export class ChatPage {
     private currentUser: any;
 
     constructor() {
-        this.initialize();
+        this.initialize().catch(error => {
+            console.error('Failed to initialize chat page:', error);
+            window.location.href = 'login.html';
+        });
     }
 
     private async initialize() {
         try {
-            await this.checkAuthentication();
+            console.log('Starting chat page initialization...');
+            
+            // Check authentication first
+            const isAuthenticated = await this.checkAuthentication();
+            if (!isAuthenticated) {
+                console.log('Authentication check failed, redirecting to login...');
+                window.location.href = 'login.html';
+                return;
+            }
+
+            console.log('Authentication successful, initializing components...');
+            
+            // Initialize components
             this.initializeCore();
             this.initializeModules();
             this.setupEventListeners();
             this.setupUI();
             this.loadSavedSettings();
-            this.loadUserProfile();
+            await this.loadUserProfile();
+
+            console.log('Chat page initialization complete');
         } catch (error) {
+            console.error('Error during chat page initialization:', error);
             ErrorHandler.handle(error);
-            // Redirect to login if there's an authentication error
-            window.location.href = '../pages/login.html';
+            window.location.href = 'login.html';
         }
     }
 
-    private async checkAuthentication() {
-        const token = StorageService.get(Constants.STORAGE_KEYS.AUTH_TOKEN);
-        const userId = StorageService.get(Constants.STORAGE_KEYS.USER_ID);
-        
-        if (!token || !userId) {
-            throw new Error('Not authenticated');
-        }
+    private async checkAuthentication(): Promise<boolean> {
+        try {
+            const token = StorageService.get(Constants.STORAGE_KEYS.AUTH_TOKEN);
+            const userId = StorageService.get(Constants.STORAGE_KEYS.USER_ID);
+            
+            console.log('Auth check - Token exists:', !!token);
+            console.log('Auth check - UserID exists:', !!userId);
 
-        this.currentUser = {
-            id: userId,
-            token: token,
-            profile: StorageService.get(Constants.STORAGE_KEYS.USER_PROFILE)
-        };
+            if (!token || !userId) {
+                return false;
+            }
+
+            this.currentUser = {
+                id: userId,
+                token: token,
+                profile: StorageService.get(Constants.STORAGE_KEYS.USER_PROFILE)
+            };
+
+            return true;
+        } catch (error) {
+            console.error('Error during authentication check:', error);
+            return false;
+        }
     }
 
-    private loadUserProfile() {
-        if (this.currentUser?.profile) {
+    private async loadUserProfile() {
+        try {
+            if (!this.currentUser?.profile) {
+                console.log('No user profile found');
+                return;
+            }
+
             // Update profile image
             const profileImg = document.getElementById("taskbar-profile-img") as HTMLImageElement;
             if (profileImg && this.currentUser.profile.avatar) {
@@ -59,34 +91,68 @@ export class ChatPage {
             if (usernameElement && this.currentUser.profile.username) {
                 usernameElement.textContent = this.currentUser.profile.username;
             }
+        } catch (error) {
+            console.error('Error loading user profile:', error);
+            ErrorHandler.handle(error);
         }
     }
 
     private loadSavedSettings() {
-        // Load dark mode preference
-        const isDarkMode = JSON.parse(localStorage.getItem('darkMode') || 'false');
-        if (isDarkMode) {
-            document.body.classList.add('dark-mode');
+        try {
+            // Load dark mode preference
+            const isDarkMode = JSON.parse(localStorage.getItem('darkMode') || 'false');
+            if (isDarkMode) {
+                document.body.classList.add('dark-mode');
+            }
+        } catch (error) {
+            console.error('Error loading saved settings:', error);
+            ErrorHandler.handle(error);
         }
     }
 
     private initializeCore() {
-        // Initialize socket connection with auth token
-        SocketService.initialize(this.currentUser.token);
-        
-        // Publish authentication status
-        EventBus.publish(Constants.EVENTS.AUTH_CHANGE, { 
-            isAuthenticated: true,
-            user: this.currentUser
-        });
+        try {
+            // Initialize socket connection with auth token
+            if (!this.currentUser?.token) {
+                throw new Error('No auth token available for socket connection');
+            }
+            
+            SocketService.initialize(this.currentUser.token);
+            
+            // Publish authentication status
+            EventBus.publish(Constants.EVENTS.AUTH_CHANGE, { 
+                isAuthenticated: true,
+                user: this.currentUser
+            });
+        } catch (error) {
+            console.error('Error initializing core services:', error);
+            throw error;
+        }
     }
 
     private initializeModules() {
-        this.chatModule = new ChatModule();
-        this.friendModule = new FriendModule();
+        try {
+            console.log('[CHAT] Creating chat module...');
+            this.chatModule = new ChatModule();
+            
+            console.log('[CHAT] Creating friend module...');
+            this.friendModule = new FriendModule();
 
-        this.chatModule.initialize();
-        this.friendModule.initialize();
+            console.log('[CHAT] Initializing chat module...');
+            this.chatModule.initialize();
+            
+            console.log('[CHAT] Initializing friend module...');
+            this.friendModule.initialize();
+            
+            console.log('[CHAT] All modules initialized successfully');
+        } catch (error) {
+            console.error('[CHAT] Error initializing modules:', error);
+            if (error instanceof Error) {
+                console.error('[CHAT] Error details:', error.message);
+                console.error('[CHAT] Stack trace:', error.stack);
+            }
+            throw error;
+        }
     }
 
     private setupUI() {

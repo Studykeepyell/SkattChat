@@ -1,6 +1,7 @@
 import jwt from 'jsonwebtoken';
 import { Request, Response, NextFunction } from 'express';
-import User from '../models/User.js';
+import User, { IUser } from '../models/User.js';
+import { Types } from 'mongoose';
 
 export interface AuthRequest extends Request {
     user?: {
@@ -10,88 +11,91 @@ export interface AuthRequest extends Request {
 }
 
 interface JwtPayload {
-    userId?: string;
-    id?: string;
+    id: string;
+    iat?: number;
+    exp?: number;
 }
 
-interface UserDocument {
-    _id: any;
-    username: string;
+interface IUserDocument extends IUser {
+    _id: Types.ObjectId;
 }
 
 const authMiddleware = async (req: AuthRequest, res: Response, next: NextFunction) => {
     try {
-        console.log('\n[AUTH MIDDLEWARE] Starting token verification...');
-        console.log('[AUTH MIDDLEWARE] Headers:', JSON.stringify(req.headers, null, 2));
-        console.log('[AUTH MIDDLEWARE] Authorization header:', req.headers.authorization);
-        
-        const token = req.headers.authorization?.split(' ')[1];
-        console.log('[AUTH MIDDLEWARE] Extracted token:', token ? `${token.substring(0, 20)}...` : 'no token');
+        const authHeader = req.headers.authorization;
+        console.log('\n[AUTH] Request path:', req.path);
+        console.log('[AUTH] Authorization header:', authHeader?.substring(0, 50) + '...');
 
-        if (!token) {
-            console.error('[AUTH MIDDLEWARE] Missing token');
-            return res.status(401).json({ error: 'Unauthorized - No token provided' });
+        if (!authHeader?.startsWith('Bearer ')) {
+            return res.status(401).json({ 
+                error: 'Unauthorized', 
+                message: 'No token provided or invalid format' 
+            });
         }
 
-        console.log('[AUTH MIDDLEWARE] JWT_SECRET exists:', !!process.env.JWT_SECRET);
-        console.log('[AUTH MIDDLEWARE] JWT_SECRET length:', process.env.JWT_SECRET?.length);
-        
+        const token = authHeader.split(' ')[1];
+        console.log('[AUTH] Token:', token.substring(0, 20) + '...');
+        console.log('[AUTH] JWT_SECRET exists:', !!process.env.JWT_SECRET);
+        console.log('[AUTH] JWT_SECRET length:', process.env.JWT_SECRET?.length);
+
+        if (!process.env.JWT_SECRET) {
+            console.error('[AUTH] JWT_SECRET not configured');
+            return res.status(500).json({ 
+                error: 'Server configuration error' 
+            });
+        }
+
         try {
-            const decoded = jwt.verify(token, process.env.JWT_SECRET as string) as JwtPayload;
-            console.log('[AUTH MIDDLEWARE] Token verified successfully');
-            console.log('[AUTH MIDDLEWARE] Decoded Token:', decoded);
+            const decoded = jwt.verify(token, process.env.JWT_SECRET) as JwtPayload;
+            console.log('[AUTH] Decoded token:', {
+                id: decoded.id,
+                iat: decoded.iat,
+                exp: decoded.exp,
+                now: Math.floor(Date.now() / 1000)
+            });
 
-            const userId = decoded.userId || decoded.id;
-            console.log('[AUTH MIDDLEWARE] Extracted userId:', userId);
-            
-            if (!userId) {
-                console.error('[AUTH MIDDLEWARE] No user ID found in token payload');
-                return res.status(401).json({ error: 'Invalid token format - No user ID' });
-            }
-
-            const user = await User.findById(userId) as UserDocument;
-            console.log('[AUTH MIDDLEWARE] User lookup result:', user ? 'Found' : 'Not found');
-            
+            const user = await User.findById(decoded.id) as IUserDocument;
             if (!user) {
-                console.error('[AUTH MIDDLEWARE] User not found in database:', userId);
-                return res.status(401).json({ error: 'Invalid token - User not found' });
+                console.error('[AUTH] User not found for id:', decoded.id);
+                return res.status(401).json({ 
+                    error: 'Unauthorized', 
+                    message: 'User not found' 
+                });
             }
 
             req.user = {
                 id: user._id.toString(),
-                username: user.username,
+                username: user.username
             };
-            console.log('[AUTH MIDDLEWARE] User attached to request:', req.user);
+            console.log('[AUTH] Authentication successful for user:', user.username);
+
             next();
-        } catch (verifyError: any) {
-            console.error('[AUTH MIDDLEWARE] Token verification failed:', {
-                name: verifyError.name,
-                message: verifyError.message,
-                expiredAt: verifyError.expiredAt,
-                stack: verifyError.stack
+        } catch (err: any) {
+            console.error('[AUTH] Token verification failed:', {
+                name: err.name,
+                message: err.message,
+                expiredAt: err.expiredAt,
+                token: token.substring(0, 20) + '...'
             });
-            
-            if (verifyError.name === 'TokenExpiredError') {
+
+            if (err.name === 'TokenExpiredError') {
                 return res.status(401).json({ 
-                    error: 'Session expired',
-                    details: {
-                        expiredAt: verifyError.expiredAt,
-                        message: 'Your session has expired. Please log in again.'
-                    }
+                    error: 'Token expired', 
+                    message: 'Please log in again',
+                    expiredAt: err.expiredAt
                 });
             }
-            
             return res.status(403).json({ 
-                error: 'Invalid token',
-                details: {
-                    name: verifyError.name,
-                    message: verifyError.message
-                }
+                error: 'Invalid token', 
+                message: 'Please log in again',
+                details: err.message
             });
         }
-    } catch (error: any) {
-        console.error('[AUTH MIDDLEWARE] Unexpected error:', error);
-        return res.status(500).json({ error: 'Internal server error' });
+    } catch (error) {
+        console.error('[AUTH] Middleware error:', error);
+        res.status(500).json({ 
+            error: 'Internal server error' 
+        });
     }
 };
 

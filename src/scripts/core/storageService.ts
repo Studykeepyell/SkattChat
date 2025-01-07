@@ -1,19 +1,22 @@
 export class StorageService {
     static set(key: string, value: any) {
         try {
-            const serializedValue = JSON.stringify(value);
-            localStorage.setItem(key, serializedValue);
+            const valueToStore = typeof value === 'object' ? JSON.stringify(value) : value;
+            localStorage.setItem(key, valueToStore);
         } catch (error) {
-            console.error('Error storing data:', error);
+            console.error('[STORAGE] Error storing data:', error);
+            throw error;
         }
     }
 
-    static get(key: string) {
+    static get(key: string, parseJson: boolean = false) {
         try {
-            const item = localStorage.getItem(key);
-            return item ? JSON.parse(item) : null;
+            const value = localStorage.getItem(key);
+            if (!value) return null;
+            
+            return parseJson ? JSON.parse(value) : value;
         } catch (error) {
-            console.error('Error retrieving data:', error);
+            console.error('[STORAGE] Error retrieving data:', error);
             return null;
         }
     }
@@ -22,7 +25,8 @@ export class StorageService {
         try {
             localStorage.removeItem(key);
         } catch (error) {
-            console.error('Error removing data:', error);
+            console.error('[STORAGE] Error removing data:', error);
+            throw error;
         }
     }
 
@@ -30,7 +34,8 @@ export class StorageService {
         try {
             localStorage.clear();
         } catch (error) {
-            console.error('Error clearing storage:', error);
+            console.error('[STORAGE] Error clearing storage:', error);
+            throw error;
         }
     }
 } 

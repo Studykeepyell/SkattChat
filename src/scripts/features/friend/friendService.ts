@@ -9,12 +9,12 @@ export class FriendService {
     async sendFriendRequest(receiverId: string) {
         try {
             const response = await HttpService.post(
-                API_CONFIG.ENDPOINTS.FRIEND_REQUESTS.SEND(receiverId),
-                {}
+                API_CONFIG.ENDPOINTS.FRIEND_REQUESTS.SEND,
+                { receiverId }
             );
 
             if (response.success) {
-                EventBus.publish(Constants.EVENTS.FRIEND_REQUEST_SENT, response);
+                EventBus.publish(Constants.EVENTS.FRIEND_REQUEST, response);
                 return response;
             }
             throw new Error(response.message || 'Failed to send friend request');
@@ -29,7 +29,7 @@ export class FriendService {
             if (!userId) throw new Error('User ID not found');
 
             const response = await HttpService.get(
-                API_CONFIG.ENDPOINTS.FRIEND_REQUESTS.PENDING(userId)
+                API_CONFIG.ENDPOINTS.FRIEND_REQUESTS.LIST
             );
             return response.requests;
         } catch (error) {
@@ -41,12 +41,12 @@ export class FriendService {
     async respondToFriendRequest(requestId: string, status: 'accepted' | 'declined') {
         try {
             const response = await HttpService.put(
-                API_CONFIG.ENDPOINTS.FRIEND_REQUESTS.RESPOND,
-                { requestId, status }
+                API_CONFIG.ENDPOINTS.FRIEND_REQUESTS.ACCEPT,
+                { requestId }
             );
             
             if (response.success) {
-                EventBus.publish(Constants.EVENTS.FRIEND_REQUEST_RESPONDED, { 
+                EventBus.publish(Constants.EVENTS.FRIEND_REQUEST, { 
                     requestId, 
                     status 
                 });

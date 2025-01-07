@@ -5,9 +5,11 @@ import {
     fetchMessages, 
     fetchChatRooms, 
     sendMessage,
-    markMessagesAsRead 
+    markMessagesAsRead,
+    joinRoom 
 } from '../controllers/chatController/index.js';
 import authMiddleware from '../middleware/authMiddleware.js';
+import { AuthenticatedRequest } from '../types/express.js';
 
 export default function(io: Server) {
     const router = Router();
@@ -18,6 +20,9 @@ export default function(io: Server) {
     router.get('/rooms/:roomId/messages', fetchMessages as RequestHandler);
     router.get('/rooms', authMiddleware, fetchChatRooms as RequestHandler);
     router.put('/rooms/:roomId/read', authMiddleware, markMessagesAsRead as RequestHandler);
+    router.post('/rooms/:roomId/join', authMiddleware, ((req: Request, res: Response) => {
+        return joinRoom(req as AuthenticatedRequest, res);
+    }) as RequestHandler);
 
     return router;
 }

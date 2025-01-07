@@ -1,6 +1,11 @@
 import { Request, Response } from 'express';
-import User from '../../models/User.js';
+import User, { IUser } from '../../models/User.js';
 import jwt from 'jsonwebtoken';
+import { Types } from 'mongoose';
+
+interface IUserDocument extends IUser {
+    _id: Types.ObjectId;
+}
 
 export const register = async (req: Request, res: Response) => {
     const { username, password } = req.body;
@@ -13,14 +18,14 @@ export const register = async (req: Request, res: Response) => {
     }
 
     try {
-        const newUser = new User({ username, password });
+        const newUser = new User({ username, password }) as IUserDocument;
         await newUser.save();
 
         // Generate token after successful registration
         const token = jwt.sign(
             { id: newUser._id.toString() },
             process.env.JWT_SECRET as string,
-            { expiresIn: '12h' }
+            { expiresIn: '3d' }
         );
 
         res.status(201).json({ 

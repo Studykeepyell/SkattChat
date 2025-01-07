@@ -1,32 +1,26 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Chat Room</title>
-    <link rel="stylesheet" href="../styles/chat.css">
+    <title>Chat</title>
+    <link rel="stylesheet" href="../dist/styles/index.css">
+    <link rel="stylesheet" href="../dist/styles/chat.css">
 
-
-     <!-- Fix socket.io script source -->
-
-     <!-- Add CSP meta tag -->
-     <meta http-equiv="Content-Security-Policy" 
-           content="default-src 'self';
-                    script-src 'self' 'unsafe-inline' https://cdn.socket.io;
-                    style-src 'self' 'unsafe-inline';
-                    connect-src 'self' https://skattchat.online http://localhost:3000 
-                               ws://localhost:3000/socket.io/ wss://localhost:3000/socket.io/ 
-                               https://skattchat.online/socket.io/ wss://skattchat.online/socket.io/;
-                    img-src 'self' data: https:">
- 
+    <meta http-equiv="Content-Security-Policy" 
+          content="default-src 'self';
+                   script-src 'self' 'unsafe-inline' https://cdn.socket.io;
+                   style-src 'self' 'unsafe-inline';
+                   connect-src 'self' https://skattchat.online http://localhost:3000 
+                              ws://localhost:3000/socket.io/ wss://localhost:3000/socket.io/ 
+                              https://skattchat.online/socket.io/ wss://skattchat.online/socket.io/;
+                   img-src 'self' data: https: blob:">
 
     <style> 
       .no-background { background: none; color: white; height:0.1% } 
       .dark-mode { filter: invert(1) hue-rotate(180deg); }
     </style>
-
-</head>
-
+  </head>
   <body>
     <div class="container">
       <!-- Taskbar Section -->
@@ -131,11 +125,16 @@
           ></div>
 
           <!-- Input Form -->
-          <!-- Input Form -->
           <div class="message-input-container">
-            <form id="chat-form" aria-label="Chat Form" >
-              <input id="messageInput" type="text" placeholder="" autocomplete="off" aria-label="Message Input" />
-              <button type="submit" aria-label="Send Message">Send</button>
+            <form id="chat-form" aria-label="Chat Form">
+              <input 
+                id="messageInput" 
+                type="text" 
+                placeholder="Type your message..." 
+                autocomplete="off" 
+                aria-label="Message Input" 
+              />
+              <button type="button" id="send-button" aria-label="Send Message">Send</button>
               <button type="button" id="emoji-button" aria-label="Emoji Picker">
                 😊
               </button>
@@ -155,10 +154,10 @@
       </main>
     </div>
 
+    <!-- Load scripts in correct order -->
     <script src="/socket.io/socket.io.js"></script>
-    <script type="module" src="../scripts/pages/chat/chat-main.ts"></script>
-    <script src="/dist/runtime.bundle.js"></script>
-    <script src="/dist/vendors.bundle.js"></script>
-    <script src="/dist/index.bundle.js"></script>
+    <script src="../dist/vendors.bundle.js"></script>
+    <script src="../dist/runtime.bundle.js"></script>
+    <script src="../dist/chat.bundle.js"></script>
   </body>
 </html>

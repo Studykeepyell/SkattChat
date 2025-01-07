@@ -15,7 +15,10 @@ export class AuthPage {
         try {
             document.addEventListener('DOMContentLoaded', () => {
                 this.setupErrorHandling();
-                this.checkAuthStatus();
+                // Only check auth status on login page
+                if (window.location.pathname.includes('login.html')) {
+                    this.checkAuthStatus();
+                }
             });
         } catch (error) {
             ErrorHandler.handle(error);
@@ -25,11 +28,10 @@ export class AuthPage {
     private checkAuthStatus() {
         const token = StorageService.get(Constants.STORAGE_KEYS.AUTH_TOKEN);
         const userId = StorageService.get(Constants.STORAGE_KEYS.USER_ID);
-        const userProfile = StorageService.get(Constants.STORAGE_KEYS.USER_PROFILE);
 
         if (token && userId) {
             // If already authenticated, redirect to chat
-            window.location.href = '../pages/chat.html';
+            window.location.href = 'chat.html';
         }
     }
 

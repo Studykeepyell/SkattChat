@@ -1,12 +1,10 @@
 import { SocketService } from '../../core/socketService';
 import { EventBus } from '../../core/eventBus';
 import { Constants } from '../../core/constants';
-import { API_CONFIG } from '../../core/api.config';
 import { ErrorHandler } from '../../core/errorHandler';
 
 export class ChatSocketHandler {
-    private socket = SocketService.getInstance();
-    private readonly EVENTS = API_CONFIG.SOCKET.EVENTS;
+    private socket = SocketService.initialize();
 
     initialize() {
         this.setupEventHandlers();
@@ -15,10 +13,10 @@ export class ChatSocketHandler {
 
     private setupEventHandlers() {
         const handlers = {
-            [this.EVENTS.MESSAGE]: this.handleMessage.bind(this),
-            [this.EVENTS.ROOM_UPDATE]: this.handleRoomUpdate.bind(this),
-            [this.EVENTS.ROOM_LIST]: this.handleRoomList.bind(this),
-            [this.EVENTS.CONNECT]: this.handleConnect.bind(this),
+            'message': this.handleMessage.bind(this),
+            'room_update': this.handleRoomUpdate.bind(this),
+            'room_list': this.handleRoomList.bind(this),
+            'connect': this.handleConnect.bind(this),
             'connect_error': this.handleError.bind(this)
         };
 
@@ -53,15 +51,16 @@ export class ChatSocketHandler {
     }
 
     private handleConnect() {
-        console.log('Chat socket connected');
+        console.log('[CHAT_SOCKET] Connected');
         this.requestInitialData();
     }
 
     private handleError(error: any) {
+        console.error('[CHAT_SOCKET] Connection error:', error);
         ErrorHandler.handle(error);
     }
 
     private requestInitialData() {
-        this.socket.emit(this.EVENTS.REQUEST_ROOMS);
+        this.socket.emit('request_rooms');
     }
 } 

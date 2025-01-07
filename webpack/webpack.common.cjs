@@ -5,7 +5,19 @@ const { CleanWebpackPlugin } = require('clean-webpack-plugin');
 const pathBrowserify = require('path-browserify');
 
 // Load env vars
-const env = dotenv.config().parsed || {};
+const env = {
+    ...process.env,
+    ...dotenv.config().parsed,
+    NODE_ENV: process.env.NODE_ENV || 'development'
+};
+
+// Stringify all values
+const stringifiedEnv = {
+    'process.env': Object.keys(env).reduce((acc, key) => {
+        acc[key] = JSON.stringify(env[key]);
+        return acc;
+    }, {})
+};
 
 module.exports = {
     module: {
@@ -63,9 +75,7 @@ module.exports = {
     },
     plugins: [
         new CleanWebpackPlugin(),
-        new webpack.DefinePlugin({
-            'process.env': JSON.stringify(env)
-        }),
+        new webpack.DefinePlugin(stringifiedEnv),
         new webpack.ProgressPlugin()
     ],
     optimization: {

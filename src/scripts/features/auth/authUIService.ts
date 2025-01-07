@@ -39,7 +39,14 @@ export class AuthUIService {
                 : await this.authService.register(username, password);
 
             if (response.success) {
-                window.location.href = '../pages/chat.html';
+                EventBus.publish(Constants.EVENTS.AUTH_CHANGE, { 
+                    isAuthenticated: true,
+                    user: {
+                        id: response.userId,
+                        token: response.token
+                    }
+                });
+                window.location.href = 'chat.html';
             } else {
                 this.showError(response.message || 'Authentication failed');
             }

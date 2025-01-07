@@ -48,7 +48,7 @@ export const login = async (req: Request, res: Response) => {
         const token = jwt.sign(
             payload,
             process.env.JWT_SECRET as string,
-            { expiresIn: '12h' }
+            { expiresIn: '3d' }
         );
 
         console.log('[LOGIN] Token generated successfully');

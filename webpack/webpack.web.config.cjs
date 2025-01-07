@@ -22,7 +22,7 @@ module.exports = merge(common, {
     publicPath: '/dist/'
   },
   target: 'web',
-  devtool: 'eval-source-map',
+  devtool: 'inline-source-map',
   module: {
     rules: [
       {
@@ -81,13 +81,11 @@ module.exports = merge(common, {
         usePolling: false,
       },
     },
-    proxy: {
-      '/api': 'http://localhost:3000',
-      '/socket.io': {
-        target: 'http://localhost:3000',
-        ws: true
-      }
-    },
+    proxy: [{
+      context: ['/api', '/socket.io'],
+      target: 'http://localhost:3000',
+      ws: true
+    }],
     open: true,
     compress: true
   },
@@ -165,10 +163,6 @@ module.exports = merge(common, {
           noErrorOnMissing: true
         }
       ],
-    }),
-    new webpack.DefinePlugin({
-      'process.env': JSON.stringify(process.env || {}),
-      IS_ELECTRON: JSON.stringify(false),
-    }),
+    })
   ],
 }); 

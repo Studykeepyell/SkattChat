@@ -6,19 +6,42 @@ export const Constants = {
         USER_PROFILE: 'user_profile'
     },
     EVENTS: {
+        // Auth Events
         AUTH_CHANGE: 'auth:change',
-        MESSAGE_RECEIVED: 'message:received',
+        LOGIN_SUCCESS: 'login:success',
+        LOGIN_FAILED: 'login:failed',
+        LOGOUT: 'logout',
+        PROFILE_UPDATE: 'auth:profile_update',
+        
+        // Chat Events
+        SEND_MESSAGE: 'chat:send_message',
+        MESSAGE_RECEIVED: 'chat:message_received',
+        JOIN_ROOM: 'chat:join_room',
+        LEAVE_ROOM: 'chat:leave_room',
+        ROOM_CREATED: 'chat:room_created',
+        ROOM_UPDATED: 'chat:room_updated',
+        ROOMS_UPDATED: 'chat:rooms_updated',
+        REQUEST_ROOMS: 'chat:request_rooms',
+        ROOM_LIST: 'chat:room_list',
+        
+        // Socket Events
+        CONNECT: 'socket:connect',
+        DISCONNECT: 'socket:disconnect',
+        CONNECT_ERROR: 'socket:connect_error',
+        
+        // Friend Events
         FRIEND_REQUEST: 'friend:request',
-        ROOM_CREATED: 'room:created',
-        ROOM_UPDATED: 'room:updated',
-        ROOMS_UPDATED: 'rooms:updated',
-        FRIEND_REQUEST_SENT: 'friend:request:sent',
-        FRIEND_REQUEST_RECEIVED: 'friend:request:received',
         FRIEND_REQUEST_ACCEPTED: 'friend:request:accepted',
-        FRIEND_REQUEST_RESPONDED: 'friend:request:responded',
-        FRIEND_LIST_UPDATED: 'friend:list:updated',
-        SEND_MESSAGE: 'send:message',
-        PROFILE_UPDATE: 'profile:update'
+        FRIEND_REQUEST_REJECTED: 'friend:request:rejected',
+        FRIEND_LIST_UPDATE: 'friend:list:update',
+        FRIEND_REMOVED: 'friend:removed',
+        
+        // UI Events
+        SHOW_NOTIFICATION: 'ui:show_notification',
+        HIDE_NOTIFICATION: 'ui:hide_notification',
+        SHOW_MODAL: 'ui:show_modal',
+        HIDE_MODAL: 'ui:hide_modal',
+        UPDATE_UI: 'ui:update'
     },
     TIMEOUTS: {
         API_REQUEST: 30000,
