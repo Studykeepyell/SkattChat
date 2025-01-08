@@ -64,7 +64,13 @@ module.exports = merge(common, {
       directory: path.join(process.cwd(), 'public'),
       publicPath: '/'
     },
-    hot: true,
+    hot: false,
+    liveReload: false,
+    client: {
+      overlay: false,
+      progress: false,
+      reconnect: false
+    },
     port: 3000,
     historyApiFallback: {
       rewrites: [
@@ -75,12 +81,7 @@ module.exports = merge(common, {
     devMiddleware: {
       writeToDisk: true,
     },
-    watchFiles: {
-      paths: ['src/**/*'],
-      options: {
-        usePolling: false,
-      },
-    },
+    watchFiles: false,
     proxy: [{
       context: ['/api', '/socket.io'],
       target: 'http://localhost:3000',
@@ -90,7 +91,6 @@ module.exports = merge(common, {
     compress: true
   },
   plugins: [
-    new webpack.HotModuleReplacementPlugin(),
     // HTML templates for each page
     new HtmlWebpackPlugin({
       template: path.resolve(process.cwd(), 'src/pages/login.html'),

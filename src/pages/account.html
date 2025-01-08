@@ -12,10 +12,14 @@
                               ws://localhost:3000/socket.io/ wss://localhost:3000/socket.io/ 
                               https://skattchat.online/socket.io/ wss://skattchat.online/socket.io/;
                    img-src 'self' data: https: blob:">
-    <link rel="stylesheet" href="/dist/styles/index.css">
-    <script src="/dist/vendors.bundle.js" defer></script>
-    <script src="/dist/runtime.bundle.js" defer></script>
-    <script src="/dist/account.bundle.js" defer></script>
+    <link rel="stylesheet" href="../styles/index.css">
+    <link rel="stylesheet" href="../styles/account.css">
+    
+    <!-- Load scripts in correct order -->
+    <script defer src="/socket.io/socket.io.js"></script>
+    <script defer src="/dist/runtime.bundle.js"></script>
+    <script defer src="/dist/vendors.bundle.js"></script>
+    <script defer src="/dist/account.bundle.js"></script>
 </head>
 <body>
     <div class="container">
@@ -31,7 +35,7 @@
 
                 <div class="profile-picture">
                     <form id="upload-form" enctype="multipart/form-data">
-                        <img src="account.svg" alt="Profile Picture" id="profile-img" onclick="document.getElementById('upload-img').click();">
+                        <img src="../assets/images/account.svg" alt="Profile Picture" id="profile-img" onclick="document.getElementById('upload-img').click();">
                         <input type="file" id="upload-img" accept="image/*" style="display: none;">
                     </form>
                 </div>
@@ -48,10 +52,7 @@
             <section class="friend-list">
                 <h2>Friends</h2>
                 <ul id="friends">
-                    <li>Friend 1</li>
-                    <li>Friend 2</li>
-                    <li>Friend 3</li>
-                    <li>Friend 4</li>
+                    <!-- Friends will be dynamically added here -->
                 </ul>
             </section>
         </main>

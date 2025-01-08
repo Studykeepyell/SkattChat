@@ -6,19 +6,16 @@
   <meta http-equiv="X-UA-Compatible" content="IE=edge" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Skattchat</title>
-  <link rel="icon" href="assets/images/logo1.png">
+  <link rel="icon" href="dist/assets/images/logo1.png">
   <link href="https://cdn.jsdelivr.net/npm/remixicon@2.5.0/fonts/remixicon.css" rel="stylesheet">
   
+  <link rel="preload" href="dist/assets/images/logo1.png" as="image">
   
-  <link rel="preload" href="assets/images/logo1.png" as="image">
-  
-  <!-- Update CSS paths to relative paths -->
-  <link rel="stylesheet" href="styles/mp.css">
-  <link rel="stylesheet" href="styles/download.css">
-  <link rel="stylesheet" href="styles/fonts.css">
+  <link rel="stylesheet" href="dist/styles/mp.css">
+  <link rel="stylesheet" href="dist/styles/download.css">
+  <link rel="stylesheet" href="dist/styles/fonts.css">
   
   <script>
-    // Improved error handling for resources
     window.addEventListener('error', function(e) {
       if (e.target.tagName === 'LINK' || e.target.tagName === 'SCRIPT') {
         console.warn(`Resource loading failed: ${e.target.src || e.target.href}`);
@@ -26,9 +23,8 @@
     }, true);
   </script>
   
-  <!-- Update script references -->
   <script src="dist/app.bundle.js"></script>
-  <script src="scripts/download-handler.js"></script>
+  <script src="dist/scripts/download-handler.js"></script>
 </head>
 
 <body>
@@ -65,7 +61,7 @@
     </section>
     
       <nav class="nav container">
-        <img src="assets/images/logo1.png" alt="logo" class="logo">
+        <img src="dist/assets/images/logo1.png" alt="logo" class="logo">
         <div class="nav__menu">
           <ul class="nav__list">
             <li class="nav__list-item">
@@ -87,58 +83,19 @@
               <a href="#" class="nav__list-link">Careers</a>
             </li>
           </ul>
-
-          <button class="btn btn--action btn--close">
-            <svg width="24" height="24" viewBox="0 0 12 12">
-              <g fill="none" fill-rule="evenodd" aria-hidden="true">
-                <path d="M0 0h12v12H0"></path>
-                <path fill="currentColor"
-                  d="M9.5 3.205L8.795 2.5 6 5.295 3.205 2.5l-.705.705L5.295 6 2.5 8.795l.705.705L6 6.705 8.795 9.5l.705-.705L6.705 6">
-                </path>
-              </g>
-            </svg>
-          </button>
-
-          <div class="nav__menu-footer">
-            <a href="" class="btn btn--action btn--small btn--brand">
-              <svg width="24" height="24" viewBox="0 0 24 24" class="btn__icon"></svg>
-                <g fill="currentColor">
-                  <path
-                    d="M17.707 10.708L16.293 9.29398L13 12.587V2.00098H11V12.587L7.70697 9.29398L6.29297 10.708L12 16.415L17.707 10.708Z">
-                  </path>
-                  <path
-                    d="M18 18.001V20.001H6V18.001H4V20.001C4 21.103 4.897 22.001 6 22.001H18C19.104 22.001 20 21.103 20 20.001V18.001H18Z">
-                  </path>
-                </g>
-              </svg>
-             Resizing the page
-            </a>
-          </div>
-
         </div>
 
         <div class="nav__btn-group">
-          <a href="tictactoe.html" class="btn btn--small btn--light">Games</a>
-          <button class="btn btn--action btn--open">
-            <svg width="40" height="40" viewBox="0 0 40 40">
-              <path fill="#fff" fill-rule="evenodd" clip-rule="evenodd"
-                d="M33.3327 10H6.66602V15H33.3327V10ZM6.66602 18.3317H33.3327V23.3317H6.66602V18.3317ZM6.66602 26.665H33.3327V31.665H6.66602V26.665Z">
-              </path>
-            </svg>
-          </button>
+          <a href="dist/pages/tictactoe.html" class="btn btn--small btn--light">Games</a>
         </div>
-
       </nav>
-
     </header>
 
     <section class="showcase">
-
       <div class="row container">
-
         <div class="showcase__images">
-          <img src="assets/images/logo1.png" alt="logo1" class="showcase__images-wumpus">
-          <img src="assets/images/SKY.png" alt="logo2" class="showcase__images-nitro">
+          <img src="dist/assets/images/logo1.png" alt="logo1" class="showcase__images-wumpus">
+          <img src="dist/assets/images/SKY.png" alt="logo2" class="showcase__images-nitro">
         </div>
 
         <p class="showcase__paragraph adaptive-font adaptive-font--medium">
@@ -146,21 +103,17 @@
         </p>
 
         <div class="showcase__btn-group btn-group">
-          <a href="./pages/register.html" class="btn btn--action btn--large btn--dark btn-group-btn">Register <span
-              class="btn-group-btn-pill">to start</span></a>
-          <a href="./pages/login.html" class="btn btn--action btn--large btn--dark btn-group-btn">login</a>
+          <a href="dist/pages/register.html" class="btn btn--action btn--large btn--dark btn-group-btn">Register <span class="btn-group-btn-pill">to start</span></a>
+          <a href="dist/pages/login.html" class="btn btn--action btn--large btn--dark btn-group-btn">login</a>
         </div>
-
       </div>
-
     </section>
 
     <video loop autoplay muted class="background__video">
-      <source src="assets/images/bgddf.webm" type="video/webm">
-      <source src="assets/images/bgddf.mp4" type="video/mp4">
+      <source src="dist/assets/images/bgddf.webm" type="video/webm">
+      <source src="dist/assets/images/bgddf.mp4" type="video/mp4">
       <p>Your browser does not support the video tag.</p>
     </video>
-
   </div>
 
   <main>

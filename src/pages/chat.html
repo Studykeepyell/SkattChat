@@ -4,8 +4,8 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Chat</title>
-    <link rel="stylesheet" href="../dist/styles/index.css">
-    <link rel="stylesheet" href="../dist/styles/chat.css">
+    <link rel="stylesheet" href="../styles/index.css">
+    <link rel="stylesheet" href="../styles/chat.css">
 
     <meta http-equiv="Content-Security-Policy" 
           content="default-src 'self';
@@ -73,7 +73,7 @@
 
       <div class="room-select">
         <h3>Chats</h3>
-        <button id="createRoomBtn">Create Room</button>
+        <button id="createRoomBtn">+</button>
         <!-- Chat Rooms -->
         <section
           class="chat-room-section"
@@ -101,8 +101,18 @@
       <!-- Chat Content Section -->
       <main class="content" aria-labelledby="chat-heading">
         <div class="chatContainer">
-          <h2 id="chat-heading">Welcome to the Chat Room</h2>
-          <ul id="welcomeMessage"></ul>
+          <div id="chat-heading" class="chat-banner">
+            <h2>Welcome to the Chat Room</h2>
+            <span class="participant-count">0 participants</span>
+          </div>
+
+          <!-- Message Display Area -->
+          <div
+            id="messages"
+            class="message-display"
+            aria-live="polite"
+            aria-atomic="true"
+          ></div>
 
           <!-- Action Buttons -->
           <div class="button-container">
@@ -116,37 +126,27 @@
             </button>
           </div>
 
-          <!-- Message Display Area -->
-          <div
-            id="messages"
-            class="message-display"
-            aria-live="polite"
-            aria-atomic="true"
-          ></div>
-
           <!-- Input Form -->
           <div class="message-input-container">
-            <form id="chat-form" aria-label="Chat Form">
+            <form class="chat-form" id="chat-form" onsubmit="return false;" action="javascript:void(0);">
               <input 
-                id="messageInput" 
                 type="text" 
+                id="messageInput" 
                 placeholder="Type your message..." 
-                autocomplete="off" 
-                aria-label="Message Input" 
+                autocomplete="off"
+                aria-label="Message Input"
               />
-              <button type="button" id="send-button" aria-label="Send Message">Send</button>
+              <button type="button" id="send-button">Send</button>
               <button type="button" id="emoji-button" aria-label="Emoji Picker">
                 😊
               </button>
               <div id="emoji-picker" style="display: none">
-                <!-- Add some example emojis -->
                 <span class="emoji">😀</span>
                 <span class="emoji">😂</span>
                 <span class="emoji">😍</span>
                 <span class="emoji">😎</span>
                 <span class="emoji">😢</span>
                 <span class="emoji">😃</span>
-                <!-- Add more emojis as needed -->
               </div>
             </form>
           </div>
@@ -156,8 +156,5 @@
 
     <!-- Load scripts in correct order -->
     <script src="/socket.io/socket.io.js"></script>
-    <script src="../dist/vendors.bundle.js"></script>
-    <script src="../dist/runtime.bundle.js"></script>
-    <script src="../dist/chat.bundle.js"></script>
   </body>
 </html>
