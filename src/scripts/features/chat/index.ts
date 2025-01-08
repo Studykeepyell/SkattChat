@@ -14,7 +14,7 @@ export class ChatModule {
         try {
             console.log('[CHAT_MODULE] Initializing services...');
             this.chatService = ChatService.getInstance();
-            this.socketHandler = new ChatSocketHandler();
+            this.socketHandler = ChatSocketHandler.getInstance();
             this.messageService = new MessageService();
             this.chatRoomService = new ChatRoomService();
             console.log('[CHAT_MODULE] Services created successfully');

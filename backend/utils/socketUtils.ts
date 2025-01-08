@@ -8,8 +8,9 @@ export const initializeIO = (socketServer: Server) => {
 };
 
 export const notifyUser = (userId: string, event: string, data: any) => {
-    if (userSocketMap[userId]) {
-        io.to(userSocketMap[userId]).emit(event, data);
+    const socketId = userSocketMap.get(userId);
+    if (socketId) {
+        io.to(socketId).emit(event, data);
     } else {
         console.log(`User ${userId} is offline or not registered in userSocketMap.`);
     }

@@ -5,6 +5,7 @@ import { ErrorHandler } from '../core/errorHandler';
 import { Constants } from '../core/constants';
 import { EventBus } from '../core/eventBus';
 import { StorageService } from '../core/storageService';
+import { ChatUIService } from '../features/chat/chatUIService';
 
 export class ChatPage {
     private chatModule!: ChatModule;
@@ -39,6 +40,9 @@ export class ChatPage {
             this.setupUI();
             this.loadSavedSettings();
             await this.loadUserProfile();
+
+            // Initialize chat UI service
+            const chatUIService = new ChatUIService();
 
             console.log('Chat page initialization complete');
         } catch (error) {

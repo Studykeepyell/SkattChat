@@ -1,57 +1,39 @@
-import { Server, Socket } from 'socket.io';
-import Room from '../models/Room.js';
+import { Server } from 'socket.io';
+import { CustomSocket } from './types.js';
 
-// Move this to a shared socket utility file or pass it as a parameter
-const userSocketMap: { [key: string]: string } = {};
+export class FriendRequestHandler {
+    constructor(private io: Server) {}
 
-interface privateRoom {
-    roomId: string;
-    name: string;
-    participants: string[];
-}
+    handleConnection(socket: CustomSocket) {
+        socket.on('friendRequest', (data) => this.handleFriendRequest(socket, data));
+        socket.on('acceptFriendRequest', (data) => this.handleAcceptRequest(socket, data));
+        socket.on('rejectFriendRequest', (data) => this.handleRejectRequest(socket, data));
+    }
 
-/**
- * Handles friend requests and real-time private room creation.
- * @param {Object} io - The Socket.IO server instance.
- * @param {Object} socket - The Socket.IO socket instance.
- */
-export function handleFriendRequestEvents(io: Server, socket: Socket) {
-    // Event: Accept Friend Request
-    socket.on('acceptFriendRequest', async (data: any) => {
-        const { requesterId, accepterId } = data;
-
+    private async handleFriendRequest(socket: CustomSocket, data: any) {
         try {
-            // Create private room (or fetch an existing one)
-            const roomId = `${requesterId}_${accepterId}`;
-            let privateRoom = await Room.findOne({ roomId });
-            
-            if (!privateRoom) {
-                privateRoom = await Room.create({
-                    roomId,
-                    name: `Private Chat: ${requesterId} and ${accepterId}`,
-                    participants: [requesterId, accepterId],
-                });
-                console.log('Private room created:', privateRoom);
-            }
-
-            // Ensure privateRoom exists before proceeding
-            if (!privateRoom) {
-                throw new Error('Failed to create or find private room');
-            }
-
-            // Notify both users of the new private room
-            [requesterId, accepterId].forEach((userId: string) => {
-                const userSocketId = userSocketMap[userId];
-                if (userSocketId) {
-                    io.to(userSocketId).emit('newPrivateRoom', {
-                        roomId: privateRoom!.roomId,
-                        name: privateRoom!.name,
-                    });
-                }
-            });
-        } catch (error: any) {
-            console.error('Error creating private room:', error);
-            socket.emit('privateRoomError', { message: 'Failed to create private room' });
+            // Friend request logic here
+            console.log('Friend request:', data);
+        } catch (error) {
+            socket.emit('error', 'Failed to send friend request');
         }
-    });
+    }
+
+    private async handleAcceptRequest(socket: CustomSocket, data: any) {
+        try {
+            // Accept friend request logic here
+            console.log('Accept friend request:', data);
+        } catch (error) {
+            socket.emit('error', 'Failed to accept friend request');
+        }
+    }
+
+    private async handleRejectRequest(socket: CustomSocket, data: any) {
+        try {
+            // Reject friend request logic here
+            console.log('Reject friend request:', data);
+        } catch (error) {
+            socket.emit('error', 'Failed to reject friend request');
+        }
+    }
 }

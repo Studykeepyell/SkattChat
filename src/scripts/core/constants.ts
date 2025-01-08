@@ -41,7 +41,10 @@ export const Constants = {
         HIDE_NOTIFICATION: 'ui:hide_notification',
         SHOW_MODAL: 'ui:show_modal',
         HIDE_MODAL: 'ui:hide_modal',
-        UPDATE_UI: 'ui:update'
+        UPDATE_UI: 'ui:update',
+        
+        // Room Events
+        ROOM_CHANGED: 'ROOM_CHANGED'
     },
     TIMEOUTS: {
         API_REQUEST: 30000,

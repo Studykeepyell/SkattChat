@@ -10,15 +10,13 @@ import { fileURLToPath } from 'url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
-// Import routes (update these to use ES module syntax)
+// Import routes
 import authRoutes from './routes/authRoutes.js';
-import friendRequestRoutes from './routes/friendRequestRoutes.js';
 import fileRoutes from './routes/fileRoutes.js';
 import userRoutes from './routes/userRoutes.js';
 import downloadRoutes from './routes/downloadRoutes.js';
 import { setupSocket } from './socket/index.js';
 import connectDB from './config/dbConfig.js';
-import chatRoutesFactory from './routes/chatRoutes.js';
 
 // Load environment variables
 config({ path: join(__dirname, '../.env') });
@@ -26,7 +24,7 @@ config({ path: join(__dirname, '../.env') });
 const isDevelopment = process.env.NODE_ENV === 'development';
 console.log('Environment:', process.env.NODE_ENV);
 
-// Ensure downloads directory exists and use dist/releases
+// Ensure downloads directory exists
 const DOWNLOADS_DIR = join(__dirname, '../dist/releases');
 if (!existsSync(DOWNLOADS_DIR)) {
     mkdirSync(DOWNLOADS_DIR, { recursive: true });
@@ -62,7 +60,7 @@ const corsOptions = {
     credentials: true
 };
 
-// Apply CORS middleware once
+// Apply CORS middleware
 app.use(cors(corsOptions));
 
 // Body parsing middleware
@@ -81,7 +79,7 @@ app.use((req, res, next) => {
     next();
 });
 
-//Debugging middleware
+// Debugging middleware
 app.use((req, res, next) => {
     console.log(`[${req.method}] ${req.path}`);
     if (Object.keys(req.body).length) console.log('Body:', req.body);
@@ -89,97 +87,70 @@ app.use((req, res, next) => {
     next();
 });
 
-// Add this before your static routes
+// Image request logging
 app.use((req, res, next) => {
-  if (req.path.includes('/assets/images/')) {
-    console.log('Image request:', req.path);
-  }
-  next();
+    if (req.path.includes('/assets/images/')) {
+        console.log('Image request:', req.path);
+    }
+    next();
 });
-
-const chatRoutes = chatRoutesFactory(io);
 
 // Set up static routes before API routes
-app.use('/', express.static(join(__dirname, '../public')));
-app.use('/assets', express.static(join(__dirname, '../public/assets')));
-app.use('/styles', express.static(join(__dirname, '../public/styles')));
-app.use('/scripts', express.static(join(__dirname, '../public/scripts')));
-app.use('/pages', express.static(join(__dirname, '../public/pages')));
-app.use('/fonts', express.static(join(__dirname, '../public/fonts')));
-app.use('/dist', express.static(join(__dirname, '../dist')));
-app.use('/downloads', express.static(DOWNLOADS_DIR));
-
-// API routes with proper error handling
-app.use('/api/auth', authRoutes);
-app.use('/api/friendRequests', friendRequestRoutes);
-app.use('/api/users', userRoutes);
-app.use('/api/chat', (req, res, next) => {
-    console.log('\n[CHAT ROUTE] Request details:', {
-        path: req.path,
-        method: req.method,
-        headers: {
-            ...req.headers,
-            authorization: req.headers.authorization ? 
-                `${req.headers.authorization.substring(0, 20)}...` : 
-                'none'
-        },
-        query: req.query,
-        body: req.body
-    });
-
-    // Check token format
-    const authHeader = req.headers.authorization;
-    if (authHeader) {
-        const [type, token] = authHeader.split(' ');
-        console.log('[CHAT ROUTE] Auth header analysis:', {
-            type,
-            tokenPresent: !!token,
-            tokenLength: token?.length,
-            tokenStart: token ? `${token.substring(0, 20)}...` : 'none'
-        });
-    } else {
-        console.log('[CHAT ROUTE] No authorization header present');
-    }
-
-    next();
-}, chatRoutes);
-app.use('/api/files', fileRoutes);
-app.use('/api/downloads', downloadRoutes);
-
-// Add these routes before the SPA support
-app.get('/api/health', (req, res) => {
-    res.json({ status: 'ok' });
-});
-
-// Serve static files
 app.use(express.static(join(__dirname, '../../public')));
 
-// SPA fallback - send index.html for all non-API routes
-app.get('*', (req, res) => {
-    // Skip API routes
-    if (req.path.startsWith('/api')) {
-        return res.status(404).send('API endpoint not found');
+// Serve dist directory and its contents
+app.use('/dist', express.static(join(__dirname, '../../public/dist'), {
+    setHeaders: (res, path) => {
+        if (path.endsWith('.css')) {
+            res.setHeader('Content-Type', 'text/css');
+        } else if (path.endsWith('.js')) {
+            res.setHeader('Content-Type', 'application/javascript');
+        } else if (path.endsWith('.svg')) {
+            res.setHeader('Content-Type', 'image/svg+xml');
+        }
     }
+}));
+
+// Other static routes
+app.use('/assets', express.static(join(__dirname, '../../public/dist/assets')));
+app.use('/styles', express.static(join(__dirname, '../../public/dist/styles')));
+app.use('/scripts', express.static(join(__dirname, '../../public/dist/scripts')));
+app.use('/pages', express.static(join(__dirname, '../../public/dist/pages')));
+app.use('/fonts', express.static(join(__dirname, '../../public/dist/fonts')));
+app.use('/downloads', express.static(DOWNLOADS_DIR));
+
+// Serve index.html for the root path
+app.get('/', (req, res) => {
     res.sendFile(join(__dirname, '../../public/index.html'));
 });
 
-// Add Electron-specific error handling
+// Add specific routes for pages in dist
+app.get('/pages/:page', (req, res) => {
+    res.sendFile(join(__dirname, '../../public/dist/pages', req.params.page));
+});
+
+// API routes with proper error handling
+app.use('/api/auth', authRoutes);
+app.use('/api/users', userRoutes);
+
+// Error handler
 const errorHandler: ErrorRequestHandler = (err, req, res, next) => {
-  console.error('Error occurred:', err);
-  res.status(err.status || 500).json({
-    error: isDevelopment ? err.message : 'Internal Server Error',
-    details: isDevelopment ? err.stack : undefined
-  });
+    console.error('Error occurred:', err);
+    res.status(err.status || 500).json({
+        error: isDevelopment ? err.message : 'Internal Server Error',
+        details: isDevelopment ? err.stack : undefined
+    });
 };
 
 app.use(errorHandler);
 
-//Socket.IO Integration
+// Socket.IO setup
 setupSocket(io);
 
-// Connect to MongoDB
+// Database connection
 connectDB();
 
+// Start server
 const PORT = parseInt(process.env.PORT || '3000', 10);
 const HOST = process.env.HOST || '0.0.0.0';
 httpServer.listen(PORT, () => console.log(`Server running at http://${HOST}:${PORT}`));

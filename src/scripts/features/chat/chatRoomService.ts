@@ -1,9 +1,8 @@
-import { API_CONFIG } from '../../core/api.config';
-import { HttpService } from '../../core/httpService';
 import { ErrorHandler } from '../../core/errorHandler';
 import { EventBus } from '../../core/eventBus';
 import { Constants } from '../../core/constants';
-import { ChatService } from './chatService';
+import { StorageService } from '../../core/storageService';
+import { ChatSocketHandler } from './chatSocketHandler';
 
 export interface ChatRoomData {
     name: string;
@@ -15,12 +14,12 @@ export interface ChatRoomData {
 export class ChatRoomService {
     private roomList: HTMLElement | null;
     private createRoomBtn: HTMLElement | null;
-    private chatService: ChatService;
+    private socketHandler: ChatSocketHandler;
 
     constructor() {
         this.roomList = null;
         this.createRoomBtn = null;
-        this.chatService = ChatService.getInstance();
+        this.socketHandler = ChatSocketHandler.getInstance();
     }
 
     initialize() {
@@ -28,7 +27,11 @@ export class ChatRoomService {
             console.log('[CHAT_ROOM] Starting initialization...');
             this.setupElements();
             this.setupEventListeners();
-            this.loadRooms();
+            
+            // Request initial room list
+            console.log('[CHAT_ROOM] Requesting initial room list');
+            this.socketHandler.requestRooms();
+            
             console.log('[CHAT_ROOM] Initialization complete');
         } catch (error) {
             console.error('[CHAT_ROOM] Error during initialization:', error);
@@ -51,35 +54,49 @@ export class ChatRoomService {
             this.createRoomBtn.addEventListener('click', this.handleCreateRoom.bind(this));
         }
 
-        EventBus.subscribe(Constants.EVENTS.ROOM_CREATED, (data: any) => this.handleRoomCreated(data));
-        EventBus.subscribe(Constants.EVENTS.ROOMS_UPDATED, () => this.loadRooms());
-    }
+        // Listen for room-related events
+        EventBus.subscribe(Constants.EVENTS.ROOM_CREATED, (data: any) => {
+            console.log('[CHAT_ROOM] Room created event received:', data);
+            this.handleRoomCreated(data);
+        });
+        
+        EventBus.subscribe(Constants.EVENTS.ROOMS_UPDATED, (rooms: any[]) => {
+            console.log('[CHAT_ROOM] Rooms updated event received:', rooms);
+            this.displayRooms(rooms);
+        });
 
-    private async loadRooms() {
-        try {
-            const response = await HttpService.get(API_CONFIG.ENDPOINTS.CHAT.ROOMS);
-            console.log('[CHAT_ROOM] Loaded rooms response:', response);
-            if (response.success) {
-                this.displayRooms(response.rooms);
-            }
-        } catch (error) {
-            ErrorHandler.handle(error);
-        }
+        // Request rooms when joining chat page
+        document.addEventListener('DOMContentLoaded', () => {
+            console.log('[CHAT_ROOM] Page loaded, requesting rooms');
+            this.socketHandler.requestRooms();
+        });
     }
 
     private displayRooms(rooms: any[]) {
         if (!this.roomList) return;
         console.log('[CHAT_ROOM] Displaying rooms:', rooms);
 
+        // Get current user info
+        const userProfile = StorageService.get(Constants.STORAGE_KEYS.USER_PROFILE) || {};
+        const authData = JSON.parse(StorageService.get('authData') || '{}');
+        const currentUsername = (
+            userProfile.username || 
+            authData.username || 
+            StorageService.get('username') || 
+            ''
+        ).toLowerCase();
+
+        console.log('[CHAT_ROOM] Current user:', currentUsername);
+
         this.roomList.innerHTML = '';
         rooms.forEach(room => {
             console.log('[CHAT_ROOM] Processing room:', room);
-            const roomElement = this.createRoomElement(room);
+            const roomElement = this.createRoomElement(room, currentUsername);
             this.roomList?.appendChild(roomElement);
         });
     }
 
-    private createRoomElement(room: any): HTMLElement {
+    private createRoomElement(room: any, currentUsername: string): HTMLElement {
         console.log('[CHAT_ROOM] Creating element for room:', room);
         
         if (!room) {
@@ -94,9 +111,37 @@ export class ChatRoomService {
         const roomId = room._id || room.roomId;
         console.log('[CHAT_ROOM] Using room ID:', roomId);
 
+        let displayName = room.name;
+        let profileImage = '../assets/images/default-profile.jpg';
+
+        // For private chats, find the other participant
+        if (room.isPrivate && room.participants) {
+            console.log('[CHAT_ROOM] Private room participants:', room.participants);
+            const otherParticipant = room.participants.find(
+                (participant: any) => participant.username?.toLowerCase() !== currentUsername
+            );
+            if (otherParticipant) {
+                console.log('[CHAT_ROOM] Found other participant:', otherParticipant);
+                displayName = otherParticipant.username;
+                profileImage = otherParticipant.avatar || profileImage;
+            }
+        } else if (room.name?.includes('Chat Room for')) {
+            const namesText = room.name.split('Chat Room for ')[1];
+            if (namesText) {
+                const names = namesText.split(' and ').map((name: string) => name.trim());
+                const otherUser = names.find((name: string) => name.toLowerCase() !== currentUsername);
+                if (otherUser) {
+                    displayName = otherUser;
+                }
+            }
+        }
+
         div.innerHTML = `
-            <h4>${room.name || 'Unnamed Room'}</h4>
-            <p>${room.participants?.length || 0} participants</p>
+            <img src="${profileImage}" alt="${displayName}'s avatar" class="profile-image">
+            <div class="room-info">
+                <div class="room-name">${displayName}</div>
+                <div class="room-timestamp">${this.formatLastActivity(room.lastActivity || room.updatedAt)}</div>
+            </div>
         `;
 
         if (!roomId) {
@@ -113,21 +158,43 @@ export class ChatRoomService {
         return div;
     }
 
+    private formatLastActivity(timestamp: string | number | Date): string {
+        if (!timestamp) return '';
+        
+        const date = new Date(timestamp);
+        const now = new Date();
+        const diff = now.getTime() - date.getTime();
+        const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+        
+        if (days > 0) {
+            return `${days}d ago`;
+        }
+        
+        const hours = Math.floor(diff / (1000 * 60 * 60));
+        if (hours > 0) {
+            return `${hours}h ago`;
+        }
+        
+        const minutes = Math.floor(diff / (1000 * 60));
+        if (minutes > 0) {
+            return `${minutes}m ago`;
+        }
+        
+        return 'Just now';
+    }
+
     private async handleCreateRoom() {
         try {
             const name = prompt('Enter room name:');
             if (!name) return;
 
-            const response = await HttpService.post(API_CONFIG.ENDPOINTS.CHAT.ROOMS, { name });
-            if (response.success) {
-                EventBus.publish(Constants.EVENTS.ROOM_CREATED, response.room);
-            }
+            this.socketHandler.createRoom(name);
         } catch (error) {
             ErrorHandler.handle(error);
         }
     }
 
     private handleRoomCreated(data: any) {
-        this.loadRooms();
+        this.socketHandler.requestRooms();
     }
 } 

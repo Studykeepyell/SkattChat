@@ -1,7 +1,6 @@
 // Base API configuration used throughout the application
 export const API_CONFIG = {
-    BASE_URL: 'http://localhost:3000',
-    SOCKET_URL: 'http://localhost:3000',
+    BASE_URL: process.env.API_URL || 'http://localhost:3000',
     ENDPOINTS: {
         AUTH: {
             LOGIN: '/api/auth/login',
@@ -11,10 +10,10 @@ export const API_CONFIG = {
         },
         CHAT: {
             SEND: '/api/chat/send',
-            MESSAGES: (roomId: string) => `/api/chat/messages/${roomId}`,
-            ROOMS: '/api/chat/rooms',
-            JOIN_ROOM: (roomId: string) => `/api/chat/rooms/${roomId}/join`,
-            MARK_READ: (roomId: string) => `/api/chat/rooms/${roomId}/read`
+            FETCH_MESSAGES: (roomId: string) => `/api/chat/rooms/${roomId}/messages`,
+            FETCH_ROOMS: '/api/chat/rooms',
+            MARK_READ: (roomId: string) => `/api/chat/rooms/${roomId}/read`,
+            JOIN_ROOM: (roomId: string) => `/api/chat/rooms/${roomId}/join`
         },
         FRIEND_REQUESTS: {
             SEND: '/api/friends/requests/send',
