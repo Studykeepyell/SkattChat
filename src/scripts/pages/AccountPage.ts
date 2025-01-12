@@ -106,9 +106,21 @@ export class AccountPage {
     }
 
     private setupImageUpload() {
-        this.uploadForm?.addEventListener('submit', async (event) => {
-            event.preventDefault();
-            const file = this.fileInput?.files?.[0];
+        // Trigger upload when file is selected
+        this.fileInput?.addEventListener('change', async (event) => {
+            console.log('File selection triggered');
+            
+            const file = (event.target as HTMLInputElement).files?.[0];
+            console.log('File input:', {
+                exists: !!this.fileInput,
+                hasFiles: !!this.fileInput?.files?.length,
+                file: file ? {
+                    name: file.name,
+                    type: file.type,
+                    size: file.size
+                } : null
+            });
+
             if (!file) {
                 alert("Please select a file first.");
                 return;
@@ -116,28 +128,29 @@ export class AccountPage {
 
             try {
                 const userId = StorageService.get('userId');
+                console.log('Uploading for user:', userId);
+                
                 const formData = new FormData();
                 formData.append('profileImage', file);
 
-                const response = await HttpService.post(`/api/users/${userId}/profile-image`, formData);
-                const result = await response.json();
+                const response = await HttpService.upload(`/api/users/${userId}/profile-image`, formData);
+                console.log('Upload response:', response);
 
-                if (result.success) {
-                    // Update the profile image display with the new image
+                if (response.success) {
                     if (this.profileImg) {
-                        this.profileImg.src = `/api/users/${userId}/profile-image?${Date.now()}`; // Add timestamp to prevent caching
+                        this.profileImg.src = `${API_CONFIG.BASE_URL}/api/users/${userId}/profile-image?${Date.now()}`;
                     }
                     alert('Profile image uploaded successfully!');
                     
-                    // Notify other components about the profile update
                     EventBus.publish(Constants.EVENTS.PROFILE_UPDATE, { 
                         ...JSON.parse(StorageService.get('userProfile') || '{}'),
-                        profileImage: `/api/users/${userId}/profile-image`
+                        profileImage: `${API_CONFIG.BASE_URL}/api/users/${userId}/profile-image`
                     });
                 } else {
-                    throw new Error(result.message || 'Upload failed');
+                    throw new Error(response.message || 'Upload failed');
                 }
             } catch (error) {
+                console.error('Upload error:', error);
                 ErrorHandler.handle(error);
             }
         });
@@ -152,14 +165,11 @@ export class AccountPage {
                 }
 
                 const username = this.usernameInput.value;
-                const profileImageURL = StorageService.get('profileImageURL');
-
+                
+                // Only send username in the update request
                 const response = await HttpService.put(
                     `/api/users/${userId}`,
-                    { 
-                        username, 
-                        profileImage: profileImageURL 
-                    }
+                    { username }
                 );
 
                 if (response.success) {

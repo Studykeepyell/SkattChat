@@ -3,15 +3,17 @@ import { Constants } from "./constants";
 
 // Base HTTP service for making API calls
 export class HttpService {
-    private static getHeaders() {
+    private static getHeaders(isFormData = false) {
         const token = localStorage.getItem(Constants.STORAGE_KEYS.AUTH_TOKEN);
         const cleanToken = token?.replace(/['"]+/g, '');
         
         console.log('[HTTP] Using token:', cleanToken ? `${cleanToken.substring(0, 20)}...` : 'no token');
         
-        const headers: Record<string, string> = {
-            'Content-Type': 'application/json'
-        };
+        const headers: Record<string, string> = {};
+        
+        if (!isFormData) {
+            headers['Content-Type'] = 'application/json';
+        }
         
         if (cleanToken) {
             headers['Authorization'] = `Bearer ${cleanToken}`;
@@ -59,6 +61,21 @@ export class HttpService {
             return await this.handleResponse(response);
         } catch (error) {
             this.handleError(error);
+        }
+    }
+
+    static async upload(endpoint: string, formData: FormData) {
+        try {
+            console.log(`[HTTP] Making upload request to: ${endpoint}`);
+            const response = await fetch(`${API_CONFIG.BASE_URL}${endpoint}`, {
+                method: 'POST',
+                headers: this.getHeaders(true), // Pass true for FormData
+                body: formData
+            });
+            return this.handleResponse(response);
+        } catch (error) {
+            console.error('[HTTP] Upload request failed:', error);
+            throw error;
         }
     }
 

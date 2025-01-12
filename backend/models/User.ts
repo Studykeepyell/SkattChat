@@ -6,7 +6,7 @@ export interface IUser extends Document {
   password: string;
   friends: string[];
   profileImage?: {
-    data: Buffer;
+    data: string;
     contentType: string;
   };
   refreshToken?: string;
@@ -18,7 +18,7 @@ const userSchema = new mongoose.Schema({
     password: { type: String, required: true },
     friends: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }], // List of friends
     profileImage: {
-        data: Buffer,
+        data: String,
         contentType: String
     }
 });
