@@ -79,20 +79,25 @@ export class ChatPage {
 
     private async loadUserProfile() {
         try {
-            if (!this.currentUser?.profile) {
-                console.log('No user profile found');
+            if (!this.currentUser?.id) {
+                console.log('No user ID found');
                 return;
             }
 
             // Update profile image
             const profileImg = document.getElementById("taskbar-profile-img") as HTMLImageElement;
-            if (profileImg && this.currentUser.profile.avatar) {
-                profileImg.src = this.currentUser.profile.avatar;
+            if (profileImg) {
+                // Use the new profile image endpoint
+                profileImg.src = `/api/users/${this.currentUser.id}/profile-image?${Date.now()}`; // Add timestamp to prevent caching
+                profileImg.onerror = () => {
+                    // Fallback to default avatar if image fails to load
+                    profileImg.src = '/assets/images/default-avatar.svg';
+                };
             }
 
             // Update username if displayed
             const usernameElement = document.getElementById("username-display");
-            if (usernameElement && this.currentUser.profile.username) {
+            if (usernameElement && this.currentUser.profile?.username) {
                 usernameElement.textContent = this.currentUser.profile.username;
             }
         } catch (error) {

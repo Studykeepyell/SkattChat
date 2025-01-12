@@ -46,7 +46,7 @@ export class AuthUIService {
                         token: response.token
                     }
                 });
-                window.location.href = 'chat.html';
+                window.location.href = '/dist/pages/chat.html';
             } else {
                 this.showError(response.message || 'Authentication failed');
             }

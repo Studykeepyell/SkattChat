@@ -23,6 +23,7 @@ export const Constants = {
         ROOMS_UPDATED: 'chat:rooms_updated',
         REQUEST_ROOMS: 'chat:request_rooms',
         ROOM_LIST: 'chat:room_list',
+        MESSAGES_LOADED: 'chat:messages_loaded',
         
         // Socket Events
         CONNECT: 'socket:connect',

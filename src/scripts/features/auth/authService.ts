@@ -8,6 +8,7 @@ import { StorageService } from '../../core/storageService';
 export interface LoginResponse {
     success: boolean;
     userId: string;
+    username: string;
     token: string;
     message?: string;
 }
@@ -30,6 +31,7 @@ export class AuthService {
             );
 
             console.log('[AUTH] Login response success:', response.success);
+            console.log('[AUTH] Login response username:', response.username);
 
             if (response.success) {
                 this.setAuthData(response);
@@ -37,6 +39,7 @@ export class AuthService {
                     isAuthenticated: true,
                     user: {
                         id: response.userId,
+                        username: response.username,
                         token: response.token
                     }
                 });
@@ -119,20 +122,24 @@ export class AuthService {
         StorageService.set('authData', JSON.stringify({
             userId: data.userId,
             token: data.token,
+            username: data.username,
             user: {
-                _id: data.userId
+                _id: data.userId,
+                username: data.username
             }
         }));
 
         // Store individual pieces for easy access
         StorageService.set('token', data.token);
         StorageService.set('userId', data.userId);
+        StorageService.set('username', data.username);
         StorageService.set(Constants.STORAGE_KEYS.AUTH_TOKEN, data.token);
         StorageService.set(Constants.STORAGE_KEYS.USER_ID, data.userId);
 
         EventBus.publish(Constants.EVENTS.AUTH_CHANGE, {
             isAuthenticated: true,
             userId: data.userId,
+            username: data.username,
             token: data.token
         });
     }

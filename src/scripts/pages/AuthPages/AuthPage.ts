@@ -31,7 +31,7 @@ export class AuthPage {
 
         if (token && userId) {
             // If already authenticated, redirect to chat
-            window.location.href = 'chat.html';
+            window.location.href = '/dist/pages/chat.html';
         }
     }
 

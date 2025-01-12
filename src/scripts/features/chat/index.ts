@@ -1,13 +1,11 @@
 import { ChatService } from './chatService';
 import { ChatRoomService } from './chatRoomService';
 import { ChatSocketHandler } from './chatSocketHandler';
-import { MessageService } from './messageService';
 import { ErrorHandler } from '../../core/errorHandler';
 
 export class ChatModule {
     private chatService: ChatService;
     private socketHandler: ChatSocketHandler;
-    private messageService: MessageService;
     private chatRoomService: ChatRoomService;
 
     constructor() {
@@ -15,7 +13,6 @@ export class ChatModule {
             console.log('[CHAT_MODULE] Initializing services...');
             this.chatService = ChatService.getInstance();
             this.socketHandler = ChatSocketHandler.getInstance();
-            this.messageService = new MessageService();
             this.chatRoomService = new ChatRoomService();
             console.log('[CHAT_MODULE] Services created successfully');
         } catch (error) {

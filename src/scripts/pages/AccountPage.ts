@@ -3,6 +3,8 @@ import { StorageService } from '../core/storageService';
 import { HttpService } from '../core/httpService';
 import { API_CONFIG } from '../core/api.config';
 import { AuthService } from '../features/auth/authService';
+import { EventBus } from '../core/eventBus';
+import { Constants } from '../core/constants';
 
 export class AccountPage {
     private fileInput!: HTMLInputElement;
@@ -46,10 +48,14 @@ export class AccountPage {
 
     private loadSavedData() {
         // Load profile image
-        const savedImageURL = StorageService.get('profileImageURL');
-        if (savedImageURL && this.profileImg) {
-            this.profileImg.src = savedImageURL;
+        const userId = StorageService.get('userId');
+        if (userId && this.profileImg) {
+            this.profileImg.src = `/api/users/${userId}/profile-image?${Date.now()}`; // Add timestamp to prevent caching
             this.profileImg.style.display = 'block';
+            this.profileImg.onerror = () => {
+                // Fallback to default avatar if image fails to load
+                this.profileImg.src = '/assets/images/default-avatar.svg';
+            };
         }
 
         // Load username
@@ -87,26 +93,14 @@ export class AccountPage {
         this.fileInput?.addEventListener('change', (event) => {
             const file = (event.target as HTMLInputElement).files?.[0];
             if (file && this.profileImg) {
-                const reader = new FileReader();
-                reader.onload = (e) => {
-                    if (this.profileImg && e.target?.result) {
-                        // Validate that it's a data URL image
-                        const result = e.target.result.toString();
-                        if (result.startsWith('data:image/')) {
-                            this.profileImg.src = result;
-                            // Store the image data for later use
-                            StorageService.set('profileImageURL', result);
-                        } else {
-                            console.error('[ACCOUNT] Invalid image format');
-                            ErrorHandler.handle(new Error('Invalid image format'));
-                        }
-                    }
+                // Create a blob URL for preview
+                const objectUrl = URL.createObjectURL(file);
+                this.profileImg.src = objectUrl;
+                
+                // Clean up the URL when the image loads
+                this.profileImg.onload = () => {
+                    URL.revokeObjectURL(objectUrl);
                 };
-                reader.onerror = (error) => {
-                    console.error('[ACCOUNT] Error reading file:', error);
-                    ErrorHandler.handle(error);
-                };
-                reader.readAsDataURL(file);
             }
         });
     }
@@ -125,12 +119,21 @@ export class AccountPage {
                 const formData = new FormData();
                 formData.append('profileImage', file);
 
-                const response = await HttpService.post(`/api/uploadProfileImage/${userId}`, formData);
+                const response = await HttpService.post(`/api/users/${userId}/profile-image`, formData);
                 const result = await response.json();
 
                 if (result.success) {
-                    StorageService.set('profileImageURL', result.imageUrl);
+                    // Update the profile image display with the new image
+                    if (this.profileImg) {
+                        this.profileImg.src = `/api/users/${userId}/profile-image?${Date.now()}`; // Add timestamp to prevent caching
+                    }
                     alert('Profile image uploaded successfully!');
+                    
+                    // Notify other components about the profile update
+                    EventBus.publish(Constants.EVENTS.PROFILE_UPDATE, { 
+                        ...JSON.parse(StorageService.get('userProfile') || '{}'),
+                        profileImage: `/api/users/${userId}/profile-image`
+                    });
                 } else {
                     throw new Error(result.message || 'Upload failed');
                 }

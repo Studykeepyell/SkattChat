@@ -65,12 +65,18 @@ export const login = async (req: Request, res: Response) => {
         }
 
         // Send response
-        res.json({
+        const responseData = {
             success: true,
             userId: user._id.toString(),
+            username: user.username,
             token,
             message: 'Login successful'
-        });
+        };
+
+        console.log('[LOGIN] Sending response data:', responseData);
+        res.json(responseData);
+
+        console.log('[LOGIN] Login successful for user:', user.username);
 
     } catch (error) {
         console.error('[LOGIN] Error during login:', error);

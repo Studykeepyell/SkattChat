@@ -3,6 +3,8 @@ import { EventBus } from '../../core/eventBus';
 import { Constants } from '../../core/constants';
 import { StorageService } from '../../core/storageService';
 import { ChatService } from './chatService';
+import { MessageService } from './messageService';
+import { ChatMessage, ChatRoom } from './types';
 
 export class ChatUIService {
     private messageInput: HTMLInputElement | null;
@@ -12,6 +14,7 @@ export class ChatUIService {
     private roomList: HTMLElement | null;
     private sendButton: HTMLButtonElement | null;
     private chatService: ChatService;
+    private messageService: MessageService;
     private currentRoom: string | null;
 
     constructor() {
@@ -23,6 +26,8 @@ export class ChatUIService {
         this.sendButton = null;
         this.currentRoom = null;
         this.chatService = ChatService.getInstance();
+        this.messageService = this.chatService['messageService'];
+
         this.initialize();
     }
 
@@ -53,81 +58,100 @@ export class ChatUIService {
         }
     }
 
-    private setupMessageHandlers() {
-        // Subscribe to message events
-        EventBus.subscribe(Constants.EVENTS.MESSAGE_RECEIVED, (message: any) => {
-            this.displayMessage(message);
-        });
+    private messagesLoadedHandler = (messages: ChatMessage[]) => {
+        console.log('[CHAT_UI] Loading initial messages:', messages);
+        this.messageService.clearMessages();
+        // Sort messages by timestamp before displaying
+        const sortedMessages = messages.sort((a, b) => 
+            new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
+        );
+        sortedMessages.forEach(message => this.messageService.addChatMessage(message));
+    };
 
-        // Subscribe to room change events
-        EventBus.subscribe(Constants.EVENTS.ROOM_CHANGED, (room: any) => {
-            this.updateRoomDisplay(room);
-        });
+    private roomChangedHandler = (room: ChatRoom) => {
+        this.updateRoomDisplay(room);
+    };
+
+    private setupMessageHandlers() {
+        // First remove any existing handlers
+        EventBus.unsubscribe(Constants.EVENTS.MESSAGES_LOADED, this.messagesLoadedHandler);
+        EventBus.unsubscribe(Constants.EVENTS.ROOM_CHANGED, this.roomChangedHandler);
+
+        // Subscribe to message events
+        EventBus.subscribe(Constants.EVENTS.MESSAGES_LOADED, this.messagesLoadedHandler);
+        EventBus.subscribe(Constants.EVENTS.ROOM_CHANGED, this.roomChangedHandler);
     }
+
+    private handleSubmit = async (event: Event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        
+        if (!this.messageInput?.value.trim() || !this.currentRoom) {
+            return;
+        }
+
+        const messageContent = this.messageInput.value.trim();
+        this.messageInput.value = '';  // Clear immediately
+        this.messageInput.focus();
+
+        try {
+            const success = await this.chatService.handleMessageSend(messageContent);
+            if (success) {
+                // Request room list update after successful message send
+                this.chatService.requestRoomUpdate();
+            }
+        } catch (error) {
+            console.error('[CHAT_UI] Error sending message:', error);
+            ErrorHandler.handle(error);
+        }
+    };
+
+    private handleKeyPress = async (event: KeyboardEvent) => {
+        if (event.key === 'Enter' && !event.shiftKey) {
+            event.preventDefault();
+            event.stopPropagation();
+            
+            if (!this.messageInput?.value.trim() || !this.currentRoom) {
+                return;
+            }
+
+            const messageContent = this.messageInput.value.trim();
+            this.messageInput.value = '';  // Clear immediately
+            this.messageInput.focus();
+
+            try {
+                const success = await this.chatService.handleMessageSend(messageContent);
+                if (success) {
+                    // Request room list update after successful message send
+                    this.chatService.requestRoomUpdate();
+                }
+            } catch (error) {
+                console.error('[CHAT_UI] Error sending message:', error);
+                ErrorHandler.handle(error);
+            }
+        }
+    };
 
     private setupEventListeners() {
         if (this.chatForm) {
-            // Form submit handler
-            this.chatForm.addEventListener('submit', async (event) => {
-                event.preventDefault();
-                if (this.messageInput?.value.trim()) {
-                    await this.chatService.handleMessageSend(this.messageInput.value.trim());
-                    this.messageInput.value = '';
-                    this.messageInput.focus();
-                }
-            });
-            
-            // Send button click handler
-            this.sendButton?.addEventListener('click', async (event) => {
-                event.preventDefault();
-                if (this.messageInput?.value.trim()) {
-                    await this.chatService.handleMessageSend(this.messageInput.value.trim());
-                    this.messageInput.value = '';
-                    this.messageInput.focus();
-                }
-            });
+            // Remove any existing event listeners
+            this.chatForm.removeEventListener('submit', this.handleSubmit);
+            this.sendButton?.removeEventListener('click', this.handleSubmit);
+            this.messageInput?.removeEventListener('keypress', this.handleKeyPress);
 
-            // Enter key handler
-            this.messageInput?.addEventListener('keypress', async (event: KeyboardEvent) => {
-                if (event.key === 'Enter' && !event.shiftKey) {
-                    event.preventDefault();
-                    if (this.messageInput?.value.trim()) {
-                        await this.chatService.handleMessageSend(this.messageInput.value.trim());
-                        this.messageInput.value = '';
-                        this.messageInput.focus();
-                    }
-                }
+            // Add event listeners
+            this.chatForm.addEventListener('submit', this.handleSubmit);
+            this.sendButton?.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                this.handleSubmit(e);
             });
+            this.messageInput?.addEventListener('keypress', this.handleKeyPress);
         }
-    }
-
-    displayMessage(message: any) {
-        if (!this.messagesContainer) return;
-
-        const messageElement = document.createElement('div');
-        messageElement.className = 'message';
-        
-        // Format timestamp
-        const timestamp = message.timestamp ? new Date(message.timestamp).toLocaleTimeString() : new Date().toLocaleTimeString();
-        
-        // Create message content with sender and timestamp
-        messageElement.innerHTML = `
-            <span class="message-sender">${message.sender || 'Unknown'}:</span>
-            <span class="message-content">${message.content}</span>
-            <span class="message-time">${timestamp}</span>
-        `;
-        
-        this.messagesContainer.appendChild(messageElement);
-        this.scrollToBottom();
     }
 
     clearMessages() {
-        console.log('[CHAT_UI] Clearing messages');
-        if (this.messagesContainer) {
-            while (this.messagesContainer.firstChild) {
-                this.messagesContainer.removeChild(this.messagesContainer.firstChild);
-            }
-        }
+        this.messageService.clearMessages();
     }
 
     private scrollToBottom() {
@@ -136,17 +160,21 @@ export class ChatUIService {
         }
     }
 
-    updateRoomDisplay(room: any) {
+    updateRoomDisplay(room: ChatRoom) {
         try {
-            console.log('[CHAT_UI] Updating room display:', room);
+            console.log('[CHAT_UI] Updating room display, full room data:', JSON.stringify(room, null, 2));
             
             if (!room) {
                 console.error('[CHAT_UI] No room data provided');
                 return;
             }
             
+            const newRoomId = room._id || room.roomId || null;
+            const isRoomChange = this.currentRoom !== newRoomId;
+            
             // Store current room ID
-            this.currentRoom = room._id || room.roomId;
+            this.currentRoom = newRoomId;
+            console.log('[CHAT_UI] Current room ID:', this.currentRoom);
             
             // Update chat heading with room name and participant count
             const chatHeading = document.getElementById('chat-heading');
@@ -155,49 +183,56 @@ export class ChatUIService {
                 throw new Error('Chat heading element not found');
             }
             
-            const participantCount = room.participants?.length || 0;
+            const participantCount = room.participants?.length || room.activeUsers?.length || 0;
+            console.log('[CHAT_UI] Participants:', room.participants || room.activeUsers);
             
-            // Get room name - for private chats, extract friend's name
-            let displayName = room.name || 'Chat Room';
+            // Get room name using the same logic as chat room list
+            let displayName = room.name || room.roomName;
+            console.log('[CHAT_UI] Initial display name:', displayName);
             
             // Try multiple locations for username
             const userProfile = StorageService.get(Constants.STORAGE_KEYS.USER_PROFILE) || {};
             const authData = JSON.parse(StorageService.get('authData') || '{}');
-            const directUsername = StorageService.get('username');
-            
             const currentUsername = (
                 userProfile.username || 
                 authData.username || 
-                directUsername || 
+                StorageService.get('username') || 
                 ''
             ).toLowerCase();
             
             console.log('[CHAT_UI] Current username:', currentUsername);
             
+            // For private chats, find the other participant
             if (room.isPrivate && room.participants) {
-                // Find the other participant (not the current user)
+                console.log('[CHAT_UI] Processing private room');
                 const otherParticipant = room.participants.find(
-                    (participant: any) => participant.username?.toLowerCase() !== currentUsername
+                    participant => participant.username?.toLowerCase() !== currentUsername
                 );
                 if (otherParticipant) {
+                    console.log('[CHAT_UI] Found other participant:', otherParticipant);
                     displayName = otherParticipant.username;
                 }
-            } else if (displayName.includes('Chat Room for')) {
-                // Remove the prefix and split the names
+            } else if (displayName?.includes('Chat Room for')) {
+                console.log('[CHAT_UI] Processing "Chat Room for" format');
                 const namesText = displayName.split('Chat Room for ')[1];
-                
                 if (namesText) {
-                    const names = namesText.split(' and ').map((name: string) => name.trim());
-                    
-                    // Find the name that's not the current user's name (case-insensitive)
-                    const otherUser = names.find((name: string) => name.toLowerCase() !== currentUsername);
-                    
+                    const names = namesText.split(' and ').map(name => name.trim());
+                    console.log('[CHAT_UI] Names from room name:', names);
+                    const otherUser = names.find(name => name.toLowerCase() !== currentUsername);
                     if (otherUser) {
                         displayName = otherUser;
                     }
                 }
             }
-            
+
+            // If no display name was set, use default
+            if (!displayName) {
+                console.log('[CHAT_UI] No display name found, using default');
+                displayName = 'General Chat';
+            }
+
+            console.log('[CHAT_UI] Final display name:', displayName);
+
             // Find or create the heading elements
             let headingTitle = chatHeading.querySelector('h2');
             let participantSpan = chatHeading.querySelector('.participant-count');
@@ -216,11 +251,12 @@ export class ChatUIService {
             // Update the content
             headingTitle.textContent = displayName;
             participantSpan.textContent = `${participantCount} participant${participantCount !== 1 ? 's' : ''}`;
-            
-            console.log('[CHAT_UI] Updated room display:', { displayName, participantCount });
 
-            // Clear existing messages when switching rooms
-            this.clearMessages();
+            // Only clear messages when actually switching rooms
+            if (isRoomChange) {
+                console.log('[CHAT_UI] Room changed, clearing messages');
+                this.clearMessages();
+            }
         } catch (error) {
             console.error('[CHAT_UI] Error updating room display:', error);
             ErrorHandler.handle(error);

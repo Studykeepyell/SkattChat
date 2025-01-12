@@ -4,6 +4,11 @@ import { HttpService } from '../core/httpService';
 import { API_CONFIG } from '../core/api.config';
 import { StorageService } from '../core/storageService';
 
+interface FriendRequestResponse {
+    success: boolean;
+    message?: string;
+}
+
 export class FriendsPage {
     private friendModule!: FriendModule;
     private searchForm!: HTMLFormElement | null;
@@ -104,8 +109,12 @@ export class FriendsPage {
         const userImage = document.createElement('img');
         userImage.src = user.profileImage || '../assets/images/default-profile.png';
         userImage.alt = 'User profile';
+        userImage.onerror = () => {
+            userImage.src = '../assets/images/default-profile.png';
+        };
 
         const userInfo = document.createElement('div');
+        userInfo.className = 'user-info';
         userInfo.innerText = user.username;
 
         userBox.appendChild(userImage);
@@ -114,7 +123,24 @@ export class FriendsPage {
         if (!isFriend) {
             const addButton = document.createElement('button');
             addButton.innerText = 'Add Friend';
-            addButton.onclick = () => this.sendFriendRequest(user._id);
+            addButton.onclick = async () => {
+                addButton.disabled = true;
+                addButton.innerText = 'Sending...';
+                try {
+                    const response = await this.sendFriendRequest(user._id);
+                    if (response?.success) {
+                        addButton.innerText = 'Request Sent';
+                        addButton.style.backgroundColor = '#4CAF50';
+                    } else {
+                        addButton.innerText = 'Add Friend';
+                        addButton.disabled = false;
+                    }
+                } catch (error) {
+                    addButton.innerText = 'Add Friend';
+                    addButton.disabled = false;
+                    ErrorHandler.handle(error);
+                }
+            };
             userBox.appendChild(addButton);
         } else {
             const friendStatus = document.createElement('span');
@@ -125,23 +151,32 @@ export class FriendsPage {
         return userBox;
     }
 
-    private async sendFriendRequest(receiverId: string) {
+    private async sendFriendRequest(receiverId: string): Promise<FriendRequestResponse> {
         try {
             const response = await this.friendModule.sendFriendRequest(receiverId);
-            if (response?.success) {
-                alert('Friend request sent successfully.');
-            }
+            return response as FriendRequestResponse;
         } catch (error) {
             ErrorHandler.handle(error);
+            return { success: false, message: 'Failed to send friend request' };
         }
     }
 
     private setupNavigationListeners() {
+        const navigationConfig = {
+            'chat': '/pages/chat.html',
+            'friends': '/pages/addFriend.html',
+            'account': '/pages/account.html',
+            'settings': '/pages/settings.html',
+            'help': '/pages/help.html'
+        };
+
         document.querySelectorAll('.taskbar-button').forEach(button => {
-            button.addEventListener('click', () => {
-                const target = button.getAttribute('data-target');
-                if (target) window.location.href = target;
-            });
+            const target = button.getAttribute('data-target');
+            if (target && target in navigationConfig) {
+                button.addEventListener('click', () => {
+                    window.location.href = navigationConfig[target as keyof typeof navigationConfig];
+                });
+            }
         });
     }
 } 

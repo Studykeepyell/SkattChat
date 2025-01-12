@@ -67,14 +67,11 @@ app.use(cors(corsOptions));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// Add CSP headers middleware
+// Configure security headers including CSP
 app.use((req, res, next) => {
     res.setHeader(
         'Content-Security-Policy',
-        "default-src 'self'; " +
-        "connect-src 'self' ws: wss: http: https:; " +
-        "script-src 'self' 'unsafe-inline' https://cdn.socket.io; " +
-        "style-src 'self' 'unsafe-inline';"
+        "default-src 'self'; img-src 'self' data: blob:; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline';"
     );
     next();
 });
@@ -97,6 +94,7 @@ app.use((req, res, next) => {
 
 // Set up static routes before API routes
 app.use(express.static(join(__dirname, '../../public')));
+app.use('/assets', express.static(join(__dirname, '../../public/assets')));
 
 // Serve dist directory and its contents
 app.use('/dist', express.static(join(__dirname, '../../public/dist'), {
@@ -118,6 +116,9 @@ app.use('/scripts', express.static(join(__dirname, '../../public/dist/scripts'))
 app.use('/pages', express.static(join(__dirname, '../../public/dist/pages')));
 app.use('/fonts', express.static(join(__dirname, '../../public/dist/fonts')));
 app.use('/downloads', express.static(DOWNLOADS_DIR));
+
+// Serve uploaded files
+app.use('/uploads', express.static(join(__dirname, '../uploads')));
 
 // Serve index.html for the root path
 app.get('/', (req, res) => {

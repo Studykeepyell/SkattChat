@@ -50,12 +50,15 @@ export class ChatService {
             }
         });
         
-        EventBus.subscribe(Constants.EVENTS.MESSAGE_RECEIVED, this.messageService.addChatMessage.bind(this.messageService));
         EventBus.subscribe(Constants.EVENTS.JOIN_ROOM, this.joinRoom.bind(this));
     }
 
     public async handleMessageSend(content: string): Promise<boolean> {
         return this.socketHandler.sendMessage(content);
+    }
+
+    public requestRoomUpdate() {
+        this.socketHandler.requestRooms();
     }
 
     async markMessagesAsRead(roomId: string) {

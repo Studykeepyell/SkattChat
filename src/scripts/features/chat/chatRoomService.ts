@@ -3,13 +3,7 @@ import { EventBus } from '../../core/eventBus';
 import { Constants } from '../../core/constants';
 import { StorageService } from '../../core/storageService';
 import { ChatSocketHandler } from './chatSocketHandler';
-
-export interface ChatRoomData {
-    name: string;
-    roomId: string;
-    lastMessageTime?: string;
-    updatedAt: string;
-}
+import { ChatRoom, RoomDisplayData } from './types';
 
 export class ChatRoomService {
     private roomList: HTMLElement | null;
@@ -55,12 +49,12 @@ export class ChatRoomService {
         }
 
         // Listen for room-related events
-        EventBus.subscribe(Constants.EVENTS.ROOM_CREATED, (data: any) => {
-            console.log('[CHAT_ROOM] Room created event received:', data);
-            this.handleRoomCreated(data);
+        EventBus.subscribe(Constants.EVENTS.ROOM_CREATED, (room: ChatRoom) => {
+            console.log('[CHAT_ROOM] Room created event received:', room);
+            this.handleRoomCreated(room);
         });
         
-        EventBus.subscribe(Constants.EVENTS.ROOMS_UPDATED, (rooms: any[]) => {
+        EventBus.subscribe(Constants.EVENTS.ROOMS_UPDATED, (rooms: ChatRoom[]) => {
             console.log('[CHAT_ROOM] Rooms updated event received:', rooms);
             this.displayRooms(rooms);
         });
@@ -72,7 +66,7 @@ export class ChatRoomService {
         });
     }
 
-    private displayRooms(rooms: any[]) {
+    private displayRooms(rooms: ChatRoom[]) {
         if (!this.roomList) return;
         console.log('[CHAT_ROOM] Displaying rooms:', rooms);
 
@@ -88,15 +82,22 @@ export class ChatRoomService {
 
         console.log('[CHAT_ROOM] Current user:', currentUsername);
 
+        // Sort rooms by last message time, most recent first
+        const sortedRooms = [...rooms].sort((a, b) => {
+            const timeA = a.lastMessageTime ? new Date(a.lastMessageTime).getTime() : 0;
+            const timeB = b.lastMessageTime ? new Date(b.lastMessageTime).getTime() : 0;
+            return timeB - timeA;
+        });
+
         this.roomList.innerHTML = '';
-        rooms.forEach(room => {
+        sortedRooms.forEach(room => {
             console.log('[CHAT_ROOM] Processing room:', room);
             const roomElement = this.createRoomElement(room, currentUsername);
             this.roomList?.appendChild(roomElement);
         });
     }
 
-    private createRoomElement(room: any, currentUsername: string): HTMLElement {
+    private createRoomElement(room: ChatRoom, currentUsername: string): HTMLElement {
         console.log('[CHAT_ROOM] Creating element for room:', room);
         
         if (!room) {
@@ -104,58 +105,92 @@ export class ChatRoomService {
             return document.createElement('div');
         }
 
+        const roomData: RoomDisplayData = this.getRoomDisplayData(room, currentUsername);
         const div = document.createElement('div');
         div.className = 'chat-room';
         
-        // Get room ID without splitting
-        const roomId = room._id || room.roomId;
-        console.log('[CHAT_ROOM] Using room ID:', roomId);
+        // Add active class if this is the current room
+        if (this.socketHandler.getCurrentRoom() === roomData.roomId) {
+            div.classList.add('active');
+        }
+        
+        // Add profile image
+        const profileImg = document.createElement('img');
+        profileImg.className = 'room-profile-image';
+        profileImg.src = roomData.profileImage;
+        profileImg.onerror = () => {
+            profileImg.src = '/dist/assets/images/account.svg';
+        };
 
-        let displayName = room.name;
-        let profileImage = '../assets/images/default-profile.jpg';
+        // Create room content container
+        const roomContent = document.createElement('div');
+        roomContent.className = 'room-content';
+
+        // Add room name
+        const roomName = document.createElement('div');
+        roomName.className = 'room-name';
+        roomName.textContent = roomData.displayName;
+
+        // Add timestamp if available
+        if (roomData.lastActivity) {
+            const timestamp = document.createElement('div');
+            timestamp.className = 'room-timestamp';
+            timestamp.textContent = roomData.lastActivity;
+            div.appendChild(timestamp);
+        }
+
+        // Add click handler
+        div.addEventListener('click', () => {
+            // Remove active class from all rooms
+            const allRooms = document.querySelectorAll('.chat-room');
+            allRooms.forEach(room => room.classList.remove('active'));
+            
+            // Add active class to clicked room
+            div.classList.add('active');
+            
+            EventBus.publish(Constants.EVENTS.JOIN_ROOM, roomData.roomId);
+        });
+
+        // Assemble the elements
+        roomContent.appendChild(roomName);
+        div.appendChild(profileImg);
+        div.appendChild(roomContent);
+
+        return div;
+    }
+
+    private getRoomDisplayData(room: ChatRoom, currentUsername: string): RoomDisplayData {
+        const roomId = room._id || room.roomId || '';
+        let displayName = room.name || room.roomName || '';
+        let profileImage = '/dist/assets/images/account.svg';
+        let lastActivity = room.lastMessageTime ? this.formatLastActivity(room.lastMessageTime) : undefined;
 
         // For private chats, find the other participant
         if (room.isPrivate && room.participants) {
-            console.log('[CHAT_ROOM] Private room participants:', room.participants);
             const otherParticipant = room.participants.find(
-                (participant: any) => participant.username?.toLowerCase() !== currentUsername
+                participant => participant.username?.toLowerCase() !== currentUsername
             );
             if (otherParticipant) {
-                console.log('[CHAT_ROOM] Found other participant:', otherParticipant);
                 displayName = otherParticipant.username;
                 profileImage = otherParticipant.avatar || profileImage;
             }
-        } else if (room.name?.includes('Chat Room for')) {
-            const namesText = room.name.split('Chat Room for ')[1];
+        } else if (displayName.includes('Chat Room for')) {
+            const namesText = displayName.split('Chat Room for ')[1];
             if (namesText) {
-                const names = namesText.split(' and ').map((name: string) => name.trim());
-                const otherUser = names.find((name: string) => name.toLowerCase() !== currentUsername);
+                const names = namesText.split(' and ').map(name => name.trim());
+                const otherUser = names.find(name => name.toLowerCase() !== currentUsername);
                 if (otherUser) {
                     displayName = otherUser;
                 }
             }
         }
 
-        div.innerHTML = `
-            <img src="${profileImage}" alt="${displayName}'s avatar" class="profile-image">
-            <div class="room-info">
-                <div class="room-name">${displayName}</div>
-                <div class="room-timestamp">${this.formatLastActivity(room.lastActivity || room.updatedAt)}</div>
-            </div>
-        `;
-
-        if (!roomId) {
-            console.error('[CHAT_ROOM] No room ID found in room object:', room);
-            return div;
-        }
-
-        div.setAttribute('data-room-id', roomId);
-        div.addEventListener('click', () => {
-            console.log('[CHAT_ROOM] Room clicked, ID:', roomId);
-            EventBus.publish(Constants.EVENTS.JOIN_ROOM, roomId);
-        });
-
-        return div;
+        return {
+            displayName: displayName || 'General Chat',
+            roomId,
+            profileImage,
+            lastActivity
+        };
     }
 
     private formatLastActivity(timestamp: string | number | Date): string {
@@ -194,7 +229,7 @@ export class ChatRoomService {
         }
     }
 
-    private handleRoomCreated(data: any) {
+    private handleRoomCreated(data: ChatRoom) {
         this.socketHandler.requestRooms();
     }
 } 

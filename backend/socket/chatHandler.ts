@@ -17,7 +17,7 @@ export class ChatHandler {
     private async handleMessage(socket: CustomSocket, data: any) {
         try {
             const { roomId, userId, username, message, timestamp } = data;
-            console.log('Received message:', data);
+            console.log('[CHAT] Received message:', data);
 
             // Save message to database
             const newMessage = new Message({
@@ -33,20 +33,20 @@ export class ChatHandler {
             await Room.findOneAndUpdate(
                 { roomId },
                 { 
-                    $set: { lastActivity: timestamp },
+                    $set: { lastMessageTime: timestamp },
                     $push: { messages: newMessage._id }
                 }
             );
 
             // Broadcast to all clients in the room
-            this.io.in(roomId).emit('message', {
-                messageId: newMessage._id,
-                roomId,
-                userId,
-                username,
-                message,
-                timestamp
-            });
+            const formattedMessage = {
+                id: newMessage._id,
+                sender: username,
+                content: message,
+                timestamp: timestamp,
+                userId: userId
+            };
+            this.io.in(roomId).emit('message', formattedMessage);
 
             // Send room update to all clients
             const updatedRoom = await Room.findOne({ roomId })
@@ -62,13 +62,71 @@ export class ChatHandler {
             this.io.in(roomId).emit('roomUpdate', {
                 roomId,
                 name: updatedRoom.name,
-                lastActivity: timestamp,
+                lastMessageTime: timestamp,
                 messageCount: updatedRoom.messages.length
             });
 
         } catch (error) {
             console.error('Error handling message:', error);
             socket.emit('error', 'Failed to send message');
+        }
+    }
+
+    private async getMessages(roomId: string, limit: number = 100) {
+        try {
+            console.log('[CHAT] Getting messages for room:', roomId);
+            
+            // First find the room
+            const room = await Room.findOne({ roomId })
+                .populate({
+                    path: 'messages',
+                    options: { 
+                        sort: { timestamp: -1 },  // Get most recent messages first
+                        limit
+                    }
+                })
+                .lean();
+
+            if (!room) {
+                console.log('[CHAT] Room not found:', roomId);
+                return [];
+            }
+
+            console.log('[CHAT] Found room with messages:', room.messages?.length || 0);
+
+            // If no messages in room, try finding them directly
+            if (!room.messages || room.messages.length === 0) {
+                console.log('[CHAT] No messages in room, searching messages collection');
+                const messages = await Message.find({ roomId })
+                    .sort({ timestamp: -1 })
+                    .limit(limit)
+                    .lean();
+                
+                console.log('[CHAT] Found messages directly:', messages.length);
+                return messages.map(msg => ({
+                    id: msg._id,
+                    sender: msg.username,
+                    content: msg.message,
+                    timestamp: msg.timestamp,
+                    userId: msg.userId
+                }));
+            }
+
+            // Map the populated messages to the expected format
+            const formattedMessages = room.messages.map((msg: any) => ({
+                id: msg._id,
+                sender: msg.username,
+                content: msg.message,
+                timestamp: msg.timestamp,
+                userId: msg.userId
+            }));
+
+            console.log('[CHAT] Returning formatted messages:', formattedMessages.length);
+            return formattedMessages;
+            
+        } catch (error) {
+            console.error('[CHAT] Error getting messages:', error);
+            return [];
         }
     }
 
@@ -80,18 +138,7 @@ export class ChatHandler {
                 throw new Error('Room ID is required');
             }
         
-            const existingRoom = await Room.findOne({ roomId })
-                .populate({
-                    path: 'messages',
-                    options: { 
-                        sort: { timestamp: 1 },
-                        limit: 100
-                    },
-                    populate: {
-                        path: 'userId',
-                        select: 'username'
-                    }
-                });
+            const existingRoom = await Room.findOne({ roomId });
         
             if (!existingRoom) {
                 socket.emit('errorMessage', { 
@@ -100,6 +147,9 @@ export class ChatHandler {
                 });
                 return;
             }
+
+            const messages = await this.getMessages(roomId);
+            console.log('[CHAT] Retrieved message history:', messages);
 
             const room = await Room.findOne({ roomId });
             if (!room) {
@@ -136,19 +186,15 @@ export class ChatHandler {
                 roomId,
                 roomName: room.name,
                 activeUsers: Array.from(this.io.sockets.adapter.rooms.get(roomId) || []),
-                messages: existingRoom.messages.map((msg: any) => ({
-                    id: msg._id,
-                    sender: msg.username,
-                    content: msg.message,
-                    timestamp: msg.timestamp,
-                    userId: msg.userId
-                })),
                 metadata: {
                     createdAt: existingRoom.createdAt,
                     lastActivity: existingRoom.updatedAt
                 }
             });
-        
+
+            // Send message history separately
+            socket.emit('messageHistory', messages);
+
         } catch (error: any) {
             console.error(`Error in room "${data}":`, error);
             socket.emit('errorMessage', { 
@@ -192,7 +238,7 @@ export class ChatHandler {
                 ]
             })
             .populate('participants', 'username profileImage')
-            .sort({ updatedAt: -1 })
+            .sort({ lastMessageTime: -1 })
             .lean();
 
             console.log(`[CHAT] Found ${rooms.length} rooms for user`);

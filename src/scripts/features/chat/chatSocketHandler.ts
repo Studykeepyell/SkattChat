@@ -3,6 +3,7 @@ import { EventBus } from '../../core/eventBus';
 import { Constants } from '../../core/constants';
 import { ErrorHandler } from '../../core/errorHandler';
 import { StorageService } from '../../core/storageService';
+import { ChatMessage, ChatRoom } from './types';
 
 export class ChatSocketHandler {
     private static instance: ChatSocketHandler;
@@ -53,7 +54,8 @@ export class ChatSocketHandler {
             'connect': this.handleConnect.bind(this),
             'connect_error': this.handleError.bind(this),
             'roomList': this.handleRoomList.bind(this),
-            'roomCreated': this.handleRoomCreated.bind(this)
+            'roomCreated': this.handleRoomCreated.bind(this),
+            'messageHistory': this.handleMessageHistory.bind(this)
         };
 
         Object.entries(handlers).forEach(([event, handler]) => {
@@ -78,31 +80,73 @@ export class ChatSocketHandler {
             }
 
             if (!this.currentRoom) {
-                console.log('[CHAT_SOCKET] No room selected');
+                console.error('[CHAT_SOCKET] No room selected');
+                ErrorHandler.handle(new Error('Please select a chat room first'));
                 return false;
             }
 
-            // Get user info from storage
+            if (!this.socket?.connected) {
+                console.error('[CHAT_SOCKET] Socket not connected');
+                ErrorHandler.handle(new Error('Connection lost. Please refresh the page.'));
+                return false;
+            }
+
+            // Get user info from multiple possible sources
             const userId = StorageService.get(Constants.STORAGE_KEYS.USER_ID);
-            const userProfile = JSON.parse(StorageService.get(Constants.STORAGE_KEYS.USER_PROFILE) || '{}');
-            const username = userProfile.username;
+            let username = '';
+
+            // Try getting username from different storage locations
+            const userProfile = StorageService.get(Constants.STORAGE_KEYS.USER_PROFILE);
+            const authData = StorageService.get('authData');
+            const directUsername = StorageService.get('username');
+
+            try {
+                if (userProfile) {
+                    username = JSON.parse(userProfile).username;
+                }
+            } catch (e) {
+                console.log('[CHAT_SOCKET] Error parsing user profile:', e);
+            }
+
+            if (!username && authData) {
+                try {
+                    username = JSON.parse(authData).username;
+                } catch (e) {
+                    console.log('[CHAT_SOCKET] Error parsing auth data:', e);
+                }
+            }
+
+            if (!username) {
+                username = directUsername || '';
+            }
 
             if (!userId || !username) {
-                console.error('[CHAT_SOCKET] User info not found');
+                const error = new Error('User information not found. Please try logging in again.');
+                console.error('[CHAT_SOCKET] User info not found. UserId:', userId, 'Username:', username);
+                ErrorHandler.handle(error);
                 return false;
             }
 
-            const messageData = {
-                roomId: this.currentRoom,
+            const messageData: ChatMessage = {
+                username: username,
                 userId,
-                username,
                 message: content,
                 timestamp: new Date().toISOString()
             };
 
             console.log('[CHAT_SOCKET] Sending message:', messageData);
-            this.socket.emit('message', messageData);
-            return true;
+            
+            return new Promise((resolve) => {
+                this.socket.emit('message', { ...messageData, roomId: this.currentRoom }, (error: any) => {
+                    if (error) {
+                        console.error('[CHAT_SOCKET] Error sending message:', error);
+                        ErrorHandler.handle(new Error(error.message || 'Failed to send message'));
+                        resolve(false);
+                    } else {
+                        resolve(true);
+                    }
+                });
+            });
 
         } catch (error) {
             console.error('[CHAT_SOCKET] Error sending message:', error);
@@ -130,23 +174,23 @@ export class ChatSocketHandler {
         }
     }
 
-    private handleMessage(data: any) {
+    private handleMessage(message: ChatMessage) {
         try {
-            console.log('[CHAT_SOCKET] Received message:', data);
-            EventBus.publish(Constants.EVENTS.MESSAGE_RECEIVED, {
-                ...data,
-                sender: data.username
-            });
+            console.log('[CHAT_SOCKET] Received message:', message);
+            EventBus.publish(Constants.EVENTS.MESSAGE_RECEIVED, message);
+            
+            // Request updated room list to refresh timestamps
+            this.requestRooms();
         } catch (error) {
             console.error('[CHAT_SOCKET] Error handling message:', error);
             ErrorHandler.handle(error);
         }
     }
 
-    private handleRoomUpdate(data: any) {
+    private handleRoomUpdate(room: ChatRoom) {
         try {
-            console.log('[CHAT_SOCKET] Room update:', data);
-            EventBus.publish(Constants.EVENTS.ROOM_CHANGED, data);
+            console.log('[CHAT_SOCKET] Room update:', room);
+            EventBus.publish(Constants.EVENTS.ROOM_CHANGED, room);
         } catch (error) {
             ErrorHandler.handle(error);
         }
@@ -180,7 +224,7 @@ export class ChatSocketHandler {
         this.socket.emit('requestRooms');
     }
 
-    private handleRoomList(rooms: any[]) {
+    private handleRoomList(rooms: ChatRoom[]) {
         try {
             console.log('[CHAT_SOCKET] Received room list:', rooms);
             EventBus.publish(Constants.EVENTS.ROOMS_UPDATED, rooms);
@@ -190,8 +234,23 @@ export class ChatSocketHandler {
         }
     }
 
-    private handleRoomCreated(room: any) {
+    private handleRoomCreated(room: ChatRoom) {
         console.log('[CHAT_SOCKET] Room created:', room);
         EventBus.publish(Constants.EVENTS.ROOM_CREATED, room);
+    }
+
+    private handleMessageHistory(messages: ChatMessage[]) {
+        try {
+            console.log('[CHAT_SOCKET] Received message history:', messages);
+            if (!Array.isArray(messages)) {
+                console.error('[CHAT_SOCKET] Expected array of messages but got:', typeof messages);
+                return;
+            }
+            console.log('[CHAT_SOCKET] Publishing message history to UI:', messages);
+            EventBus.publish(Constants.EVENTS.MESSAGES_LOADED, messages);
+        } catch (error) {
+            console.error('[CHAT_SOCKET] Error handling message history:', error);
+            ErrorHandler.handle(error);
+        }
     }
 } 
