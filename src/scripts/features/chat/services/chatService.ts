@@ -1,9 +1,9 @@
-import { API_CONFIG } from '../../core/api.config';
-import { HttpService } from '../../core/httpService';
-import { EventBus } from '../../core/eventBus';
-import { Constants } from '../../core/constants';
-import { ErrorHandler } from '../../core/errorHandler';
-import { MessageService } from './messageService';
+import { API_CONFIG } from '../../../core/api.config';
+import { HttpService } from '../../../core/httpService';
+import { EventBus } from '../../../core/eventBus';
+import { Constants } from '../../../core/constants';
+import { ErrorHandler } from '../../../core/errorHandler';
+import { MessageService } from '../messageService';
 import { ChatSocketHandler } from './chatSocketHandler';
 
 export class ChatService {

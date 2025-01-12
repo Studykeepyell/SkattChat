@@ -1,10 +1,10 @@
-import { ErrorHandler } from '../../core/errorHandler';
-import { EventBus } from '../../core/eventBus';
-import { Constants } from '../../core/constants';
-import { StorageService } from '../../core/storageService';
+import { ErrorHandler } from '../../../core/errorHandler';
+import { EventBus } from '../../../core/eventBus';
+import { Constants } from '../../../core/constants';
+import { StorageService } from '../../../core/storageService';
 import { ChatService } from './chatService';
-import { MessageService } from './messageService';
-import { ChatMessage, ChatRoom } from './types';
+import { MessageService } from '../messageService';
+import { ChatMessage, ChatRoom } from '../types';
 
 export class ChatUIService {
     private messageInput: HTMLInputElement | null;
@@ -27,11 +27,9 @@ export class ChatUIService {
         this.currentRoom = null;
         this.chatService = ChatService.getInstance();
         this.messageService = this.chatService['messageService'];
-
-        this.initialize();
     }
 
-    initialize() {
+    public initialize() {
         try {
             console.log('[CHAT_UI] Starting initialization...');
             this.setupElements();
@@ -150,7 +148,7 @@ export class ChatUIService {
         }
     }
 
-    clearMessages() {
+    public clearMessages() {
         this.messageService.clearMessages();
     }
 
@@ -160,7 +158,7 @@ export class ChatUIService {
         }
     }
 
-    updateRoomDisplay(room: ChatRoom) {
+    public updateRoomDisplay(room: ChatRoom) {
         try {
             console.log('[CHAT_UI] Updating room display, full room data:', JSON.stringify(room, null, 2));
             

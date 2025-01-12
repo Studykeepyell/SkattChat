@@ -1,9 +1,9 @@
-import { ErrorHandler } from '../../core/errorHandler';
-import { EventBus } from '../../core/eventBus';
-import { Constants } from '../../core/constants';
-import { StorageService } from '../../core/storageService';
+import { ErrorHandler } from '../../../core/errorHandler';
+import { EventBus } from '../../../core/eventBus';
+import { Constants } from '../../../core/constants';
+import { StorageService } from '../../../core/storageService';
 import { ChatSocketHandler } from './chatSocketHandler';
-import { ChatRoom, RoomDisplayData } from './types';
+import { ChatRoom, RoomDisplayData } from '../types';
 
 export class ChatRoomService {
     private roomList: HTMLElement | null;

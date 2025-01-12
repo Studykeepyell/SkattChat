@@ -1,16 +1,33 @@
-import { ChatModule } from '../features/chat/index';
 import { FriendModule } from '../features/friend/index';
 import { SocketService } from '../core/socketService';
 import { ErrorHandler } from '../core/errorHandler';
 import { Constants } from '../core/constants';
 import { EventBus } from '../core/eventBus';
-import { StorageService } from '../core/storageService';
-import { ChatUIService } from '../features/chat/chatUIService';
+import { TaskbarService } from '../features/layout/TaskbarService';
+import { ThemeService } from '../features/layout/ThemeService';
+import { MenuService } from '../features/layout/MenuService';
+import { ChatAuthService } from '../features/chat/services/ChatAuthService';
+import { ProfileService } from '../features/chat/services/ProfileService';
+import { EmojiService } from '../features/chat/services/EmojiService';
+import { ChatUIService } from '../features/chat/services/ChatUIService';
+import { ChatService } from '../features/chat/services/chatService';
+import { ChatRoomService } from '../features/chat/services/chatRoomService';
+import { ChatSocketHandler } from '../features/chat/services/chatSocketHandler';
 
 export class ChatPage {
-    private chatModule!: ChatModule;
     private friendModule!: FriendModule;
-    private currentUser: any;
+    private services!: {
+        auth: ChatAuthService;
+        profile: ProfileService;
+        taskbar: TaskbarService;
+        theme: ThemeService;
+        menu: MenuService;
+        emoji: EmojiService;
+        ui: ChatUIService;
+        chat: ChatService;
+        room: ChatRoomService;
+        socket: ChatSocketHandler;
+    };
 
     constructor() {
         this.initialize().catch(error => {
@@ -23,8 +40,11 @@ export class ChatPage {
         try {
             console.log('Starting chat page initialization...');
             
+            // Initialize services
+            this.initializeServices();
+            
             // Check authentication first
-            const isAuthenticated = await this.checkAuthentication();
+            const isAuthenticated = await this.services.auth.checkAuthentication();
             if (!isAuthenticated) {
                 console.log('Authentication check failed, redirecting to login...');
                 window.location.href = 'login.html';
@@ -33,16 +53,22 @@ export class ChatPage {
 
             console.log('Authentication successful, initializing components...');
             
-            // Initialize components
+            // Initialize components and setup
             this.initializeCore();
-            this.initializeModules();
+            this.initializeFriendModule();
             this.setupEventListeners();
-            this.setupUI();
-            this.loadSavedSettings();
-            await this.loadUserProfile();
+            await this.services.profile.loadUserProfile();
 
-            // Initialize chat UI service
-            const chatUIService = new ChatUIService();
+            // Initialize UI services
+            this.services.taskbar.initialize();
+            this.services.theme.initialize();
+            this.services.menu.initialize();
+            this.services.emoji.initialize();
+            this.services.ui.initialize();
+
+            // Initialize chat services
+            this.services.socket.initialize();
+            this.services.room.initialize();
 
             console.log('Chat page initialization complete');
         } catch (error) {
@@ -52,86 +78,37 @@ export class ChatPage {
         }
     }
 
-    private async checkAuthentication(): Promise<boolean> {
-        try {
-            const token = StorageService.get(Constants.STORAGE_KEYS.AUTH_TOKEN);
-            const userId = StorageService.get(Constants.STORAGE_KEYS.USER_ID);
-            
-            console.log('Auth check - Token exists:', !!token);
-            console.log('Auth check - UserID exists:', !!userId);
-
-            if (!token || !userId) {
-                return false;
-            }
-
-            this.currentUser = {
-                id: userId,
-                token: token,
-                profile: StorageService.get(Constants.STORAGE_KEYS.USER_PROFILE)
-            };
-
-            return true;
-        } catch (error) {
-            console.error('Error during authentication check:', error);
-            return false;
-        }
-    }
-
-    private async loadUserProfile() {
-        try {
-            if (!this.currentUser?.id) {
-                console.log('No user ID found');
-                return;
-            }
-
-            // Update profile image
-            const profileImg = document.getElementById("taskbar-profile-img") as HTMLImageElement;
-            if (profileImg) {
-                // Use the new profile image endpoint
-                profileImg.src = `/api/users/${this.currentUser.id}/profile-image?${Date.now()}`; // Add timestamp to prevent caching
-                profileImg.onerror = () => {
-                    // Fallback to default avatar if image fails to load
-                    profileImg.src = '/assets/images/default-avatar.svg';
-                };
-            }
-
-            // Update username if displayed
-            const usernameElement = document.getElementById("username-display");
-            if (usernameElement && this.currentUser.profile?.username) {
-                usernameElement.textContent = this.currentUser.profile.username;
-            }
-        } catch (error) {
-            console.error('Error loading user profile:', error);
-            ErrorHandler.handle(error);
-        }
-    }
-
-    private loadSavedSettings() {
-        try {
-            // Load dark mode preference
-            const isDarkMode = JSON.parse(localStorage.getItem('darkMode') || 'false');
-            if (isDarkMode) {
-                document.body.classList.add('dark-mode');
-            }
-        } catch (error) {
-            console.error('Error loading saved settings:', error);
-            ErrorHandler.handle(error);
-        }
+    private initializeServices(): void {
+        const auth = new ChatAuthService();
+        const chat = ChatService.getInstance();
+        const socket = ChatSocketHandler.getInstance();
+        
+        this.services = {
+            auth,
+            profile: new ProfileService(auth.getCurrentUser()),
+            taskbar: new TaskbarService(),
+            theme: new ThemeService(),
+            menu: new MenuService(),
+            emoji: new EmojiService(),
+            ui: new ChatUIService(),
+            chat,
+            socket,
+            room: new ChatRoomService()
+        };
     }
 
     private initializeCore() {
         try {
-            // Initialize socket connection with auth token
-            if (!this.currentUser?.token) {
+            const currentUser = this.services.auth.getCurrentUser();
+            if (!currentUser?.token) {
                 throw new Error('No auth token available for socket connection');
             }
             
-            SocketService.initialize(this.currentUser.token);
+            SocketService.initialize(currentUser.token);
             
-            // Publish authentication status
             EventBus.publish(Constants.EVENTS.AUTH_CHANGE, { 
                 isAuthenticated: true,
-                user: this.currentUser
+                user: currentUser
             });
         } catch (error) {
             console.error('Error initializing core services:', error);
@@ -139,23 +116,17 @@ export class ChatPage {
         }
     }
 
-    private initializeModules() {
+    private initializeFriendModule() {
         try {
-            console.log('[CHAT] Creating chat module...');
-            this.chatModule = new ChatModule();
-            
             console.log('[CHAT] Creating friend module...');
             this.friendModule = new FriendModule();
 
-            console.log('[CHAT] Initializing chat module...');
-            this.chatModule.initialize();
-            
             console.log('[CHAT] Initializing friend module...');
             this.friendModule.initialize();
             
-            console.log('[CHAT] All modules initialized successfully');
+            console.log('[CHAT] Friend module initialized successfully');
         } catch (error) {
-            console.error('[CHAT] Error initializing modules:', error);
+            console.error('[CHAT] Error initializing friend module:', error);
             if (error instanceof Error) {
                 console.error('[CHAT] Error details:', error.message);
                 console.error('[CHAT] Stack trace:', error.stack);
@@ -164,96 +135,9 @@ export class ChatPage {
         }
     }
 
-    private setupUI() {
-        this.setupTaskbarNavigation();
-        this.setupHamburgerMenu();
-        this.setupEmojiPicker();
-        this.setupDarkMode();
-    }
-
     private setupEventListeners() {
-        EventBus.subscribe(Constants.EVENTS.AUTH_CHANGE, this.handleAuthChange.bind(this));
-        EventBus.subscribe(Constants.EVENTS.PROFILE_UPDATE, this.handleProfileUpdate.bind(this));
-    }
-
-    private handleAuthChange({ isAuthenticated, user }: { isAuthenticated: boolean, user?: any }) {
-        if (!isAuthenticated) {
-            // Handle logout
-            window.location.href = '../pages/login.html';
-            return;
-        }
-
-        if (user) {
-            this.currentUser = user;
-            this.loadUserProfile();
-        }
-    }
-
-    private handleProfileUpdate(profile: any) {
-        if (this.currentUser) {
-            this.currentUser.profile = profile;
-            StorageService.set(Constants.STORAGE_KEYS.USER_PROFILE, profile);
-            this.loadUserProfile();
-        }
-    }
-
-    // UI Methods moved from scripts.ts
-    private setupTaskbarNavigation() {
-        document.querySelectorAll(".taskbar button[data-target]").forEach(button => {
-            button.addEventListener("click", () => {
-                const targetPage = button.getAttribute("data-target");
-                if (targetPage) {
-                    window.location.href = targetPage;
-                }
-            });
-        });
-    }
-
-    private setupHamburgerMenu() {
-        const hamburgerMenu = document.getElementById('hamburger-menu');
-        const bubbleMenu = document.getElementById('bubble-menu');
-
-        hamburgerMenu?.addEventListener('click', (event) => {
-            event.stopPropagation();
-            bubbleMenu?.classList.toggle('active');
-        });
-
-        document.addEventListener('click', (event) => {
-            if (!hamburgerMenu?.contains(event.target as Node) && !bubbleMenu?.contains(event.target as Node)) {
-                bubbleMenu?.classList.remove('active');
-            }
-        });
-    }
-
-    private setupEmojiPicker() {
-        const emojiButton = document.getElementById("emoji-button");
-        const emojiPicker = document.getElementById("emoji-picker");
-        const messageInput = document.getElementById("messageInput") as HTMLInputElement;
-
-        emojiButton?.addEventListener("click", () => {
-            if (emojiPicker) {
-                emojiPicker.style.display = 
-                    emojiPicker.style.display === "none" ? "block" : "none";
-            }
-        });
-
-        document.querySelectorAll(".emoji").forEach((emoji) => {
-            emoji.addEventListener("click", () => {
-                if (messageInput && emojiPicker) {
-                    messageInput.value += emoji.textContent;
-                    emojiPicker.style.display = "none";
-                }
-            });
-        });
-    }
-
-    private setupDarkMode() {
-        const darkModeButton = document.getElementById('darkModeButton');
-        darkModeButton?.addEventListener('click', () => {
-            document.body.classList.toggle('dark-mode');
-            const isDarkMode = document.body.classList.contains('dark-mode');
-            localStorage.setItem('darkMode', JSON.stringify(isDarkMode));
-        });
+        EventBus.subscribe(Constants.EVENTS.AUTH_CHANGE, this.services.auth.handleAuthChange.bind(this.services.auth));
+        EventBus.subscribe(Constants.EVENTS.PROFILE_UPDATE, this.services.profile.handleProfileUpdate.bind(this.services.profile));
     }
 }
 

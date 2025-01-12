@@ -1,9 +1,9 @@
-import { SocketService } from '../../core/socketService';
-import { EventBus } from '../../core/eventBus';
-import { Constants } from '../../core/constants';
-import { ErrorHandler } from '../../core/errorHandler';
-import { StorageService } from '../../core/storageService';
-import { ChatMessage, ChatRoom } from './types';
+import { SocketService } from '../../../core/socketService';
+import { EventBus } from '../../../core/eventBus';
+import { Constants } from '../../../core/constants';
+import { ErrorHandler } from '../../../core/errorHandler';
+import { StorageService } from '../../../core/storageService';
+import { ChatMessage, ChatRoom } from '../types';
 
 export class ChatSocketHandler {
     private static instance: ChatSocketHandler;
