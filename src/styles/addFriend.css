@@ -28,98 +28,143 @@ body {
 /* Taskbar Styling */
 .taskbar {
   display: flex;
-  flex-direction: column;
-  align-items: center;
-  background-color: #333;
-  padding: 1rem 0; /* Padding using rem for better scalability */
-  width: 7.15%; /* Taskbar takes up 12% of the screen width */
-  min-width: 100px; /* Minimum width for the taskbar */
-  height: 100%;
+  justify-content: center;
+  gap: 20px;
+  padding: 10px;
+  background-color: #f8f9fa;
+  border-bottom: 1px solid #e0e0e0;
 }
 
 .taskbar-button {
-  background: none;
-  border: none;
-  outline: none;
-  cursor: pointer;
-  margin: 1.5rem 0; /* Margin with rem for spacing */
-  transition: transform 0.2s ease;
+  padding: 10px;
+  border-radius: 50%;
+  transition: background-color 0.2s;
 }
 
 .taskbar-button:hover {
-  transform: scale(1.1);
+  background-color: #e9ecef;
 }
 
-
 .button-icon {
-  width: 2rem; /* Set icon size using rem */
-  height: 2rem;
-  filter: invert(100%);
+  width: 24px;
+  height: 24px;
 }
 
 /* Main Content Section */
 .main-content {
-  flex-grow: 1; /* Allow the content area to take the remaining space */
-  padding: 2rem;
   display: flex;
-  flex-direction: column;
-  justify-content: flex-start;
-  align-items: stretch;
-  height: 100%;
-  overflow: auto;
+  height: calc(100vh - 60px);
+  padding: 20px;
+  gap: 20px;
 }
 
 /* Search Section Styling */
 .search-section {
-  margin-bottom: 2rem;
+  flex: 1;
+  padding: 20px;
+  background: #ffffff;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  overflow-y: auto;
+}
+
+.requests-section {
+  flex: 1;
+  padding: 20px;
+  background: #ffffff;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  overflow-y: auto;
+}
+
+.divider {
+  width: 1px;
+  background-color: #e0e0e0;
+  margin: 0 10px;
+}
+
+h2 {
+  margin-bottom: 20px;
+  color: #333;
+  font-size: 1.5rem;
 }
 
 .search-form {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
+  margin-bottom: 20px;
 }
 
 .search-box-container {
   display: flex;
-  flex-grow: 1;
-  border: 1px solid #ddd;
-  border-radius: 0.25rem;
-  overflow: hidden;
+  gap: 10px;
 }
 
 .search-input {
-  flex-grow: 1;
-  padding: 0.5rem;
-  border: none;
-  outline: none;
+  flex: 1;
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
   font-size: 1rem;
 }
 
 .search-button {
-  background-color: #1e90ff;
+  padding: 10px 20px;
+  background-color: #007bff;
   color: white;
-  padding: 0.5rem 1rem;
   border: none;
+  border-radius: 4px;
   cursor: pointer;
-  transition: background-color 0.2s ease;
-  font-size: 1rem;
+  transition: background-color 0.2s;
 }
 
 .search-button:hover {
-  background-color: #1c7ed6;
+  background-color: #0056b3;
 }
 
 /* Results Container Styling */
-.results-container {
-  min-height: 200px;
-  margin-top: 2rem;
+.results-container, .requests-container {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
 }
 
-.results-container > * {
-  margin-bottom: 1.5rem;
-  padding: 1rem;
-  background-color: #f9f9f9;
-  border: 1px solid #ddd;
-  border-radius: 0.25rem;
+.box {
+  display: flex;
+  align-items: center;
+  padding: 15px;
+  background: #f8f9fa;
+  border-radius: 8px;
+  gap: 15px;
+}
+
+.box img {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.user-info {
+  flex: 1;
+}
+
+.box button {
+  padding: 8px 16px;
+  background-color: #28a745;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.box button:disabled {
+  background-color: #6c757d;
+  cursor: not-allowed;
+}
+
+.box span {
+  padding: 5px 10px;
+  background-color: #e9ecef;
+  border-radius: 4px;
+  color: #6c757d;
 }

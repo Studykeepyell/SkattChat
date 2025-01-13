@@ -14,7 +14,7 @@ export const searchUsers = async (req: Request, res: Response) => {
         if (users.length === 0) {
             return res.status(404).json({ success: false, message: 'No users found' });
         }
-        res.json(users);
+        res.json({ success: true, users });
     } catch (err) {
         res.status(500).json({ success: false, message: 'Server error' });
     }

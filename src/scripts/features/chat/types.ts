@@ -13,18 +13,19 @@ export interface ChatRoom {
     name?: string;
     roomName?: string;
     isPrivate?: boolean;
-    participants?: Array<{
-        username: string;
-        avatar?: string;
-    }>;
+    participants?: ChatParticipant[];
     activeUsers?: Array<any>;
     lastMessageTime?: string;
     updatedAt: string;
 }
 
 export interface ChatParticipant {
+    _id: string;
     username: string;
-    avatar?: string;
+    profileImage?: {
+        data: string;
+        contentType: string;
+    };
 }
 
 export interface MessageData {

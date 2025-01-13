@@ -132,19 +132,22 @@ export class ChatUIService {
 
     private setupEventListeners() {
         if (this.chatForm) {
-            // Remove any existing event listeners
-            this.chatForm.removeEventListener('submit', this.handleSubmit);
-            this.sendButton?.removeEventListener('click', this.handleSubmit);
-            this.messageInput?.removeEventListener('keypress', this.handleKeyPress);
-
-            // Add event listeners
             this.chatForm.addEventListener('submit', this.handleSubmit);
-            this.sendButton?.addEventListener('click', (e) => {
-                e.preventDefault();
-                e.stopPropagation();
-                this.handleSubmit(e);
-            });
-            this.messageInput?.addEventListener('keypress', this.handleKeyPress);
+        }
+        if (this.messageInput) {
+            this.messageInput.addEventListener('keypress', this.handleKeyPress);
+        }
+
+        // Add profile image update handler
+        EventBus.subscribe(Constants.EVENTS.UPDATE_ROOM_PROFILE, this.handleProfileImageUpdate.bind(this));
+    }
+
+    private async handleProfileImageUpdate(data: { roomId: string, targetUserId: string, imageData: string, contentType: string }) {
+        try {
+            const { roomId, targetUserId, imageData, contentType } = data;
+            await this.chatService.updateRoomProfileImage(roomId, targetUserId, imageData, contentType);
+        } catch (error) {
+            ErrorHandler.handle(error);
         }
     }
 
@@ -173,6 +176,49 @@ export class ChatUIService {
             // Store current room ID
             this.currentRoom = newRoomId;
             console.log('[CHAT_UI] Current room ID:', this.currentRoom);
+
+            // Get current user info
+            const userProfile = JSON.parse(StorageService.get(Constants.STORAGE_KEYS.USER_PROFILE) || '{}');
+            const authData = JSON.parse(StorageService.get('authData') || '{}');
+            const currentUserId = StorageService.get(Constants.STORAGE_KEYS.USER_ID);
+            const currentUsername = (
+                userProfile.username || 
+                authData.username || 
+                StorageService.get('username') || 
+                ''
+            ).toLowerCase();
+
+            // Determine if this is a private chat (2 participants or contains "Chat Room for")
+            const participantCount = room.participants?.length || room.activeUsers?.length || 0;
+            const isPrivateChat = participantCount === 2 || (room.name?.includes('Chat Room for') || false);
+
+            // For private chats, update profile images
+            if (isPrivateChat && room.participants && isRoomChange) {
+                console.log('[CHAT_UI] Processing private room for profile updates');
+                const otherParticipant = room.participants.find(
+                    participant => participant.username?.toLowerCase() !== currentUsername
+                );
+                
+                if (otherParticipant && otherParticipant.profileImage) {
+                    // Update other participant's profile image in room
+                    EventBus.publish(Constants.EVENTS.UPDATE_ROOM_PROFILE, {
+                        roomId: newRoomId,
+                        targetUserId: otherParticipant._id,
+                        imageData: otherParticipant.profileImage.data,
+                        contentType: otherParticipant.profileImage.contentType || 'image/jpeg'
+                    });
+                }
+
+                // Also update current user's profile image in room
+                if (userProfile.profileImage) {
+                    EventBus.publish(Constants.EVENTS.UPDATE_ROOM_PROFILE, {
+                        roomId: newRoomId,
+                        targetUserId: currentUserId,
+                        imageData: userProfile.profileImage.data,
+                        contentType: userProfile.profileImage.contentType || 'image/jpeg'
+                    });
+                }
+            }
             
             // Update chat heading with room name and participant count
             const chatHeading = document.getElementById('chat-heading');
@@ -181,27 +227,14 @@ export class ChatUIService {
                 throw new Error('Chat heading element not found');
             }
             
-            const participantCount = room.participants?.length || room.activeUsers?.length || 0;
             console.log('[CHAT_UI] Participants:', room.participants || room.activeUsers);
             
             // Get room name using the same logic as chat room list
             let displayName = room.name || room.roomName;
             console.log('[CHAT_UI] Initial display name:', displayName);
             
-            // Try multiple locations for username
-            const userProfile = StorageService.get(Constants.STORAGE_KEYS.USER_PROFILE) || {};
-            const authData = JSON.parse(StorageService.get('authData') || '{}');
-            const currentUsername = (
-                userProfile.username || 
-                authData.username || 
-                StorageService.get('username') || 
-                ''
-            ).toLowerCase();
-            
-            console.log('[CHAT_UI] Current username:', currentUsername);
-            
             // For private chats, find the other participant
-            if (room.isPrivate && room.participants) {
+            if (isPrivateChat && room.participants) {
                 console.log('[CHAT_UI] Processing private room');
                 const otherParticipant = room.participants.find(
                     participant => participant.username?.toLowerCase() !== currentUsername

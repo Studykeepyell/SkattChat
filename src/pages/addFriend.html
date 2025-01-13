@@ -25,8 +25,10 @@
     
     <!-- Main Content Section -->
     <div class="main-content">
+        <!-- Left Section: Search -->
         <section class="search-section">
-            <form id="searchForm" class="search-form">
+            <h2>Find Friends</h2>
+            <form id="searchForm" class="search-form" onsubmit="return false">
                 <div class="search-box-container">
                     <input type="text" 
                            id="searchInput" 
@@ -43,8 +45,17 @@
                 <!-- Search results will be dynamically added here -->
             </section>
         </section>
-    </div>
 
-    <script type="module" src="../scripts/pages/friends/addFriend.js"></script>
+        <!-- Divider -->
+        <div class="divider"></div>
+
+        <!-- Right Section: Friend Requests -->
+        <section class="requests-section">
+            <h2>Friend Requests</h2>
+            <div id="requestsContainer" class="requests-container">
+                <!-- Friend requests will be dynamically added here -->
+            </div>
+        </section>
+    </div>
 </body>
 </html>

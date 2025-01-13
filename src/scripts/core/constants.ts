@@ -7,23 +7,24 @@ export const Constants = {
     },
     EVENTS: {
         // Auth Events
-        AUTH_CHANGE: 'auth:change',
-        LOGIN_SUCCESS: 'login:success',
-        LOGIN_FAILED: 'login:failed',
+        AUTH_CHANGE: 'authChange',
+        LOGIN_SUCCESS: 'loginSuccess',
+        LOGIN_FAILED: 'loginFailed',
         LOGOUT: 'logout',
-        PROFILE_UPDATE: 'auth:profile_update',
+        PROFILE_UPDATE: 'profileUpdate',
+        PROFILE_IMAGE_UPDATED: 'profileImageUpdated',
         
         // Chat Events
-        SEND_MESSAGE: 'chat:send_message',
-        MESSAGE_RECEIVED: 'chat:message_received',
-        JOIN_ROOM: 'chat:join_room',
-        LEAVE_ROOM: 'chat:leave_room',
-        ROOM_CREATED: 'chat:room_created',
-        ROOM_UPDATED: 'chat:room_updated',
-        ROOMS_UPDATED: 'chat:rooms_updated',
-        REQUEST_ROOMS: 'chat:request_rooms',
-        ROOM_LIST: 'chat:room_list',
-        MESSAGES_LOADED: 'chat:messages_loaded',
+        SEND_MESSAGE: 'sendMessage',
+        MESSAGE_RECEIVED: 'messageReceived',
+        MESSAGES_LOADED: 'messagesLoaded',
+        MESSAGES_CLEARED: 'messagesCleared',
+        JOIN_ROOM: 'joinRoom',
+        LEAVE_ROOM: 'leaveRoom',
+        ROOM_JOINED: 'roomJoined',
+        ROOM_LEFT: 'roomLeft',
+        ROOM_UPDATED: 'roomUpdated',
+        UPDATE_ROOM_PROFILE: 'updateRoomProfile',
         
         // Socket Events
         CONNECT: 'socket:connect',
@@ -45,7 +46,9 @@ export const Constants = {
         UPDATE_UI: 'ui:update',
         
         // Room Events
-        ROOM_CHANGED: 'ROOM_CHANGED'
+        ROOM_CHANGED: 'ROOM_CHANGED',
+        ROOMS_UPDATED: 'roomsUpdated',
+        ROOM_CREATED: 'roomCreated'
     },
     TIMEOUTS: {
         API_REQUEST: 30000,

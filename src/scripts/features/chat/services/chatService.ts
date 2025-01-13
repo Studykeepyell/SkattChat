@@ -80,4 +80,26 @@ export class ChatService {
             ErrorHandler.handle(error);
         }
     }
+
+    async updateRoomProfileImage(roomId: string, targetUserId: string, imageData: string, contentType: string) {
+        try {
+            const response = await HttpService.post(
+                API_CONFIG.ENDPOINTS.CHAT.UPDATE_PROFILE_IMAGE(roomId),
+                {
+                    targetUserId,
+                    profileImage: {
+                        data: imageData,
+                        contentType: contentType
+                    }
+                }
+            );
+            if (response) {
+                EventBus.publish(Constants.EVENTS.ROOM_UPDATED, { roomId });
+            }
+            return response;
+        } catch (error) {
+            ErrorHandler.handle(error);
+            return null;
+        }
+    }
 }

@@ -110,7 +110,7 @@ module.exports = merge(common, {
     new HtmlWebpackPlugin({
       template: path.resolve(process.cwd(), 'src/pages/addFriend.html'),
       filename: 'pages/addFriend.html',
-      chunks: ['vendors', 'runtime', 'addFriend']
+      chunks: ['vendors', 'runtime', 'friends']
     }),
     new HtmlWebpackPlugin({
       template: path.resolve(process.cwd(), 'src/pages/account.html'),

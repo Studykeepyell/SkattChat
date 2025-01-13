@@ -108,19 +108,7 @@ export class AccountPage {
     private setupImageUpload() {
         // Trigger upload when file is selected
         this.fileInput?.addEventListener('change', async (event) => {
-            console.log('File selection triggered');
-            
             const file = (event.target as HTMLInputElement).files?.[0];
-            console.log('File input:', {
-                exists: !!this.fileInput,
-                hasFiles: !!this.fileInput?.files?.length,
-                file: file ? {
-                    name: file.name,
-                    type: file.type,
-                    size: file.size
-                } : null
-            });
-
             if (!file) {
                 alert("Please select a file first.");
                 return;
@@ -128,20 +116,26 @@ export class AccountPage {
 
             try {
                 const userId = StorageService.get('userId');
-                console.log('Uploading for user:', userId);
-                
                 const formData = new FormData();
                 formData.append('profileImage', file);
 
                 const response = await HttpService.upload(`/api/users/${userId}/profile-image`, formData);
-                console.log('Upload response:', response);
 
                 if (response.success) {
+                    // Update profile page image
                     if (this.profileImg) {
                         this.profileImg.src = `${API_CONFIG.BASE_URL}/api/users/${userId}/profile-image?${Date.now()}`;
                     }
+
+                    // Update taskbar profile image
+                    const taskbarProfileImg = document.getElementById('taskbar-profile-img') as HTMLImageElement;
+                    if (taskbarProfileImg) {
+                        taskbarProfileImg.src = `${API_CONFIG.BASE_URL}/api/users/${userId}/profile-image?${Date.now()}`;
+                    }
+
                     alert('Profile image uploaded successfully!');
                     
+                    // Notify other components about the profile update
                     EventBus.publish(Constants.EVENTS.PROFILE_UPDATE, { 
                         ...JSON.parse(StorageService.get('userProfile') || '{}'),
                         profileImage: `${API_CONFIG.BASE_URL}/api/users/${userId}/profile-image`

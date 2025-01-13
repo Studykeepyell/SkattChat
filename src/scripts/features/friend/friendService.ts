@@ -40,8 +40,12 @@ export class FriendService {
 
     async respondToFriendRequest(requestId: string, status: 'accepted' | 'declined') {
         try {
+            const endpoint = status === 'accepted' ? 
+                API_CONFIG.ENDPOINTS.FRIEND_REQUESTS.ACCEPT :
+                API_CONFIG.ENDPOINTS.FRIEND_REQUESTS.DECLINE;
+
             const response = await HttpService.put(
-                API_CONFIG.ENDPOINTS.FRIEND_REQUESTS.ACCEPT,
+                endpoint,
                 { requestId }
             );
             

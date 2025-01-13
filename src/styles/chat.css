@@ -132,6 +132,7 @@ button:hover {
   align-items: flex-start;
   margin: 8px 16px;
   max-width: 80%;
+  position: relative;
 }
 
 /* Left-aligned messages (other users) */
@@ -161,17 +162,13 @@ button:hover {
   margin-right: 0;
 }
 
-.message-right .timestamp {
-  margin-right: 0;
-  margin-left: 8px;
-}
-
 /* Profile image styles */
 .profile-image {
-  width: 40px;
-  height: 40px;
+  width: 32px;
+  height: 32px;
   border-radius: 50%;
   margin-right: 12px;
+  object-fit: cover;
 }
 
 .message-right .profile-image {
@@ -186,6 +183,7 @@ button:hover {
   padding: 8px 12px;
   margin-left: 12px;
   max-width: calc(100% - 60px);
+  position: relative;
 }
 
 .message-header {
@@ -207,10 +205,25 @@ button:hover {
 .timestamp {
   font-size: 0.8em;
   color: #7f8c8d;
+  display: none;
 }
 
 .message-right .timestamp {
   color: #e0e0e0;
+}
+
+/* Show timestamp when date changes */
+.new-date .timestamp {
+  display: block;
+  position: absolute;
+  top: -20px;
+  left: 50%;
+  transform: translateX(-50%);
+  background-color: #fff;
+  padding: 2px 8px;
+  border-radius: 12px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  z-index: 1;
 }
 
 .message-text {
@@ -221,28 +234,27 @@ button:hover {
 /* Date separator styles */
 .date-separator {
   text-align: center;
-  margin: 16px 0;
+  margin: 24px 0;
   color: #7f8c8d;
   font-size: 0.9em;
   position: relative;
-}
-
-.date-separator::before,
-.date-separator::after {
-  content: '';
-  position: absolute;
-  top: 50%;
-  width: 45%;
-  height: 1px;
-  background-color: #e0e0e0;
+  background: #fff;
+  padding: 0 16px;
+  z-index: 1;
+  display: inline-block;
+  left: 50%;
+  transform: translateX(-50%);
 }
 
 .date-separator::before {
-  left: 0;
-}
-
-.date-separator::after {
-  right: 0;
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: -50vw;
+  right: -50vw;
+  height: 1px;
+  background-color: #e0e0e0;
+  z-index: -1;
 }
 
 /* Message container hover effect */
@@ -586,12 +598,66 @@ button:hover {
   flex-direction: column;
 }
 
-.room-select h3 {
-  padding: 20px;
-  margin: 0;
-  font-size: 16px;
-  color: #1a1a1a;
+.room-header {
+  padding: 15px;
+  display: flex;
+  gap: 10px;
+  align-items: center;
   border-bottom: 1px solid #f0f0f0;
+}
+
+.create-room-btn {
+  width: 40px;
+  height: 40px;
+  min-width: 40px;
+  background-color: #0084ff;
+  color: white;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  transition: all 0.2s ease;
+}
+
+.create-room-btn:hover {
+  background-color: #0073e6;
+  transform: scale(1.05);
+}
+
+.room-search-container {
+  position: relative;
+  flex: 1;
+}
+
+.room-search {
+  width: 100%;
+  padding: 10px 15px 10px 35px;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  font-size: 14px;
+  background-color: #f8f9fa;
+  transition: all 0.3s ease;
+}
+
+.room-search:focus {
+  outline: none;
+  border-color: #0084ff;
+  background-color: white;
+  box-shadow: 0 0 0 2px rgba(0, 132, 255, 0.1);
+}
+
+.room-search-container::before {
+  content: "🔍";
+  position: absolute;
+  left: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #666;
+  font-size: 14px;
+  pointer-events: none;
 }
 
 /* Base styling for all chat rooms */

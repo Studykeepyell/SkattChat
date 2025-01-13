@@ -13,12 +13,13 @@ export const API_CONFIG = {
             FETCH_MESSAGES: (roomId: string) => `/api/chat/rooms/${roomId}/messages`,
             FETCH_ROOMS: '/api/chat/rooms',
             MARK_READ: (roomId: string) => `/api/chat/rooms/${roomId}/read`,
-            JOIN_ROOM: (roomId: string) => `/api/chat/rooms/${roomId}/join`
+            JOIN_ROOM: (roomId: string) => `/api/chat/rooms/${roomId}/join`,
+            UPDATE_PROFILE_IMAGE: (roomId: string) => `/api/chat/rooms/${roomId}/profile-image`
         },
         FRIEND_REQUESTS: {
             SEND: '/api/friends/requests/send',
             ACCEPT: '/api/friends/requests/accept',
-            REJECT: '/api/friends/requests/reject',
+            DECLINE: '/api/friends/requests/decline',
             LIST: '/api/friends/requests',
             FRIENDS: (userId: string) => `/api/friends/${userId}/list`
         },

@@ -15,8 +15,10 @@ import authRoutes from './routes/authRoutes.js';
 import fileRoutes from './routes/fileRoutes.js';
 import userRoutes from './routes/userRoutes.js';
 import downloadRoutes from './routes/downloadRoutes.js';
+import roomRoutes from './routes/roomRoutes.js';
 import { setupSocket } from './socket/index.js';
 import connectDB from './config/dbConfig.js';
+import friendRoutes from './routes/friendRoutes.js';
 
 // Load environment variables
 config({ path: join(__dirname, '../.env') });
@@ -64,8 +66,8 @@ const corsOptions = {
 app.use(cors(corsOptions));
 
 // Body parsing middleware
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
 // Configure security headers including CSP
 app.use((req, res, next) => {
@@ -132,7 +134,11 @@ app.get('/pages/:page', (req, res) => {
 
 // API routes with proper error handling
 app.use('/api/auth', authRoutes);
+app.use('/api/files', fileRoutes);
 app.use('/api/users', userRoutes);
+app.use('/api/downloads', downloadRoutes);
+app.use('/api/chat/rooms', roomRoutes);
+app.use('/api/friends', friendRoutes);
 
 // Error handler
 const errorHandler: ErrorRequestHandler = (err, req, res, next) => {

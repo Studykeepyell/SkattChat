@@ -31,10 +31,10 @@
           aria-label="Account"
         >
           <img
-            src="../assets/images/account.svg"
-            class="button-icon"
+            src="/assets/images/default-avatar.svg"
             alt="Account"
             id="taskbar-profile-img"
+            style="width: 32px; height: 32px; border-radius: 50%; object-fit: cover;"
           />
         </button>
         <button
@@ -72,8 +72,12 @@
       </div>
 
       <div class="room-select">
-        <h3>Chats</h3>
-        <button id="createRoomBtn">+</button>
+        <div class="room-header">
+          <button class="create-room-btn" id="createRoomBtn">+</button>
+          <div class="room-search-container">
+            <input type="text" class="room-search" id="roomNameInput" placeholder="Search rooms...">
+          </div>
+        </div>
         <!-- Chat Rooms -->
         <section
           class="chat-room-section"
@@ -83,19 +87,6 @@
 
         
         </section>
-
-        <!-- Friend Requests Section -->
-        <div id="friendRequests">
-          <h3>Pending Friend Requests</h3>
-          <ul id="friendRequestList" class="friend-request-list"></ul>            
-          <!-- Friend requests will be dynamically added here -->
-          </ul>
-        </div>
-
-        <div id="friendsList">
-          <h3>Your Friends</h3>
-          <!-- Friends will be dynamically added here -->
-        </div>
       </div>
 
       <!-- Chat Content Section -->

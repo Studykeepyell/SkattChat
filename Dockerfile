@@ -1,40 +1,41 @@
-# Use Node.js base image with alpine for smaller size
-FROM node:18-alpine
+FROM node:18-alpine AS builder
 
 # Set working directory
 WORKDIR /app
 
-# Copy package files first (better layer caching)
+# Copy package files
 COPY package*.json ./
 
-# Install dependencies with clean npm cache
-RUN npm install && \
-    npm cache clean --force
+# Install dependencies
+RUN npm install
 
-# Copy only necessary project files with organized structure
-COPY public/assets ./public/assets
-COPY public/scripts ./public/scripts
-COPY public/styles ./public/styles
-COPY public/pages ./public/pages
-COPY public/Games ./public/Games
-COPY public/index.html ./public/index.html
+# Copy source code
+COPY src ./src
+COPY backend ./backend
+COPY public ./public
 COPY tsconfig*.json ./
 COPY vite.config.* ./
 
 # Build the application
 RUN npm run build
 
-# Use a smaller base image for production
-FROM nginx:alpine
+# Production stage
+FROM node:18-alpine
 
-# Copy built files from previous stage
-COPY --from=0 /app/dist /usr/share/nginx/html
+WORKDIR /app
 
-# Copy nginx configuration
-COPY nginx.conf /etc/nginx/conf.d/default.conf
+# Copy package files and install production dependencies
+COPY package*.json ./
+RUN npm install --production
 
-# Expose port 80 for nginx
-EXPOSE 80
+# Copy built frontend from builder stage
+COPY --from=builder /app/dist ./dist
 
-# Start nginx
-CMD ["nginx", "-g", "daemon off;"]
+# Copy backend files
+COPY --from=builder /app/backend ./backend
+
+# Expose port for the Node.js backend
+EXPOSE 3000
+
+# Start the application
+CMD ["npm", "start"]

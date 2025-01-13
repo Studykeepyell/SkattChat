@@ -237,23 +237,65 @@ export class ChatHandler {
                     { participants: { $size: 0 } }
                 ]
             })
-            .populate('participants', 'username profileImage')
+            .populate('participants', 'username')
             .sort({ lastMessageTime: -1 })
             .lean();
 
             console.log(`[CHAT] Found ${rooms.length} rooms for user`);
 
-            const formattedRooms = rooms.map(room => ({
-                roomId: room.roomId || room._id,
-                name: room.name,
-                isPrivate: room.isPrivate || false,
-                lastMessageTime: room.lastMessageTime || room.updatedAt,
-                updatedAt: room.updatedAt,
-                participants: room.participants.map((p: any) => ({
-                    id: p._id,
-                    username: p.username,
-                    profileImage: p.profileImage
-                }))
+            // For each private room, get the other participant's profile
+            const formattedRooms = await Promise.all(rooms.map(async room => {
+                let participantProfiles = room.participantProfiles || [];
+                
+                // If it's a private room and profiles need updating
+                if (room.isPrivate && room.participants.length === 2) {
+                    const otherParticipant = room.participants.find(
+                        (p: any) => p._id.toString() !== socket.userId
+                    );
+                    
+                    if (otherParticipant) {
+                        // Get the other participant's full profile
+                        const user = await User.findById(otherParticipant._id)
+                            .select('username profileImage')
+                            .lean();
+                            
+                        if (user?.profileImage) {
+                            // Update or add profile in participantProfiles
+                            const profileIndex = participantProfiles.findIndex(
+                                (p: any) => p.userId.toString() === otherParticipant._id.toString()
+                            );
+                            
+                            if (profileIndex >= 0) {
+                                participantProfiles[profileIndex].profileImage = user.profileImage;
+                            } else {
+                                participantProfiles.push({
+                                    userId: otherParticipant._id,
+                                    profileImage: user.profileImage
+                                });
+                            }
+                            
+                            // Update the room's participantProfiles
+                            await Room.findByIdAndUpdate(room._id, {
+                                $set: { participantProfiles }
+                            });
+                        }
+                    }
+                }
+
+                return {
+                    roomId: room.roomId || room._id,
+                    name: room.name,
+                    isPrivate: room.isPrivate || false,
+                    lastMessageTime: room.lastMessageTime || room.updatedAt,
+                    updatedAt: room.updatedAt,
+                    participants: room.participants.map((p: any) => ({
+                        _id: p._id,
+                        username: p.username,
+                        profileImage: participantProfiles.find(
+                            (profile: any) => profile.userId.toString() === p._id.toString()
+                        )?.profileImage
+                    }))
+                };
             }));
 
             console.log('[CHAT] Sending room list to client');

@@ -8,6 +8,13 @@ const roomSchema = new mongoose.Schema({
         default: false
     },
     participants: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }],
+    participantProfiles: [{
+        userId: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+        profileImage: {
+            data: String,
+            contentType: String
+        }
+    }],
     messages: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Message' }],
     unreadMessages: [
         {

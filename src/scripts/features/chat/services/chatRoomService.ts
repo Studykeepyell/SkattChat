@@ -4,6 +4,7 @@ import { Constants } from '../../../core/constants';
 import { StorageService } from '../../../core/storageService';
 import { ChatSocketHandler } from './chatSocketHandler';
 import { ChatRoom, RoomDisplayData } from '../types';
+import { API_CONFIG } from '../../../core/api.config';
 
 export class ChatRoomService {
     private roomList: HTMLElement | null;
@@ -59,6 +60,12 @@ export class ChatRoomService {
             this.displayRooms(rooms);
         });
 
+        // Subscribe to profile image updates
+        EventBus.subscribe(Constants.EVENTS.PROFILE_IMAGE_UPDATED, (userId: string) => {
+            console.log('[CHAT_ROOM] Profile image updated for user:', userId);
+            this.updateRoomProfileImage(userId);
+        });
+
         // Request rooms when joining chat page
         document.addEventListener('DOMContentLoaded', () => {
             console.log('[CHAT_ROOM] Page loaded, requesting rooms');
@@ -108,6 +115,7 @@ export class ChatRoomService {
         const roomData: RoomDisplayData = this.getRoomDisplayData(room, currentUsername);
         const div = document.createElement('div');
         div.className = 'chat-room';
+        div.setAttribute('data-room-id', roomData.roomId); // Add room ID for easy lookup
         
         // Add active class if this is the current room
         if (this.socketHandler.getCurrentRoom() === roomData.roomId) {
@@ -119,7 +127,7 @@ export class ChatRoomService {
         profileImg.className = 'room-profile-image';
         profileImg.src = roomData.profileImage;
         profileImg.onerror = () => {
-            profileImg.src = '/dist/assets/images/account.svg';
+            profileImg.src = '/assets/images/default-avatar.svg';
         };
 
         // Create room content container
@@ -162,23 +170,26 @@ export class ChatRoomService {
     private getRoomDisplayData(room: ChatRoom, currentUsername: string): RoomDisplayData {
         const roomId = room._id || room.roomId || '';
         let displayName = room.name || room.roomName || '';
-        let profileImage = '/dist/assets/images/account.svg';
+        let profileImage = '/assets/images/default-avatar.svg';
         let lastActivity = room.lastMessageTime ? this.formatLastActivity(room.lastMessageTime) : undefined;
 
         // For private chats, find the other participant
         if (room.isPrivate && room.participants) {
             const otherParticipant = room.participants.find(
-                participant => participant.username?.toLowerCase() !== currentUsername
+                participant => participant.username?.toLowerCase() !== currentUsername?.toLowerCase()
             );
             if (otherParticipant) {
                 displayName = otherParticipant.username;
-                profileImage = otherParticipant.avatar || profileImage;
+                // Check if participant has profile image data
+                if (otherParticipant.profileImage?.data) {
+                    profileImage = `${API_CONFIG.BASE_URL}/api/users/${otherParticipant._id}/profile-image?${Date.now()}`;
+                }
             }
         } else if (displayName.includes('Chat Room for')) {
             const namesText = displayName.split('Chat Room for ')[1];
             if (namesText) {
                 const names = namesText.split(' and ').map(name => name.trim());
-                const otherUser = names.find(name => name.toLowerCase() !== currentUsername);
+                const otherUser = names.find(name => name.toLowerCase() !== currentUsername?.toLowerCase());
                 if (otherUser) {
                     displayName = otherUser;
                 }
@@ -231,5 +242,15 @@ export class ChatRoomService {
 
     private handleRoomCreated(data: ChatRoom) {
         this.socketHandler.requestRooms();
+    }
+
+    private updateRoomProfileImage(userId: string) {
+        // Request updated room list to get latest participant data
+        this.socketHandler.requestRooms();
+    }
+
+    private findRoomById(roomId: string | null, rooms: ChatRoom[]): ChatRoom | undefined {
+        if (!roomId) return undefined;
+        return rooms.find(room => (room._id || room.roomId) === roomId);
     }
 } 

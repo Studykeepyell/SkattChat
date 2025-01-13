@@ -40,26 +40,32 @@ export class ChatPage {
         try {
             console.log('Starting chat page initialization...');
             
-            // Initialize services
-            this.initializeServices();
+            // Initialize auth service first
+            const auth = new ChatAuthService();
             
             // Check authentication first
-            const isAuthenticated = await this.services.auth.checkAuthentication();
+            const isAuthenticated = await auth.checkAuthentication();
             if (!isAuthenticated) {
                 console.log('Authentication check failed, redirecting to login...');
                 window.location.href = 'login.html';
                 return;
             }
 
-            console.log('Authentication successful, initializing components...');
+            console.log('Authentication successful, initializing services...');
+            
+            // Initialize remaining services with authenticated user
+            this.initializeServices(auth);
             
             // Initialize components and setup
             this.initializeCore();
             this.initializeFriendModule();
             this.setupEventListeners();
+
+            // Load user profile
+            console.log('Loading user profile...');
             await this.services.profile.loadUserProfile();
 
-            // Initialize UI services
+            // Initialize UI services after profile is loaded
             this.services.taskbar.initialize();
             this.services.theme.initialize();
             this.services.menu.initialize();
@@ -78,8 +84,7 @@ export class ChatPage {
         }
     }
 
-    private initializeServices(): void {
-        const auth = new ChatAuthService();
+    private initializeServices(auth: ChatAuthService): void {
         const chat = ChatService.getInstance();
         const socket = ChatSocketHandler.getInstance();
         
