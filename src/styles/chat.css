@@ -130,26 +130,25 @@ button:hover {
 .message-container {
   display: flex;
   align-items: flex-start;
-  margin: 8px 16px;
-  max-width: 80%;
+  margin: 8px 0;
+  width: 100%;
   position: relative;
+  padding: 0 50px;
 }
 
 /* Left-aligned messages (other users) */
 .message-left {
-  margin-right: auto;
+  justify-content: flex-start;
 }
 
 /* Right-aligned messages (current user) */
 .message-right {
-  margin-left: auto;
-  flex-direction: row-reverse;
+  justify-content: flex-end;
 }
 
 .message-right .message-content {
-  margin-right: 12px;
-  margin-left: 0;
-  background-color: #007bff;
+  margin-right: 50px;
+  background-color: #0084ff;
   color: white;
 }
 
@@ -164,26 +163,28 @@ button:hover {
 
 /* Profile image styles */
 .profile-image {
-  width: 32px;
-  height: 32px;
+  width: 40px;
+  height: 40px;
   border-radius: 50%;
-  margin-right: 12px;
-  object-fit: cover;
+  position: absolute;
+  top: 0;
 }
 
 .message-right .profile-image {
-  margin-right: 0;
-  margin-left: 12px;
+  right: 0;
+}
+
+.message-left .profile-image {
+  left: 0;
 }
 
 /* Message content styles */
 .message-content {
-  background-color: #f0f0f0;
-  border-radius: 12px;
+  max-width: 70%;
+  border-radius: 18px;
   padding: 8px 12px;
-  margin-left: 12px;
-  max-width: calc(100% - 60px);
   position: relative;
+  word-wrap: break-word;
 }
 
 .message-header {
@@ -203,13 +204,15 @@ button:hover {
 }
 
 .timestamp {
-  font-size: 0.8em;
-  color: #7f8c8d;
-  display: none;
+  font-size: 11px;
+  margin-top: 4px;
+  opacity: 0.7;
+  width: fit-content;
+  margin-left: auto;
 }
 
-.message-right .timestamp {
-  color: #e0e0e0;
+.message-left .timestamp {
+  margin-left: 0;
 }
 
 /* Show timestamp when date changes */
@@ -234,27 +237,26 @@ button:hover {
 /* Date separator styles */
 .date-separator {
   text-align: center;
-  margin: 24px 0;
+  margin: 24px auto;
   color: #7f8c8d;
   font-size: 0.9em;
   position: relative;
   background: #fff;
-  padding: 0 16px;
-  z-index: 1;
-  display: inline-block;
-  left: 50%;
-  transform: translateX(-50%);
+  padding: 0 12px;
+  z-index: 2;
+  width: fit-content;
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
-.date-separator::before {
+.date-separator::before,
+.date-separator::after {
   content: '';
-  position: absolute;
-  top: 50%;
-  left: -50vw;
-  right: -50vw;
   height: 1px;
   background-color: #e0e0e0;
-  z-index: -1;
+  width: 50px;
+  display: block;
 }
 
 /* Message container hover effect */
@@ -273,21 +275,22 @@ button:hover {
   display: flex;
   flex-direction: column;
   width: 100%;
+  max-width: 800px;
+  margin: 0 auto;
 }
 
 /* Scrollbar styling */
 #messages::-webkit-scrollbar {
-  width: 8px;
+  width: 6px;
 }
 
 #messages::-webkit-scrollbar-track {
-  background: #f1f1f1;
-  border-radius: 4px;
+  background: transparent;
 }
 
 #messages::-webkit-scrollbar-thumb {
   background: #c1c1c1;
-  border-radius: 4px;
+  border-radius: 3px;
 }
 
 #messages::-webkit-scrollbar-thumb:hover {

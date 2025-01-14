@@ -64,12 +64,12 @@ module.exports = merge(common, {
       directory: path.join(process.cwd(), 'public'),
       publicPath: '/'
     },
-    hot: false,
-    liveReload: false,
+    hot: true,
+    liveReload: true,
     client: {
-      overlay: false,
-      progress: false,
-      reconnect: false
+      overlay: true,
+      progress: true,
+      reconnect: true
     },
     port: 3000,
     historyApiFallback: {
@@ -81,10 +81,15 @@ module.exports = merge(common, {
     devMiddleware: {
       writeToDisk: true,
     },
-    watchFiles: false,
+    watchFiles: {
+      paths: ['src/**/*'],
+      options: {
+        usePolling: true
+      }
+    },
     proxy: [{
       context: ['/api', '/socket.io'],
-      target: 'http://localhost:3000',
+      target: 'http://localhost:3001',
       ws: true
     }],
     open: true,

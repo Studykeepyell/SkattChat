@@ -14,7 +14,8 @@ export const API_CONFIG = {
             FETCH_ROOMS: '/api/chat/rooms',
             MARK_READ: (roomId: string) => `/api/chat/rooms/${roomId}/read`,
             JOIN_ROOM: (roomId: string) => `/api/chat/rooms/${roomId}/join`,
-            UPDATE_PROFILE_IMAGE: (roomId: string) => `/api/chat/rooms/${roomId}/profile-image`
+            UPDATE_PROFILE_IMAGE: (roomId: string) => `/api/chat/rooms/${roomId}/profile-image`,
+            CREATE_ROOM: '/api/chat/rooms/create'
         },
         FRIEND_REQUESTS: {
             SEND: '/api/friends/requests/send',

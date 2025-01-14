@@ -118,8 +118,8 @@ export class AuthService {
     private setAuthData(data: any) {
         console.log('[AUTH] Setting auth data:', data);
         
-        // Store full auth data
-        StorageService.set('authData', JSON.stringify({
+        // Store full auth data as an object
+        StorageService.set('authData', {
             userId: data.userId,
             token: data.token,
             username: data.username,
@@ -127,7 +127,7 @@ export class AuthService {
                 _id: data.userId,
                 username: data.username
             }
-        }));
+        });
 
         // Store individual pieces for easy access
         StorageService.set('token', data.token);

@@ -109,7 +109,24 @@ export class MessageService {
     private createMessageElement(data: MessageData, lastMessageDate: string | null): HTMLElement[] {
         const { username, userId, content, timestamp } = data;
         const elements: HTMLElement[] = [];
-        const currentMessageDate = formatMessageDate(timestamp);
+        const messageDate = new Date(timestamp);
+        const now = new Date();
+        
+        // Format date divider
+        let dateDividerText = '';
+        const diffDays = Math.floor((now.getTime() - messageDate.getTime()) / (1000 * 60 * 60 * 24));
+        
+        if (diffDays === 0) {
+            dateDividerText = 'Today';
+        } else if (diffDays === 1) {
+            dateDividerText = 'Yesterday';
+        } else {
+            dateDividerText = messageDate.toLocaleDateString('en-US', {
+                month: '2-digit',
+                day: '2-digit',
+                year: '2-digit'
+            });
+        }
 
         // Get current user's username
         const authData = StorageService.get('authData');
@@ -117,21 +134,31 @@ export class MessageService {
         const isCurrentUser = username.toLowerCase() === currentUsername?.toLowerCase();
 
         // Add date separator if needed
-        if (currentMessageDate !== lastMessageDate) {
+        if (dateDividerText !== lastMessageDate) {
             const dateSeparator = document.createElement('div');
             dateSeparator.className = 'date-separator';
-            dateSeparator.textContent = currentMessageDate;
+            dateSeparator.textContent = dateDividerText;
             elements.push(dateSeparator);
         }
 
-        // Create message container
+        // Create message container with absolute positioning
         const messageContainer = document.createElement('div');
         messageContainer.className = `message-container ${isCurrentUser ? 'message-right' : 'message-left'}`;
+        messageContainer.style.position = 'relative';
+        messageContainer.style.width = '100%';
+        messageContainer.style.marginBottom = '16px';
 
         // Add profile image
         const profileImg = document.createElement('img');
         profileImg.className = 'profile-image';
         profileImg.src = `/api/users/${userId}/profile-image?${Date.now()}`; // Add timestamp to prevent caching
+        profileImg.style.width = '40px';
+        profileImg.style.height = '40px';
+        profileImg.style.borderRadius = '50%';
+        profileImg.style.position = 'absolute';
+        profileImg.style[isCurrentUser ? 'right' : 'left'] = '0';
+        profileImg.style.top = '0';
+        
         profileImg.onerror = () => {
             profileImg.src = '/assets/images/default-avatar.svg';
         };
@@ -139,43 +166,49 @@ export class MessageService {
         // Create message content
         const messageContent = document.createElement('div');
         messageContent.className = 'message-content';
+        messageContent.style.maxWidth = '70%';
+        messageContent.style.margin = isCurrentUser ? '0 50px 0 auto' : '0 auto 0 50px';
+        messageContent.style.backgroundColor = isCurrentUser ? '#0084ff' : '#f0f0f0';
+        messageContent.style.color = isCurrentUser ? '#fff' : '#000';
+        messageContent.style.borderRadius = '18px';
+        messageContent.style.padding = '10px 15px';
+        messageContent.style.position = 'relative';
 
-        // Add username and timestamp
-        const header = document.createElement('div');
-        header.className = 'message-header';
-        
-        const usernameSpan = document.createElement('span');
+        // Add username
+        const usernameSpan = document.createElement('div');
         usernameSpan.className = 'username';
         usernameSpan.textContent = username;
-        
-        const timestampSpan = document.createElement('span');
-        timestampSpan.className = 'timestamp';
-        timestampSpan.textContent = formatMessageTime(timestamp);
-
-        // Order username and timestamp based on message alignment
-        if (isCurrentUser) {
-            header.appendChild(timestampSpan);
-            header.appendChild(usernameSpan);
-        } else {
-            header.appendChild(usernameSpan);
-            header.appendChild(timestampSpan);
-        }
-        messageContent.appendChild(header);
+        usernameSpan.style.fontSize = '12px';
+        usernameSpan.style.marginBottom = '4px';
+        usernameSpan.style.color = isCurrentUser ? '#fff' : '#666';
 
         // Add message text
         const messageText = document.createElement('div');
         messageText.className = 'message-text';
         messageText.textContent = content;
-        messageContent.appendChild(messageText);
+        messageText.style.wordBreak = 'break-word';
 
-        // Add elements in the correct order based on alignment
-        if (isCurrentUser) {
-            messageContainer.appendChild(messageContent);
-            messageContainer.appendChild(profileImg);
-        } else {
-            messageContainer.appendChild(profileImg);
-            messageContainer.appendChild(messageContent);
-        }
+        // Add timestamp
+        const timestampSpan = document.createElement('div');
+        timestampSpan.className = 'timestamp';
+        timestampSpan.textContent = messageDate.toLocaleTimeString('en-US', {
+            hour: 'numeric',
+            minute: '2-digit',
+            hour12: true
+        });
+        timestampSpan.style.fontSize = '11px';
+        timestampSpan.style.marginTop = '4px';
+        timestampSpan.style.color = isCurrentUser ? 'rgba(255,255,255,0.7)' : '#999';
+        timestampSpan.style.textAlign = isCurrentUser ? 'right' : 'left';
+
+        // Assemble message content
+        messageContent.appendChild(usernameSpan);
+        messageContent.appendChild(messageText);
+        messageContent.appendChild(timestampSpan);
+
+        // Add elements to container
+        messageContainer.appendChild(profileImg);
+        messageContainer.appendChild(messageContent);
         elements.push(messageContainer);
 
         return elements;

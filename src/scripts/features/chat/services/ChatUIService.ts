@@ -267,6 +267,8 @@ export class ChatUIService {
             // Find or create the heading elements
             let headingTitle = chatHeading.querySelector('h2');
             let participantSpan = chatHeading.querySelector('.participant-count');
+            let profileImage = chatHeading.querySelector('.room-profile-image') as HTMLImageElement;
+            let lastActivitySpan = chatHeading.querySelector('.last-activity');
             
             if (!headingTitle) {
                 headingTitle = document.createElement('h2');
@@ -278,10 +280,45 @@ export class ChatUIService {
                 participantSpan.className = 'participant-count';
                 chatHeading.appendChild(participantSpan);
             }
+
+            if (!profileImage) {
+                profileImage = document.createElement('img');
+                profileImage.className = 'room-profile-image';
+                profileImage.onerror = () => {
+                    profileImage.src = '/assets/images/default-avatar.svg';
+                };
+                chatHeading.insertBefore(profileImage, headingTitle);
+            }
+
+            if (!lastActivitySpan) {
+                lastActivitySpan = document.createElement('span');
+                lastActivitySpan.className = 'last-activity';
+                chatHeading.appendChild(lastActivitySpan);
+            }
             
             // Update the content
             headingTitle.textContent = displayName;
             participantSpan.textContent = `${participantCount} participant${participantCount !== 1 ? 's' : ''}`;
+
+            // Update profile image for private chats
+            if (isPrivateChat && room.participants) {
+                const otherParticipant = room.participants.find(
+                    participant => participant.username?.toLowerCase() !== currentUsername
+                );
+                if (otherParticipant?.profileImage?.data) {
+                    profileImage.src = `data:${otherParticipant.profileImage.contentType};base64,${otherParticipant.profileImage.data}`;
+                } else {
+                    profileImage.src = '/assets/images/default-avatar.svg';
+                }
+            }
+
+            // Update last activity
+            if (room.lastMessageTime) {
+                const lastActivity = this.formatLastActivity(room.lastMessageTime);
+                lastActivitySpan.textContent = lastActivity;
+            } else {
+                lastActivitySpan.textContent = '';
+            }
 
             // Only clear messages when actually switching rooms
             if (isRoomChange) {
@@ -292,5 +329,30 @@ export class ChatUIService {
             console.error('[CHAT_UI] Error updating room display:', error);
             ErrorHandler.handle(error);
         }
+    }
+
+    private formatLastActivity(timestamp: string | number | Date): string {
+        if (!timestamp) return '';
+        
+        const date = new Date(timestamp);
+        const now = new Date();
+        const diff = now.getTime() - date.getTime();
+        const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+        
+        if (days > 0) {
+            return `${days}d ago`;
+        }
+        
+        const hours = Math.floor(diff / (1000 * 60 * 60));
+        if (hours > 0) {
+            return `${hours}h ago`;
+        }
+        
+        const minutes = Math.floor(diff / (1000 * 60));
+        if (minutes > 0) {
+            return `${minutes}m ago`;
+        }
+        
+        return 'Just now';
     }
 } 

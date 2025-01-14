@@ -11,8 +11,8 @@ export class ChatSocketHandler {
     private currentRoom: string | null = null;
 
     private constructor() {
-        // Get auth data from storage
-        const authData = JSON.parse(StorageService.get('authData') || '{}');
+        // Get auth data from storage with proper parsing
+        const authData = StorageService.get('authData', true) || {};
         const token = authData.token;
         const userId = StorageService.get(Constants.STORAGE_KEYS.USER_ID) || authData.userId;
         
@@ -179,6 +179,16 @@ export class ChatSocketHandler {
             console.log('[CHAT_SOCKET] Received message:', message);
             EventBus.publish(Constants.EVENTS.MESSAGE_RECEIVED, message);
             
+            // Update room's last message time
+            if (this.currentRoom) {
+                const updateData = {
+                    roomId: this.currentRoom,
+                    lastMessageTime: new Date().toISOString(),
+                    lastMessage: message
+                };
+                EventBus.publish(Constants.EVENTS.ROOM_UPDATED, updateData);
+            }
+            
             // Request updated room list to refresh timestamps
             this.requestRooms();
         } catch (error) {
@@ -190,7 +200,12 @@ export class ChatSocketHandler {
     private handleRoomUpdate(room: ChatRoom) {
         try {
             console.log('[CHAT_SOCKET] Room update:', room);
+            if (!room.lastMessageTime && typeof room.lastMessage === 'object' && room.lastMessage?.timestamp) {
+                room.lastMessageTime = room.lastMessage.timestamp;
+            }
             EventBus.publish(Constants.EVENTS.ROOM_CHANGED, room);
+            // Also update room list to reflect changes
+            this.requestRooms();
         } catch (error) {
             ErrorHandler.handle(error);
         }
@@ -227,7 +242,25 @@ export class ChatSocketHandler {
     private handleRoomList(rooms: ChatRoom[]) {
         try {
             console.log('[CHAT_SOCKET] Received room list:', rooms);
-            EventBus.publish(Constants.EVENTS.ROOMS_UPDATED, rooms);
+            // Ensure each room has lastMessageTime set from either lastMessage object or string
+            const updatedRooms = rooms.map(room => {
+                if (!room.lastMessageTime) {
+                    // Handle case where lastMessage is a timestamp string
+                    if (typeof room.lastMessage === 'string') {
+                        return { ...room, lastMessageTime: room.lastMessage };
+                    }
+                    // Handle case where lastMessage is an object with timestamp
+                    else if (room.lastMessage?.timestamp) {
+                        return { ...room, lastMessageTime: room.lastMessage.timestamp };
+                    }
+                    // Fallback to updatedAt if available
+                    else if (room.updatedAt) {
+                        return { ...room, lastMessageTime: room.updatedAt };
+                    }
+                }
+                return room;
+            });
+            EventBus.publish(Constants.EVENTS.ROOMS_UPDATED, updatedRooms);
         } catch (error) {
             console.error('[CHAT_SOCKET] Error handling room list:', error);
             ErrorHandler.handle(error);

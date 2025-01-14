@@ -17,16 +17,13 @@ export class ChatRoomService {
         this.socketHandler = ChatSocketHandler.getInstance();
     }
 
-    initialize() {
+    // Initialization
+    public initialize() {
         try {
             console.log('[CHAT_ROOM] Starting initialization...');
             this.setupElements();
             this.setupEventListeners();
-            
-            // Request initial room list
-            console.log('[CHAT_ROOM] Requesting initial room list');
-            this.socketHandler.requestRooms();
-            
+            this.requestInitialRooms();
             console.log('[CHAT_ROOM] Initialization complete');
         } catch (error) {
             console.error('[CHAT_ROOM] Error during initialization:', error);
@@ -44,57 +41,31 @@ export class ChatRoomService {
         }
     }
 
+    // Event Handling
     private setupEventListeners() {
         if (this.createRoomBtn) {
             this.createRoomBtn.addEventListener('click', this.handleCreateRoom.bind(this));
         }
 
-        // Listen for room-related events
-        EventBus.subscribe(Constants.EVENTS.ROOM_CREATED, (room: ChatRoom) => {
-            console.log('[CHAT_ROOM] Room created event received:', room);
-            this.handleRoomCreated(room);
-        });
-        
-        EventBus.subscribe(Constants.EVENTS.ROOMS_UPDATED, (rooms: ChatRoom[]) => {
-            console.log('[CHAT_ROOM] Rooms updated event received:', rooms);
-            this.displayRooms(rooms);
-        });
+        EventBus.subscribe(Constants.EVENTS.ROOM_CREATED, this.handleRoomCreated.bind(this));
+        EventBus.subscribe(Constants.EVENTS.ROOMS_UPDATED, this.displayRooms.bind(this));
+        EventBus.subscribe(Constants.EVENTS.PROFILE_IMAGE_UPDATED, this.handleProfileUpdate.bind(this));
 
-        // Subscribe to profile image updates
-        EventBus.subscribe(Constants.EVENTS.PROFILE_IMAGE_UPDATED, (userId: string) => {
-            console.log('[CHAT_ROOM] Profile image updated for user:', userId);
-            this.updateRoomProfileImage(userId);
-        });
-
-        // Request rooms when joining chat page
-        document.addEventListener('DOMContentLoaded', () => {
-            console.log('[CHAT_ROOM] Page loaded, requesting rooms');
-            this.socketHandler.requestRooms();
-        });
+        document.addEventListener('DOMContentLoaded', this.requestInitialRooms.bind(this));
     }
 
+    private requestInitialRooms() {
+        console.log('[CHAT_ROOM] Requesting initial room list');
+        this.socketHandler.requestRooms();
+    }
+
+    // Room Display
     private displayRooms(rooms: ChatRoom[]) {
         if (!this.roomList) return;
         console.log('[CHAT_ROOM] Displaying rooms:', rooms);
 
-        // Get current user info
-        const userProfile = StorageService.get(Constants.STORAGE_KEYS.USER_PROFILE) || {};
-        const authData = JSON.parse(StorageService.get('authData') || '{}');
-        const currentUsername = (
-            userProfile.username || 
-            authData.username || 
-            StorageService.get('username') || 
-            ''
-        ).toLowerCase();
-
-        console.log('[CHAT_ROOM] Current user:', currentUsername);
-
-        // Sort rooms by last message time, most recent first
-        const sortedRooms = [...rooms].sort((a, b) => {
-            const timeA = a.lastMessageTime ? new Date(a.lastMessageTime).getTime() : 0;
-            const timeB = b.lastMessageTime ? new Date(b.lastMessageTime).getTime() : 0;
-            return timeB - timeA;
-        });
+        const currentUsername = this.getCurrentUsername();
+        const sortedRooms = this.sortRoomsByActivity(rooms);
 
         this.roomList.innerHTML = '';
         sortedRooms.forEach(room => {
@@ -104,94 +75,186 @@ export class ChatRoomService {
         });
     }
 
-    private createRoomElement(room: ChatRoom, currentUsername: string): HTMLElement {
-        console.log('[CHAT_ROOM] Creating element for room:', room);
-        
-        if (!room) {
-            console.error('[CHAT_ROOM] Invalid room object');
-            return document.createElement('div');
-        }
+    private getCurrentUsername(): string {
+        const userProfile = StorageService.get(Constants.STORAGE_KEYS.USER_PROFILE) || {};
+        const authData = JSON.parse(StorageService.get('authData') || '{}');
+        return (
+            userProfile.username || 
+            authData.username || 
+            StorageService.get('username') || 
+            ''
+        ).toLowerCase();
+    }
 
-        const roomData: RoomDisplayData = this.getRoomDisplayData(room, currentUsername);
+    private sortRoomsByActivity(rooms: ChatRoom[]): ChatRoom[] {
+        return [...rooms].sort((a, b) => {
+            const timeA = a.lastMessageTime ? new Date(a.lastMessageTime).getTime() : 0;
+            const timeB = b.lastMessageTime ? new Date(b.lastMessageTime).getTime() : 0;
+            return timeB - timeA;
+        });
+    }
+
+    // Room Element Creation
+    private createRoomElement(room: ChatRoom, currentUsername: string): HTMLElement {
+        const roomData = this.getRoomDisplayData(room, currentUsername);
         const div = document.createElement('div');
         div.className = 'chat-room';
-        div.setAttribute('data-room-id', roomData.roomId); // Add room ID for easy lookup
-        
-        // Add active class if this is the current room
+        div.setAttribute('data-room-id', roomData.roomId);
+
         if (this.socketHandler.getCurrentRoom() === roomData.roomId) {
             div.classList.add('active');
         }
-        
-        // Add profile image
-        const profileImg = document.createElement('img');
-        profileImg.className = 'room-profile-image';
-        profileImg.src = roomData.profileImage;
-        profileImg.onerror = () => {
-            profileImg.src = '/assets/images/default-avatar.svg';
-        };
 
-        // Create room content container
-        const roomContent = document.createElement('div');
-        roomContent.className = 'room-content';
+        const profileImg = this.createProfileImage(room, currentUsername, roomData);
+        const roomContent = this.createRoomContent(room, roomData);
 
-        // Add room name
-        const roomName = document.createElement('div');
-        roomName.className = 'room-name';
-        roomName.textContent = roomData.displayName;
+        div.addEventListener('click', () => this.handleRoomClick(div, roomData.roomId));
 
-        // Add timestamp if available
-        if (roomData.lastActivity) {
-            const timestamp = document.createElement('div');
-            timestamp.className = 'room-timestamp';
-            timestamp.textContent = roomData.lastActivity;
-            div.appendChild(timestamp);
-        }
-
-        // Add click handler
-        div.addEventListener('click', () => {
-            // Remove active class from all rooms
-            const allRooms = document.querySelectorAll('.chat-room');
-            allRooms.forEach(room => room.classList.remove('active'));
-            
-            // Add active class to clicked room
-            div.classList.add('active');
-            
-            EventBus.publish(Constants.EVENTS.JOIN_ROOM, roomData.roomId);
-        });
-
-        // Assemble the elements
-        roomContent.appendChild(roomName);
         div.appendChild(profileImg);
         div.appendChild(roomContent);
 
         return div;
     }
 
+    private createProfileImage(room: ChatRoom, currentUsername: string, roomData: RoomDisplayData): HTMLImageElement {
+        const profileImg = document.createElement('img');
+        profileImg.className = 'room-profile-image';
+        
+        if (room.type === 'private' && room.members) {
+            const otherParticipant = room.members.find(
+                member => member.username?.toLowerCase() !== currentUsername?.toLowerCase()
+            );
+            
+            if (otherParticipant?.profileImage?.data) {
+                // Use the base64 data directly from the room data
+                console.log('[CHAT_ROOM] Using embedded profile image for:', otherParticipant.username);
+                profileImg.src = otherParticipant.profileImage.data;
+            } else if (otherParticipant?._id) {
+                // Fallback to API endpoint if no embedded data
+                console.log('[CHAT_ROOM] Falling back to API endpoint for:', otherParticipant._id);
+                profileImg.src = `${API_CONFIG.BASE_URL}/api/users/${otherParticipant._id}/profile-image?${Date.now()}`;
+            } else {
+                profileImg.src = '/assets/images/default-avatar.svg';
+            }
+        } else {
+            profileImg.src = roomData.profileImage;
+        }
+
+        profileImg.onerror = ((e: Event | string) => {
+            const target = e instanceof Event ? e.target as HTMLImageElement : null;
+            console.error('[CHAT_ROOM] Error loading profile image:', target?.src);
+            profileImg.src = '/assets/images/default-avatar.svg';
+        }) as OnErrorEventHandler;
+
+        return profileImg;
+    }
+
+    private createRoomContent(room: ChatRoom, roomData: RoomDisplayData): HTMLElement {
+        const roomContent = document.createElement('div');
+        roomContent.className = 'room-content';
+
+        const roomInfo = document.createElement('div');
+        roomInfo.className = 'room-info';
+
+        const roomNameContainer = document.createElement('div');
+        roomNameContainer.className = 'room-name-container';
+
+        const roomName = document.createElement('div');
+        roomName.className = 'room-name';
+        roomName.textContent = roomData.displayName;
+
+        roomNameContainer.appendChild(roomName);
+
+        const lastMessage = document.createElement('div');
+        lastMessage.className = 'last-message';
+        if (typeof room.lastMessage === 'object' && room.lastMessage?.content) {
+            lastMessage.textContent = room.lastMessage.content;
+        }
+
+        roomInfo.appendChild(roomNameContainer);
+        roomInfo.appendChild(lastMessage);
+
+        const timestampContainer = document.createElement('div');
+        timestampContainer.className = 'timestamp-container';
+        
+        // Try different sources for the timestamp
+        const timestamp = document.createElement('div');
+        timestamp.className = 'room-timestamp';
+        
+        let timeToShow = room.lastMessageTime || 
+                        (typeof room.lastMessage === 'string' ? room.lastMessage : room.lastMessage?.timestamp) || 
+                        room.updatedAt;
+                        
+        if (timeToShow) {
+            timestamp.textContent = this.formatLastActivity(new Date(timeToShow));
+            timestampContainer.appendChild(timestamp);
+        }
+
+        roomContent.appendChild(roomInfo);
+        roomContent.appendChild(timestampContainer);
+
+        return roomContent;
+    }
+
+    private formatLastActivity(date: string | Date): string {
+        try {
+            const now = new Date();
+            const messageDate = date instanceof Date ? date : new Date(date);
+            const diff = now.getTime() - messageDate.getTime();
+            
+            // If more than 24 hours ago, show the date
+            if (diff > 24 * 60 * 60 * 1000) {
+                return messageDate.toLocaleDateString('en-US', {
+                    month: 'short',
+                    day: 'numeric'
+                });
+            }
+            
+            // If more than an hour ago, show hours
+            const hours = Math.floor(diff / (1000 * 60 * 60));
+            if (hours > 0) {
+                return messageDate.toLocaleTimeString('en-US', {
+                    hour: 'numeric',
+                    minute: '2-digit',
+                    hour12: true
+                });
+            }
+            
+            // If less than an hour ago, show minutes
+            const minutes = Math.floor(diff / (1000 * 60));
+            if (minutes > 0) {
+                return `${minutes} min`;
+            }
+            
+            return 'now';
+        } catch (error) {
+            console.error('[CHAT_ROOM] Error formatting timestamp:', error);
+            return '';
+        }
+    }
+
+    private handleRoomClick(roomElement: HTMLElement, roomId: string) {
+        const allRooms = document.querySelectorAll('.chat-room');
+        allRooms.forEach(room => room.classList.remove('active'));
+        roomElement.classList.add('active');
+        EventBus.publish(Constants.EVENTS.JOIN_ROOM, roomId);
+    }
+
+    // Room Data Processing
     private getRoomDisplayData(room: ChatRoom, currentUsername: string): RoomDisplayData {
         const roomId = room._id || room.roomId || '';
         let displayName = room.name || room.roomName || '';
         let profileImage = '/assets/images/default-avatar.svg';
         let lastActivity = room.lastMessageTime ? this.formatLastActivity(room.lastMessageTime) : undefined;
 
-        // For private chats, find the other participant
-        if (room.isPrivate && room.participants) {
-            const otherParticipant = room.participants.find(
-                participant => participant.username?.toLowerCase() !== currentUsername?.toLowerCase()
+        if (room.type === 'private' && room.members) {
+            const otherParticipant = room.members.find(
+                member => member.username?.toLowerCase() !== currentUsername?.toLowerCase()
             );
             if (otherParticipant) {
                 displayName = otherParticipant.username;
-                // Check if participant has profile image data
                 if (otherParticipant.profileImage?.data) {
-                    profileImage = `${API_CONFIG.BASE_URL}/api/users/${otherParticipant._id}/profile-image?${Date.now()}`;
-                }
-            }
-        } else if (displayName.includes('Chat Room for')) {
-            const namesText = displayName.split('Chat Room for ')[1];
-            if (namesText) {
-                const names = namesText.split(' and ').map(name => name.trim());
-                const otherUser = names.find(name => name.toLowerCase() !== currentUsername?.toLowerCase());
-                if (otherUser) {
-                    displayName = otherUser;
+                    profileImage = otherParticipant.profileImage.data;
                 }
             }
         }
@@ -204,53 +267,22 @@ export class ChatRoomService {
         };
     }
 
-    private formatLastActivity(timestamp: string | number | Date): string {
-        if (!timestamp) return '';
-        
-        const date = new Date(timestamp);
-        const now = new Date();
-        const diff = now.getTime() - date.getTime();
-        const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-        
-        if (days > 0) {
-            return `${days}d ago`;
-        }
-        
-        const hours = Math.floor(diff / (1000 * 60 * 60));
-        if (hours > 0) {
-            return `${hours}h ago`;
-        }
-        
-        const minutes = Math.floor(diff / (1000 * 60));
-        if (minutes > 0) {
-            return `${minutes}m ago`;
-        }
-        
-        return 'Just now';
-    }
-
+    // Event Handlers
     private async handleCreateRoom() {
         try {
             const name = prompt('Enter room name:');
             if (!name) return;
-
             this.socketHandler.createRoom(name);
         } catch (error) {
             ErrorHandler.handle(error);
         }
     }
 
-    private handleRoomCreated(data: ChatRoom) {
+    private handleRoomCreated() {
         this.socketHandler.requestRooms();
     }
 
-    private updateRoomProfileImage(userId: string) {
-        // Request updated room list to get latest participant data
+    private handleProfileUpdate(userId: string) {
         this.socketHandler.requestRooms();
-    }
-
-    private findRoomById(roomId: string | null, rooms: ChatRoom[]): ChatRoom | undefined {
-        if (!roomId) return undefined;
-        return rooms.find(room => (room._id || room.roomId) === roomId);
     }
 } 

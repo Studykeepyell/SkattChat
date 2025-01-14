@@ -158,6 +158,6 @@ setupSocket(io);
 connectDB();
 
 // Start server
-const PORT = parseInt(process.env.PORT || '3000', 10);
+const PORT = parseInt(process.env.PORT || '3001', 10);
 const HOST = process.env.HOST || '0.0.0.0';
 httpServer.listen(PORT, () => console.log(`Server running at http://${HOST}:${PORT}`));

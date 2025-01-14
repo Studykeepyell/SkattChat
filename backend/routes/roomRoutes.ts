@@ -1,10 +1,19 @@
 import express from 'express';
-import { updateRoomProfileImage } from '../controllers/roomController/updateProfileImage.js';
 import authMiddleware from '../middleware/authMiddleware.js';
+import { createRoom, joinRoom, getRooms,  } from '../controllers/roomController/index.js';
 
 const router = express.Router();
 
-// Protected routes (require authentication)
-router.post('/:roomId/profile-image', authMiddleware, updateRoomProfileImage);
+// Create a new room (can be private or public)
+router.post('/create', authMiddleware, createRoom);
+
+// Update room profile image
+router.post('/:roomId/profile-image', authMiddleware);
+
+// Join a public room
+router.post('/:roomId/join', authMiddleware, joinRoom);
+
+// Get room list for user
+router.get('/', authMiddleware, getRooms);
 
 export default router; 

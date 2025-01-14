@@ -3,13 +3,30 @@ import { RequestHandler } from 'express-serve-static-core';
 import authMiddleware from '../middleware/authMiddleware.js';
 import FriendRequest from '../models/FriendRequest.js';
 import User from '../models/User.js';
-import ChatRoom from '../models/ChatRoom.js';
+import ChatRoom from '../models/chatroom/ChatRoom.js';
+import { Types } from 'mongoose';
 
 interface AuthRequest extends Request {
     user?: { id: string; username: string };
 }
 
-const router = Router();
+interface PopulatedUser {
+    _id: Types.ObjectId;
+    username: string;
+    profileImage?: {
+        data: string;
+        contentType: string;
+    } | null;
+}
+
+interface PopulatedFriendRequest {
+    _id: Types.ObjectId;
+    sender: PopulatedUser;
+    receiver: PopulatedUser;
+    status: string;
+}
+
+const router = Router(); 
 
 // Accept friend request
 router.put('/requests/accept', authMiddleware, (async (req: AuthRequest, res) => {
@@ -24,7 +41,11 @@ router.put('/requests/accept', authMiddleware, (async (req: AuthRequest, res) =>
             });
         }
 
-        const request = await FriendRequest.findById(requestId);
+        const request = await FriendRequest.findById(requestId)
+            .populate<{ sender: PopulatedUser }>('sender', 'username profileImage')
+            .populate<{ receiver: PopulatedUser }>('receiver', 'username profileImage')
+            .lean() as PopulatedFriendRequest;
+            
         if (!request) {
             return res.status(404).json({
                 success: false,
@@ -33,7 +54,7 @@ router.put('/requests/accept', authMiddleware, (async (req: AuthRequest, res) =>
         }
 
         // Verify the current user is the receiver
-        if (request.receiver.toString() !== userId) {
+        if (request.receiver._id.toString() !== userId) {
             return res.status(403).json({
                 success: false,
                 message: 'Not authorized to accept this request'
@@ -41,26 +62,53 @@ router.put('/requests/accept', authMiddleware, (async (req: AuthRequest, res) =>
         }
 
         // Update request status and create chat room
-        await Promise.all([
+        const [, , , chatRoom] = await Promise.all([
             FriendRequest.updateOne(
                 { _id: requestId },
                 { status: 'accepted' }
             ),
-            User.findByIdAndUpdate(request.sender, {
-                $addToSet: { friends: request.receiver }
+            User.findByIdAndUpdate(request.sender._id, {
+                $addToSet: { friends: request.receiver._id }
             }),
-            User.findByIdAndUpdate(request.receiver, {
-                $addToSet: { friends: request.sender }
+            User.findByIdAndUpdate(request.receiver._id, {
+                $addToSet: { friends: request.sender._id }
             }),
-            // Create private chat room
+            // Create private chat room with new schema
             ChatRoom.create({
+                roomId: `private_chat_${request.sender._id}_${request.receiver._id}`,
                 type: 'private',
-                members: [request.sender, request.receiver],
-                createdBy: userId
+                name: `Chat with ${request.sender.username}`,
+                members: [request.sender._id, request.receiver._id],
+                memberProfiles: [
+                    {
+                        userId: request.sender._id,
+                        username: request.sender.username,
+                        profileImage: request.sender.profileImage || null,
+                        role: 'member'
+                    },
+                    {
+                        userId: request.receiver._id,
+                        username: request.receiver.username,
+                        profileImage: request.receiver.profileImage || null,
+                        role: 'member'
+                    }
+                ],
+                settings: {
+                    maxMembers: 2,
+                    isModerated: false,
+                    allowNewMembers: false
+                }
             })
         ]);
 
-        res.json({ success: true });
+        // Return the response with room data
+        res.json({ 
+            success: true,
+            friendId: request.sender._id.toString() === userId ? 
+                request.receiver._id.toString() : 
+                request.sender._id.toString(),
+            room: chatRoom
+        });
     } catch (error) {
         console.error('Accept friend request error:', error);
         res.status(500).json({ success: false, message: 'Failed to accept friend request' });

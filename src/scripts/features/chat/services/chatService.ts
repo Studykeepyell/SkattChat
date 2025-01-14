@@ -5,11 +5,13 @@ import { Constants } from '../../../core/constants';
 import { ErrorHandler } from '../../../core/errorHandler';
 import { MessageService } from '../messageService';
 import { ChatSocketHandler } from './chatSocketHandler';
+import { ChatRoom } from '../types';
 
 export class ChatService {
     private static instance: ChatService;
     private messageService: MessageService;
     private socketHandler: ChatSocketHandler;
+    private currentRoom: string | null = null;
 
     private constructor() {
         try {
@@ -31,57 +33,55 @@ export class ChatService {
         return ChatService.instance;
     }
 
+    // Room Management
     public setCurrentRoom(roomId: string | null) {
+        this.currentRoom = roomId;
         this.socketHandler.setCurrentRoom(roomId);
     }
 
     public getCurrentRoom(): string | null {
-        return this.socketHandler.getCurrentRoom();
+        return this.currentRoom;
     }
 
-    private setupEventListeners() {
-        // Handle local events
-        EventBus.subscribe(Constants.EVENTS.SEND_MESSAGE, async (data: any) => {
-            console.log('[CHAT_SERVICE] Received send message event:', data);
-            if (data && data.content) {
-                await this.handleMessageSend(data.content);
-            } else {
-                console.error('[CHAT_SERVICE] Invalid message data:', data);
-            }
-        });
-        
-        EventBus.subscribe(Constants.EVENTS.JOIN_ROOM, this.joinRoom.bind(this));
-    }
-
-    public async handleMessageSend(content: string): Promise<boolean> {
-        return this.socketHandler.sendMessage(content);
-    }
-
-    public requestRoomUpdate() {
-        this.socketHandler.requestRooms();
-    }
-
-    async markMessagesAsRead(roomId: string) {
-        try {
-            await HttpService.put(
-                API_CONFIG.ENDPOINTS.CHAT.MARK_READ(roomId)
-            );
-        } catch (error) {
-            ErrorHandler.handle(error);
-        }
-    }
-
-    async joinRoom(roomId: string) {
+    public async joinRoom(roomId: string) {
         try {
             this.messageService.clearMessages();
             await this.socketHandler.joinRoom(roomId);
+            this.setCurrentRoom(roomId);
         } catch (error) {
             console.error('[CHAT_SERVICE] Error joining room:', error);
             ErrorHandler.handle(error);
         }
     }
 
-    async updateRoomProfileImage(roomId: string, targetUserId: string, imageData: string, contentType: string) {
+    public requestRoomUpdate() {
+        this.socketHandler.requestRooms();
+    }
+
+    // Message Management
+    public async handleMessageSend(content: string): Promise<boolean> {
+        if (!this.currentRoom) {
+            console.error('[CHAT_SERVICE] No active room to send message to');
+            return false;
+        }
+        return this.socketHandler.sendMessage(content);
+    }
+
+    public async markMessagesAsRead(roomId: string) {
+        try {
+            await HttpService.put(API_CONFIG.ENDPOINTS.CHAT.MARK_READ(roomId));
+        } catch (error) {
+            ErrorHandler.handle(error);
+        }
+    }
+
+    // Profile Management
+    public async updateRoomProfileImage(
+        roomId: string, 
+        targetUserId: string, 
+        imageData: string, 
+        contentType: string
+    ) {
         try {
             const response = await HttpService.post(
                 API_CONFIG.ENDPOINTS.CHAT.UPDATE_PROFILE_IMAGE(roomId),
@@ -89,7 +89,7 @@ export class ChatService {
                     targetUserId,
                     profileImage: {
                         data: imageData,
-                        contentType: contentType
+                        contentType
                     }
                 }
             );
@@ -100,6 +100,28 @@ export class ChatService {
         } catch (error) {
             ErrorHandler.handle(error);
             return null;
+        }
+    }
+
+    // Event Handling
+    private setupEventListeners() {
+        EventBus.subscribe(Constants.EVENTS.SEND_MESSAGE, this.handleSendMessageEvent.bind(this));
+        EventBus.subscribe(Constants.EVENTS.JOIN_ROOM, this.joinRoom.bind(this));
+        EventBus.subscribe(Constants.EVENTS.ROOM_UPDATED, this.handleRoomUpdate.bind(this));
+    }
+
+    private async handleSendMessageEvent(data: { content: string }) {
+        console.log('[CHAT_SERVICE] Received send message event:', data);
+        if (data?.content) {
+            await this.handleMessageSend(data.content);
+        } else {
+            console.error('[CHAT_SERVICE] Invalid message data:', data);
+        }
+    }
+
+    private handleRoomUpdate(data: { roomId: string }) {
+        if (data.roomId === this.currentRoom) {
+            this.requestRoomUpdate();
         }
     }
 }
