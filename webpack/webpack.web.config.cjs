@@ -14,7 +14,8 @@ module.exports = merge(common, {
     chat: path.resolve(process.cwd(), 'src/scripts/pages/ChatPage.ts'),
     friends: path.resolve(process.cwd(), 'src/scripts/pages/FriendsPage.ts'),
     account: path.resolve(process.cwd(), 'src/scripts/pages/AccountPage.ts'),
-    explore: path.resolve(process.cwd(), 'src/scripts/pages/ExplorePage.ts')
+    explore: path.resolve(process.cwd(), 'src/scripts/pages/ExplorePage.ts'),
+    videoCall: path.resolve(process.cwd(), 'src/scripts/pages/VideoCallPage.ts')
   },
   output: {
     path: path.resolve(process.cwd(), 'public/dist'),
@@ -137,6 +138,11 @@ module.exports = merge(common, {
       template: path.resolve(process.cwd(), 'src/pages/navigate.html'),
       filename: 'pages/navigate.html',
       chunks: ['vendors', 'runtime', 'navigate']
+    }),
+    new HtmlWebpackPlugin({
+      template: path.resolve(process.cwd(), 'src/pages/video-call.html'),
+      filename: 'pages/video-call.html',
+      chunks: ['vendors', 'runtime', 'videoCall']
     }),
     new CopyWebpackPlugin({
       patterns: [

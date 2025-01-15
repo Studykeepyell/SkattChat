@@ -226,7 +226,7 @@ export class ChatSocketHandler {
             if (!room.lastMessageTime && typeof room.lastMessage === 'object' && room.lastMessage?.timestamp) {
                 room.lastMessageTime = room.lastMessage.timestamp;
             }
-            EventBus.publish(Constants.EVENTS.ROOM_CHANGED, room);
+            EventBus.publish(Constants.EVENTS.ROOM_CHANGED, { roomId: room._id || room.roomId });
             // Also update room list to reflect changes
             this.requestRooms();
         } catch (error) {

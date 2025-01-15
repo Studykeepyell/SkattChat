@@ -1,5 +1,8 @@
 // Application-wide constants
 export const Constants = {
+    API_URL: process.env.NODE_ENV === 'production' 
+        ? 'https://skattchat.online' 
+        : 'http://localhost:3000',
     STORAGE_KEYS: {
         AUTH_TOKEN: 'auth_token',
         USER_ID: 'user_id',
@@ -51,7 +54,12 @@ export const Constants = {
         
         // Message Events
         MESSAGE_SENT: 'message:sent',
-        SEND_MESSAGE: 'message:send'
+        SEND_MESSAGE: 'message:send',
+        
+        // Video Call Events
+        LOCAL_STREAM_READY: 'local-stream-ready',
+        MIC_TOGGLE: 'mic-toggle',
+        VIDEO_TOGGLE: 'video-toggle'
     },
     TIMEOUTS: {
         API_REQUEST: 30000,

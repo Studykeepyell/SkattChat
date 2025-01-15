@@ -4,11 +4,30 @@ import { Constants } from '../../../core/constants';
 export class MessageInputService {
     private container: HTMLElement;
     private message: string = '';
+    private currentRoomId: string | null = null;
 
     constructor(container: HTMLElement) {
         this.container = container;
         this.render();
         this.attachEventListeners();
+        
+        // Subscribe to room changes
+        EventBus.subscribe(Constants.EVENTS.ROOM_CHANGED, (data: { roomId: string }) => {
+            console.log('[MESSAGE_INPUT] Room changed:', data);
+            if (data && data.roomId) {
+                this.currentRoomId = data.roomId;
+            } else {
+                console.warn('[MESSAGE_INPUT] Room changed event received without roomId');
+            }
+        });
+
+        // Also listen for room join events as backup
+        EventBus.subscribe(Constants.EVENTS.ROOM_JOINED, (data: { roomId: string }) => {
+            console.log('[MESSAGE_INPUT] Room joined:', data);
+            if (data && data.roomId) {
+                this.currentRoomId = data.roomId;
+            }
+        });
     }
 
     private render(): void {
@@ -82,12 +101,38 @@ export class MessageInputService {
         const form = this.container.querySelector('form');
         const input = this.container.querySelector('.message-input') as HTMLInputElement;
         const sendButton = this.container.querySelector('.send-button') as HTMLButtonElement;
+        const videoCallButton = this.container.querySelector('.video-call-button') as HTMLButtonElement;
 
         input?.addEventListener('input', (e: Event) => {
             const target = e.target as HTMLInputElement;
             this.message = target.value;
             if (sendButton) {
                 sendButton.disabled = !this.message.trim();
+            }
+        });
+
+        videoCallButton?.addEventListener('click', () => {
+            if (!this.currentRoomId) {
+                alert('Please join a chat room first');
+                return;
+            }
+
+            // Open video call in new window/tab based on platform
+            const width = 800;
+            const height = 600;
+            const left = (window.screen.width - width) / 2;
+            const top = (window.screen.height - height) / 2;
+
+            if (window.matchMedia('(display-mode: standalone)').matches) {
+                // PWA or mobile - open in new tab
+                window.open(`/pages/video-call.html?roomId=${this.currentRoomId}`, '_blank');
+            } else {
+                // Desktop - open in new window
+                window.open(
+                    `/pages/video-call.html?roomId=${this.currentRoomId}`,
+                    'Video Call',
+                    `width=${width},height=${height},left=${left},top=${top}`
+                );
             }
         });
 
