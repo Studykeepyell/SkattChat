@@ -3,11 +3,18 @@ import { app, BrowserWindow, WebContents, Session } from 'electron';
 import path from 'path';
 import { exec } from 'child_process';
 
+// Load environment variables
 config();
 
+// Environment setup
+const isDev = process.env.NODE_ENV === 'development' || !process.env.NODE_ENV;
+const API_URL = isDev ? 'http://localhost:3001' : 'https://skattchat.online';
+
+console.log('Environment:', process.env.NODE_ENV);
+console.log('Development mode:', isDev);
+console.log('API URL:', API_URL);
+
 let mainWindow: BrowserWindow | null = null;
-const isDev = process.env.NODE_ENV === 'development';
-const API_URL = isDev ? 'http://localhost:3000' : 'https://skattchat.online';
 
 function packageApp(): void {
     exec('electron-builder', (error, stdout, stderr) => {
@@ -28,10 +35,11 @@ function createWindow(): void {
         width: 1200,
         height: 800,
         webPreferences: {
-            preload: path.join(__dirname, 'preload.bundle.js'),
+            preload: path.join(__dirname, 'preload.bundle.cjs'),
             nodeIntegration: false,
             contextIsolation: true,
-            webSecurity: !isDev
+            webSecurity: !isDev,
+            sandbox: false
         }
     });
 
@@ -44,7 +52,7 @@ function createWindow(): void {
     // Updated path resolution logic
     const indexPath = isDev
         ? path.join(__dirname, 'pages', 'login.html')
-        : path.join(__dirname, 'dist', 'pages', 'login.html');
+        : path.join(__dirname, 'pages', 'login.html');
 
     console.log('App path:', app.getAppPath());
     console.log('Loading index from:', indexPath);
