@@ -32,10 +32,13 @@ export class ChatUIService {
     public initialize() {
         try {
             console.log('[CHAT_UI] Starting initialization...');
-            this.setupElements();
-            this.setupEventListeners();
-            this.setupMessageHandlers();
-            console.log('[CHAT_UI] Initialization complete');
+            // Wait for message input component to be ready
+            setTimeout(() => {
+                this.setupElements();
+                this.setupEventListeners();
+                this.setupMessageHandlers();
+                console.log('[CHAT_UI] Initialization complete');
+            }, 0);
         } catch (error) {
             console.error('[CHAT_UI] Error during initialization:', error);
             ErrorHandler.handle(error);
@@ -44,16 +47,33 @@ export class ChatUIService {
     }
 
     private setupElements() {
-        this.messageInput = document.getElementById('messageInput') as HTMLInputElement;
-        this.chatForm = document.getElementById('chat-form') as HTMLFormElement;
-        this.messagesContainer = document.getElementById('messages');
-        this.chatHeading = document.getElementById('chat-heading');
-        this.roomList = document.getElementById('roomList');
-        this.sendButton = document.getElementById('send-button') as HTMLButtonElement;
+        // Wait for elements to be available in DOM
+        const maxAttempts = 10;
+        let attempts = 0;
+        
+        const trySetup = () => {
+            this.messageInput = document.querySelector('.message-input') as HTMLInputElement;
+            this.chatForm = document.querySelector('form') as HTMLFormElement;
+            this.messagesContainer = document.getElementById('messages');
+            this.chatHeading = document.getElementById('chat-heading');
+            this.roomList = document.getElementById('roomList');
+            this.sendButton = document.querySelector('.send-button') as HTMLButtonElement;
 
-        if (!this.messageInput || !this.chatForm || !this.messagesContainer || !this.roomList) {
-            throw new Error('Required chat UI elements not found');
-        }
+            if (!this.messageInput || !this.chatForm || !this.messagesContainer || !this.roomList) {
+                attempts++;
+                if (attempts < maxAttempts) {
+                    console.log('[CHAT_UI] Retrying element setup...');
+                    setTimeout(trySetup, 100);
+                } else {
+                    throw new Error('Required chat UI elements not found after multiple attempts');
+                }
+                return;
+            }
+            
+            this.setupEventListeners();
+        };
+
+        trySetup();
     }
 
     private messagesLoadedHandler = (messages: ChatMessage[]) => {
@@ -132,11 +152,23 @@ export class ChatUIService {
 
     private setupEventListeners() {
         if (this.chatForm) {
+            // Remove old event listeners if they exist
+            this.chatForm.removeEventListener('submit', this.handleSubmit);
             this.chatForm.addEventListener('submit', this.handleSubmit);
         }
         if (this.messageInput) {
+            // Remove old event listeners if they exist
+            this.messageInput.removeEventListener('keypress', this.handleKeyPress);
             this.messageInput.addEventListener('keypress', this.handleKeyPress);
         }
+
+        // Listen for custom message-sent event from MessageInput component
+        document.getElementById('message-input-root')?.addEventListener('message-sent', (e) => {
+            const customEvent = e as CustomEvent;
+            if (customEvent.detail?.message) {
+                this.chatService.handleMessageSend(customEvent.detail.message);
+            }
+        });
 
         // Add profile image update handler
         EventBus.subscribe(Constants.EVENTS.UPDATE_ROOM_PROFILE, this.handleProfileImageUpdate.bind(this));

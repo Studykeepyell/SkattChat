@@ -1,0 +1,84 @@
+/* Add these styles to your CSS file */
+.message-input {
+    width: 100%;
+    background: transparent;
+    border: none;
+    outline: none;
+    padding: 8px 0;
+    font-size: 14px;
+    color: inherit;
+  }
+  
+  .message-input::placeholder {
+    color: #666;
+    opacity: 0.8;
+  }
+  
+  /* Remove focus outline */
+  .message-input:focus {
+    outline: none;
+    box-shadow: none;
+  }
+  
+  /* Custom scrollbar for input */
+  .message-input::-webkit-scrollbar {
+    width: 6px;
+  }
+  
+  .message-input::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  
+  .message-input::-webkit-scrollbar-thumb {
+    background: #c1c1c1;
+    border-radius: 3px;
+  }
+  
+  /* Button styles */
+  .button-ghost {
+    padding: 8px;
+    border-radius: 50%;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    color: inherit;
+    opacity: 0.7;
+    transition: all 0.2s;
+  }
+  
+  .button-ghost:hover {
+    opacity: 1;
+    background: rgba(0, 0, 0, 0.1);
+  }
+  
+  .button-ghost:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+  }
+  
+  /* Send button */
+  .send-button {
+    padding: 8px;
+    border-radius: 50%;
+    background: #0084ff;
+    border: none;
+    cursor: pointer;
+    color: white;
+    transition: all 0.2s;
+  }
+  
+  .send-button:hover {
+    background: #0073e6;
+  }
+  
+  .send-button:disabled {
+    background: #ccc;
+    cursor: not-allowed;
+  }
+  
+  /* Layout utilities */
+  .flex { display: flex; }
+  .flex-col { flex-direction: column; }
+  .items-center { align-items: center; }
+  .justify-between { justify-content: space-between; }
+  .gap-2 { gap: 0.5rem; }

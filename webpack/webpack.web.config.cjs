@@ -14,12 +14,13 @@ module.exports = merge(common, {
     chat: path.resolve(process.cwd(), 'src/scripts/pages/ChatPage.ts'),
     friends: path.resolve(process.cwd(), 'src/scripts/pages/FriendsPage.ts'),
     account: path.resolve(process.cwd(), 'src/scripts/pages/AccountPage.ts'),
+    explore: path.resolve(process.cwd(), 'src/scripts/pages/ExplorePage.ts')
   },
   output: {
     path: path.resolve(process.cwd(), 'public/dist'),
     filename: '[name].bundle.js',
     clean: true,
-    publicPath: '/dist/'
+    publicPath: '/'
   },
   target: 'web',
   devtool: 'inline-source-map',
@@ -165,6 +166,11 @@ module.exports = merge(common, {
         {
           from: path.resolve(process.cwd(), 'public/download'),
           to: path.resolve(process.cwd(), 'public/dist/download'),
+          noErrorOnMissing: true
+        },
+        {
+          from: path.resolve(process.cwd(), 'src/pages/explore.html'),
+          to: path.resolve(process.cwd(), 'public/dist/pages/explore.html'),
           noErrorOnMissing: true
         }
       ],
