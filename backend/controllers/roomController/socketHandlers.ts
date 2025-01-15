@@ -278,6 +278,8 @@ export class RoomSocketHandlers {
                     id: msg._id,
                     sender: msg.username,
                     content: msg.message,
+                    messageType: msg.messageType,
+                    gifUrl: msg.gifUrl,
                     timestamp: msg.timestamp,
                     userId: msg.userId
                 }));
@@ -288,6 +290,8 @@ export class RoomSocketHandlers {
                 id: msg._id,
                 sender: msg.username,
                 content: msg.message,
+                messageType: msg.messageType,
+                gifUrl: msg.gifUrl,
                 timestamp: msg.timestamp,
                 userId: msg.userId
             }));
