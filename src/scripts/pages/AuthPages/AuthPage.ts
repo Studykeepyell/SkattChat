@@ -4,22 +4,17 @@ import { Constants } from '../../core/constants';
 import { StorageService } from '../../core/storageService';
 
 export class AuthPage {
-    protected authModule: AuthModule;
+    protected authModule: AuthModule = {} as AuthModule;
 
     constructor(formId: string) {
-        this.authModule = new AuthModule(formId);
-        this.initialize();
-    }
-
-    protected initialize() {
         try {
-            document.addEventListener('DOMContentLoaded', () => {
-                this.setupErrorHandling();
-                // Only check auth status on login page
-                if (window.location.pathname.includes('login.html')) {
-                    this.checkAuthStatus();
-                }
-            });
+            this.authModule = new AuthModule(formId);
+            this.setupErrorHandling();
+            
+            // Only check auth status on login page
+            if (window.location.pathname.includes('login.html')) {
+                this.checkAuthStatus();
+            }
         } catch (error) {
             ErrorHandler.handle(error);
         }

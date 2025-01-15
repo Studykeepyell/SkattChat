@@ -5,6 +5,8 @@ export interface ChatMessage {
     timestamp: string;
     sender?: string;
     content?: string;
+    messageType?: 'text' | 'gif';
+    gifUrl?: string;
 }
 
 export interface ChatRoom {

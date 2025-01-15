@@ -111,7 +111,7 @@ module.exports = merge(common, {
     new HtmlWebpackPlugin({
       template: path.resolve(process.cwd(), 'src/pages/chat.html'),
       filename: 'pages/chat.html',
-      chunks: ['vendors', 'runtime', 'chat']
+      chunks: ['vendors', 'runtime', 'chat', 'messageInput']
     }),
     new HtmlWebpackPlugin({
       template: path.resolve(process.cwd(), 'src/pages/addFriend.html'),

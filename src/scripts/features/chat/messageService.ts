@@ -38,11 +38,13 @@ export class MessageService {
             let lastMessageDate: string | null = null;
 
             sortedMessages.forEach(message => {
-                const messageData: MessageData = {
+                const messageData: MessageData & Partial<ChatMessage> = {
                     username: message.sender || message.username || 'Unknown',
                     userId: message.userId,
                     content: message.content || message.message || '',
-                    timestamp: message.timestamp || new Date().toISOString()
+                    timestamp: message.timestamp || new Date().toISOString(),
+                    messageType: message.messageType,
+                    gifUrl: message.gifUrl
                 };
 
                 const elements = this.createMessageElement(messageData, lastMessageDate);
@@ -71,11 +73,13 @@ export class MessageService {
             }
 
             // Extract message data, handling both formats
-            const messageData: MessageData = {
+            const messageData: MessageData & Partial<ChatMessage> = {
                 username: data.sender || data.username || 'Unknown',
                 userId: data.userId,
                 content: data.content || data.message || '',
-                timestamp: data.timestamp || new Date().toISOString()
+                timestamp: data.timestamp || new Date().toISOString(),
+                messageType: data.messageType,
+                gifUrl: data.gifUrl
             };
 
             console.log('[MESSAGE_SERVICE] Formatted message data:', messageData);
@@ -182,11 +186,32 @@ export class MessageService {
         usernameSpan.style.marginBottom = '4px';
         usernameSpan.style.color = isCurrentUser ? '#fff' : '#666';
 
-        // Add message text
+        // Add message text or GIF
         const messageText = document.createElement('div');
         messageText.className = 'message-text';
-        messageText.textContent = content;
-        messageText.style.wordBreak = 'break-word';
+        
+        // Check if this is a GIF message
+        if ((data as ChatMessage).messageType === 'gif' && (data as ChatMessage).gifUrl) {
+            const gifContainer = document.createElement('div');
+            gifContainer.className = 'message-gif';
+            gifContainer.style.maxWidth = '300px';
+            gifContainer.style.borderRadius = '8px';
+            gifContainer.style.overflow = 'hidden';
+            gifContainer.style.margin = '4px 0';
+
+            const gifImage = document.createElement('img');
+            gifImage.src = (data as ChatMessage).gifUrl!;
+            gifImage.alt = 'GIF';
+            gifImage.style.width = '100%';
+            gifImage.style.height = 'auto';
+            gifImage.style.display = 'block';
+
+            gifContainer.appendChild(gifImage);
+            messageText.appendChild(gifContainer);
+        } else if ((data as ChatMessage).messageType !== 'gif') {
+            messageText.textContent = content;
+            messageText.style.wordBreak = 'break-word';
+        }
 
         // Add timestamp
         const timestampSpan = document.createElement('div');

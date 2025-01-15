@@ -1,20 +1,31 @@
-import { FriendModule } from '../features/friend/index';
+// Core imports
 import { SocketService } from '../core/socketService';
 import { ErrorHandler } from '../core/errorHandler';
 import { Constants } from '../core/constants';
 import { EventBus } from '../core/eventBus';
+
+// Layout services
 import { TaskbarService } from '../features/layout/TaskbarService';
 import { ThemeService } from '../features/layout/ThemeService';
 import { MenuService } from '../features/layout/MenuService';
+
+// Chat services
 import { ChatAuthService } from '../features/chat/services/ChatAuthService';
 import { ProfileService } from '../features/chat/services/ProfileService';
-import { EmojiService } from '../features/chat/services/EmojiService';
 import { ChatUIService } from '../features/chat/services/ChatUIService';
 import { ChatService } from '../features/chat/services/chatService';
 import { ChatRoomService } from '../features/chat/services/chatRoomService';
 import { ChatSocketHandler } from '../features/chat/services/chatSocketHandler';
 
+// UI Components
+import { MessageInputService } from '../features/chat/services/MessageInputService';
+import { EmojiService } from '../features/chat/services/EmojiService';
+
+// Friend module
+import { FriendModule } from '../features/friend/index';
+
 export class ChatPage {
+    private static instance: ChatPage;
     private friendModule!: FriendModule;
     private services!: {
         auth: ChatAuthService;
@@ -27,61 +38,72 @@ export class ChatPage {
         chat: ChatService;
         room: ChatRoomService;
         socket: ChatSocketHandler;
+        messageInput: MessageInputService;
     };
 
-    constructor() {
-        this.initialize().catch(error => {
-            console.error('Failed to initialize chat page:', error);
-            window.location.href = 'login.html';
-        });
+    private constructor() {}
+
+    public static async init(): Promise<ChatPage> {
+        if (!ChatPage.instance) {
+            ChatPage.instance = new ChatPage();
+            await ChatPage.instance.initialize();
+        }
+        return ChatPage.instance;
     }
 
     private async initialize() {
         try {
             console.log('Starting chat page initialization...');
             
-            // Initialize auth service first
             const auth = new ChatAuthService();
-            
-            // Check authentication first
             const isAuthenticated = await auth.checkAuthentication();
+            
             if (!isAuthenticated) {
                 console.log('Authentication check failed, redirecting to login...');
                 window.location.href = 'login.html';
                 return;
             }
 
-            console.log('Authentication successful, initializing services...');
-            
-            // Initialize remaining services with authenticated user
             this.initializeServices(auth);
-            
-            // Initialize components and setup
             this.initializeCore();
-            this.initializeFriendModule();
-            this.setupEventListeners();
+            await this.initializeComponents();
 
-            // Load user profile
-            console.log('Loading user profile...');
-            await this.services.profile.loadUserProfile();
-
-            // Initialize UI services after profile is loaded
-            this.services.taskbar.initialize();
-            this.services.theme.initialize();
-            this.services.menu.initialize();
-            this.services.emoji.initialize();
-            this.services.ui.initialize();
-
-            // Initialize chat services
-            this.services.socket.initialize();
-            this.services.room.initialize();
-
-            console.log('Chat page initialization complete');
         } catch (error) {
             console.error('Error during chat page initialization:', error);
             ErrorHandler.handle(error);
             window.location.href = 'login.html';
         }
+    }
+
+    private async initializeComponents() {
+        // Initialize friend module
+        this.initializeFriendModule();
+        
+        // Setup event listeners
+        this.setupEventListeners();
+
+        // Load user profile
+        console.log('Loading user profile...');
+        await this.services.profile.loadUserProfile();
+
+        // Initialize UI services
+        this.services.taskbar.initialize();
+        this.services.theme.initialize();
+        this.services.menu.initialize();
+        this.services.ui.initialize();
+
+        // Initialize chat services
+        this.services.socket.initialize();
+        this.services.room.initialize();
+
+        // Initialize UI components
+        const messageInputRoot = document.getElementById('message-input-root');
+        if (messageInputRoot) {
+            this.services.messageInput = new MessageInputService(messageInputRoot);
+            this.services.emoji.initialize();
+        }
+
+        console.log('Chat page initialization complete');
     }
 
     private initializeServices(auth: ChatAuthService): void {
@@ -94,11 +116,12 @@ export class ChatPage {
             taskbar: new TaskbarService(),
             theme: new ThemeService(),
             menu: new MenuService(),
-            emoji: new EmojiService(),
             ui: new ChatUIService(),
             chat,
             socket,
-            room: new ChatRoomService()
+            room: new ChatRoomService(),
+            emoji: new EmojiService(),
+            messageInput: {} as MessageInputService // Will be initialized later
         };
     }
 
@@ -149,10 +172,16 @@ export class ChatPage {
 // Initialize the application when the DOM is ready
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', () => {
-        new ChatPage();
+        ChatPage.init().catch(error => {
+            console.error('Failed to initialize chat page:', error);
+            window.location.href = 'login.html';
+        });
     });
 } else {
-    new ChatPage();
+    ChatPage.init().catch(error => {
+        console.error('Failed to initialize chat page:', error);
+        window.location.href = 'login.html';
+    });
 }
 
 // Make this file a module

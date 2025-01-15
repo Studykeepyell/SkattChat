@@ -83,7 +83,9 @@ export class ChatUIService {
         const sortedMessages = messages.sort((a, b) => 
             new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime()
         );
-        sortedMessages.forEach(message => this.messageService.addChatMessage(message));
+        sortedMessages.forEach(message => {
+            this.messageService.addChatMessage(message);
+        });
     };
 
     private roomChangedHandler = (room: ChatRoom) => {
@@ -172,6 +174,23 @@ export class ChatUIService {
 
         // Add profile image update handler
         EventBus.subscribe(Constants.EVENTS.UPDATE_ROOM_PROFILE, this.handleProfileImageUpdate.bind(this));
+
+        // Add styles for GIF messages
+        const style = document.createElement('style');
+        style.textContent = `
+            .message-gif {
+                max-width: 300px;
+                border-radius: 8px;
+                overflow: hidden;
+                margin: 4px 0;
+            }
+            .message-gif img {
+                width: 100%;
+                height: auto;
+                display: block;
+            }
+        `;
+        document.head.appendChild(style);
     }
 
     private async handleProfileImageUpdate(data: { roomId: string, targetUserId: string, imageData: string, contentType: string }) {

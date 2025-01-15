@@ -1,21 +1,33 @@
 import { AuthPage } from './AuthPage';
 
-export class LoginPage extends AuthPage {
+class LoginPage extends AuthPage {
     constructor() {
         super('login-form');
         this.setupAdditionalListeners();
     }
 
     private setupAdditionalListeners() {
-        // Add any login-specific listeners here
-        document.addEventListener('DOMContentLoaded', () => {
-            const form = document.getElementById('login-form');
-            if (form) {
-                form.setAttribute('data-auth-type', 'login');
-            }
-        });
+        const form = document.getElementById('login-form');
+        if (form) {
+            form.setAttribute('data-auth-type', 'login');
+        }
     }
 }
 
-// Initialize login page
-new LoginPage(); 
+// Initialize the application when the DOM is ready
+function initializeLoginPage() {
+    try {
+        new LoginPage();
+    } catch (error) {
+        console.error('Failed to initialize login page:', error);
+    }
+}
+
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initializeLoginPage);
+} else {
+    initializeLoginPage();
+}
+
+// Export the class for potential use elsewhere
+export { LoginPage }; 

@@ -33,6 +33,10 @@ export class SocketService {
         return this.socket;
     }
 
+    static getSocket(): Socket | null {
+        return this.socket;
+    }
+
     private static setupBaseHandlers() {
         if (!this.socket) return;
 

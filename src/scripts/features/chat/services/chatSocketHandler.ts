@@ -4,10 +4,11 @@ import { Constants } from '../../../core/constants';
 import { ErrorHandler } from '../../../core/errorHandler';
 import { StorageService } from '../../../core/storageService';
 import { ChatMessage, ChatRoom } from '../types';
+import { Socket } from 'socket.io-client';
 
 export class ChatSocketHandler {
     private static instance: ChatSocketHandler;
-    private socket;
+    private socket: Socket | null = null;
     private currentRoom: string | null = null;
 
     private constructor() {
@@ -28,6 +29,10 @@ export class ChatSocketHandler {
         // Initialize socket with auth data
         this.socket = SocketService.initialize(token);
         
+        if (!this.socket) {
+            throw new Error('Failed to initialize socket');
+        }
+        
         // Set user ID in socket query params
         this.socket.auth = { token, userId };
         
@@ -47,6 +52,10 @@ export class ChatSocketHandler {
     }
 
     private setupEventHandlers() {
+        if (!this.socket) {
+            throw new Error('Socket not initialized');
+        }
+
         const handlers = {
             'message': this.handleMessage.bind(this),
             'roomUpdate': this.handleRoomUpdate.bind(this),
@@ -59,8 +68,8 @@ export class ChatSocketHandler {
         };
 
         Object.entries(handlers).forEach(([event, handler]) => {
-            this.socket.off(event);
-            this.socket.on(event, handler);
+            this.socket?.off(event);
+            this.socket?.on(event, handler);
         });
     }
 
@@ -72,9 +81,9 @@ export class ChatSocketHandler {
         return this.currentRoom;
     }
 
-    public async sendMessage(content: string): Promise<boolean> {
+    public async sendMessage(content: string, messageType: 'text' | 'gif' = 'text', gifUrl?: string): Promise<boolean> {
         try {
-            if (!content.trim()) {
+            if (messageType === 'text' && !content.trim()) {
                 console.log('[CHAT_SOCKET] Cannot send empty message');
                 return false;
             }
@@ -128,21 +137,31 @@ export class ChatSocketHandler {
             }
 
             const messageData: ChatMessage = {
-                username: username,
+                username,
                 userId,
                 message: content,
-                timestamp: new Date().toISOString()
+                timestamp: new Date().toISOString(),
+                messageType,
+                ...(messageType === 'gif' ? { gifUrl } : {})
             };
 
             console.log('[CHAT_SOCKET] Sending message:', messageData);
             
             return new Promise((resolve) => {
+                if (!this.socket) {
+                    ErrorHandler.handle(new Error('Socket not initialized'));
+                    resolve(false);
+                    return;
+                }
+
                 this.socket.emit('message', { ...messageData, roomId: this.currentRoom }, (error: any) => {
                     if (error) {
                         console.error('[CHAT_SOCKET] Error sending message:', error);
                         ErrorHandler.handle(new Error(error.message || 'Failed to send message'));
                         resolve(false);
                     } else {
+                        // Publish message locally for immediate UI update
+                        EventBus.publish(Constants.EVENTS.MESSAGE_RECEIVED, messageData);
                         resolve(true);
                     }
                 });
@@ -162,6 +181,10 @@ export class ChatSocketHandler {
             const userId = StorageService.get(Constants.STORAGE_KEYS.USER_ID);
             if (!userId) {
                 throw new Error('User not authenticated');
+            }
+
+            if (!this.socket) {
+                throw new Error('Socket not initialized');
             }
 
             this.setCurrentRoom(roomId);
@@ -231,10 +254,16 @@ export class ChatSocketHandler {
     }
 
     public createRoom(name: string) {
+        if (!this.socket) {
+            throw new Error('Socket not initialized');
+        }
         this.socket.emit('createRoom', { name });
     }
 
     public requestRooms() {
+        if (!this.socket) {
+            throw new Error('Socket not initialized');
+        }
         console.log('[CHAT_SOCKET] Requesting rooms');
         this.socket.emit('requestRooms');
     }

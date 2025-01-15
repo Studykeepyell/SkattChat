@@ -59,12 +59,12 @@ export class ChatService {
     }
 
     // Message Management
-    public async handleMessageSend(content: string): Promise<boolean> {
+    public async handleMessageSend(content: string, messageType: 'text' | 'gif' = 'text', gifUrl?: string): Promise<boolean> {
         if (!this.currentRoom) {
             console.error('[CHAT_SERVICE] No active room to send message to');
             return false;
         }
-        return this.socketHandler.sendMessage(content);
+        return this.socketHandler.sendMessage(content, messageType, gifUrl);
     }
 
     public async markMessagesAsRead(roomId: string) {

@@ -3,6 +3,16 @@ import Message from '../models/Message.js';
 import { CustomSocket } from './types.js';
 import { RoomSocketHandlers } from '../controllers/roomController/socketHandlers.js';
 
+interface MessageData {
+    roomId: string;
+    userId: string;
+    username: string;
+    message?: string;
+    gifUrl?: string;
+    messageType: 'text' | 'gif';
+    timestamp: Date;
+}
+
 export class ChatHandler {
     private roomHandlers: RoomSocketHandlers;
 
@@ -11,7 +21,7 @@ export class ChatHandler {
     }
 
     handleConnection(socket: CustomSocket) {
-        socket.on('message', (data: any) => this.handleMessage(socket, data));
+        socket.on('message', (data: MessageData) => this.handleMessage(socket, data));
         socket.on('joinRoom', (data: any) => this.roomHandlers.handleJoinRoom(socket, data));
         socket.on('createRoom', (data: any) => this.roomHandlers.handleCreateRoom(socket, data));
         socket.on('requestRooms', () => this.roomHandlers.handleRequestRooms(socket));
@@ -23,9 +33,9 @@ export class ChatHandler {
         });
     }
 
-    private async handleMessage(socket: CustomSocket, data: any) {
+    private async handleMessage(socket: CustomSocket, data: MessageData) {
         try {
-            const { roomId, userId, username, message, timestamp } = data;
+            const { roomId, userId, username, message, gifUrl, messageType, timestamp } = data;
             console.log('[CHAT] Received message:', data);
 
             // Save message to database
@@ -33,7 +43,9 @@ export class ChatHandler {
                 roomId,
                 userId,
                 username,
-                message,
+                messageType,
+                message: messageType === 'text' ? message : '',
+                gifUrl: messageType === 'gif' ? gifUrl : '',
                 timestamp
             });
             await newMessage.save();
@@ -42,7 +54,9 @@ export class ChatHandler {
             const formattedMessage = {
                 id: newMessage._id,
                 sender: username,
-                content: message,
+                content: messageType === 'text' ? message : '',
+                messageType,
+                gifUrl: messageType === 'gif' ? gifUrl : '',
                 timestamp: timestamp,
                 userId: userId
             };

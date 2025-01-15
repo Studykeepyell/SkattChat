@@ -1,6 +1,7 @@
 // Base API configuration used throughout the application
 export const API_CONFIG = {
     BASE_URL: process.env.API_URL || 'http://localhost:3000',
+    SOCKET_URL: process.env.SOCKET_URL || 'http://localhost:3000',
     ENDPOINTS: {
         AUTH: {
             LOGIN: '/api/auth/login',

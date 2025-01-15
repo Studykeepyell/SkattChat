@@ -15,7 +15,6 @@ export const Constants = {
         PROFILE_IMAGE_UPDATED: 'profileImageUpdated',
         
         // Chat Events
-        SEND_MESSAGE: 'sendMessage',
         MESSAGE_RECEIVED: 'messageReceived',
         MESSAGES_LOADED: 'messagesLoaded',
         MESSAGES_CLEARED: 'messagesCleared',
@@ -48,7 +47,11 @@ export const Constants = {
         // Room Events
         ROOM_CHANGED: 'ROOM_CHANGED',
         ROOMS_UPDATED: 'roomsUpdated',
-        ROOM_CREATED: 'roomCreated'
+        ROOM_CREATED: 'roomCreated',
+        
+        // Message Events
+        MESSAGE_SENT: 'message:sent',
+        SEND_MESSAGE: 'message:send'
     },
     TIMEOUTS: {
         API_REQUEST: 30000,
