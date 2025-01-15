@@ -1,13 +1,15 @@
-require('dotenv').config();
-const { app, BrowserWindow } = require('electron');
-const path = require('path');
-const { exec } = require('child_process');
+import { config } from 'dotenv';
+import { app, BrowserWindow, WebContents, Session } from 'electron';
+import path from 'path';
+import { exec } from 'child_process';
 
-let mainWindow;
+config();
+
+let mainWindow: BrowserWindow | null = null;
 const isDev = process.env.NODE_ENV === 'development';
 const API_URL = isDev ? 'http://localhost:3000' : 'https://skattchat.online';
 
-function packageApp() {
+function packageApp(): void {
     exec('electron-builder', (error, stdout, stderr) => {
         if (error) {
             console.error(`Error packaging app: ${error.message}`);
@@ -21,32 +23,28 @@ function packageApp() {
     });
 }
 
-function createWindow() {
+function createWindow(): void {
     mainWindow = new BrowserWindow({
         width: 1200,
         height: 800,
         webPreferences: {
-            preload: path.join(__dirname, 'preload.js'),
+            preload: path.join(__dirname, 'preload.bundle.js'),
             nodeIntegration: false,
-            contextIsolation: true, // Enable context isolation
-            webSecurity: isDev ? false : true  // Disable only in development
+            contextIsolation: true,
+            webSecurity: !isDev
         }
     });
 
     // Development specific settings
-    if (isDev) {
+    if (isDev && mainWindow.webContents) {
         mainWindow.webContents.session.clearCache();
         mainWindow.webContents.openDevTools();
     }
 
     // Updated path resolution logic
-    let indexPath;
-    if (isDev) {
-        indexPath = path.join(__dirname,  'pages', 'login.html');
-    } else {
-        // Look in dist folder for production
-        indexPath = path.join(__dirname, 'dist', 'pages', 'login.html');  // Updated path
-    }
+    const indexPath = isDev
+        ? path.join(__dirname, 'pages', 'login.html')
+        : path.join(__dirname, 'dist', 'pages', 'login.html');
 
     console.log('App path:', app.getAppPath());
     console.log('Loading index from:', indexPath);
@@ -55,8 +53,7 @@ function createWindow() {
     mainWindow.loadFile(indexPath)
         .catch(err => {
             console.error('Failed to load login.html:', err);
-            // Show error in window
-            mainWindow.loadURL(`data:text/html;charset=utf-8,
+            mainWindow?.loadURL(`data:text/html;charset=utf-8,
                 <html>
                     <body>
                         <h2>Error loading application</h2>
@@ -77,7 +74,7 @@ function createWindow() {
                     "connect-src 'self' http://localhost:3000",
                     "script-src 'self' 'unsafe-inline'",
                     "style-src 'self' 'unsafe-inline'"
-                ].join('; ') : undefined
+                ].join('; ') : []
             }
         });
     });
@@ -87,11 +84,6 @@ function createWindow() {
         console.error('Page load failed:', code, desc);
     });
 
-    // Open DevTools in development
-    if (process.env.NODE_ENV === 'development') {
-        mainWindow.webContents.openDevTools();
-    }
-
     // Enhanced dev tools and logging for development
     if (isDev) {
         mainWindow.webContents.openDevTools();
@@ -99,12 +91,13 @@ function createWindow() {
         console.log('API URL:', API_URL);
         
         try {
+            // Note: electron-reload types might not be available
             const electronReload = require('electron-reload');
             electronReload(__dirname, {
                 electron: path.join(__dirname, 'node_modules', '.bin', 'electron')
             });
         } catch (error) {
-            console.warn('electron-reload not available:', error.message);
+            console.warn('electron-reload not available:', (error as Error).message);
         }
     }
 
@@ -134,4 +127,4 @@ app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) {
         createWindow();
     }
-});
+}); 
