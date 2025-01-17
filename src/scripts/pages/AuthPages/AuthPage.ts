@@ -8,6 +8,12 @@ export class AuthPage {
 
     constructor(formId: string, isRegistration: boolean = false) {
         try {
+            // Set the form type before initializing the auth module
+            const form = document.getElementById(formId);
+            if (form) {
+                form.setAttribute('data-auth-type', isRegistration ? 'register' : 'login');
+            }
+
             this.authModule = new AuthModule(formId, isRegistration);
             this.setupErrorHandling();
             

@@ -17,7 +17,13 @@ export class AuthUIService {
         this.errorDisplay = document.getElementById('error-message');
         this.usernameInput = document.getElementById('username') as HTMLInputElement;
         this.passwordInput = document.getElementById('password') as HTMLInputElement;
-        this.isRegistration = isRegistration;
+        
+        // Set isRegistration based on either the passed flag or form attribute
+        this.isRegistration = isRegistration || this.form?.getAttribute('data-auth-type') === 'register';
+        console.log('[AUTH] Form type:', this.isRegistration ? 'Registration' : 'Login', 
+                    'Flag:', isRegistration, 
+                    'Form attr:', this.form?.getAttribute('data-auth-type'));
+        
         this.setupEventListeners();
     }
 
@@ -34,30 +40,36 @@ export class AuthUIService {
         const password = this.passwordInput?.value;
         
         if (!username || !password) {
-            alert('Please fill in all fields');
+            this.showError('Please fill in all fields');
             return;
         }
 
         try {
+            console.log('[AUTH] Handling form submission for:', this.isRegistration ? 'Registration' : 'Login');
+            
             if (this.isRegistration) {
                 const success = await this.authService.register(username, password);
                 if (success) {
                     window.location.href = '/dist/pages/chat.html';
+                } else {
+                    this.showError('Registration failed. Please try again.');
                 }
             } else {
                 const response = await this.authService.login(username, password);
                 if (response.success) {
                     window.location.href = '/dist/pages/chat.html';
+                } else {
+                    this.showError('Login failed. Please check your credentials.');
                 }
             }
         } catch (error: any) {
             // Display user-friendly error message
             if (error.message === 'Username already exists') {
-                alert('This username is already taken. Please choose a different one.');
+                this.showError('This username is already taken. Please choose a different one.');
             } else if (error.message.includes('Username') || error.message.includes('Password')) {
-                alert(error.message);
+                this.showError(error.message);
             } else {
-                alert('An error occurred. Please try again later.');
+                this.showError('An error occurred. Please try again later.');
             }
             console.error('Auth error:', error);
         }
@@ -67,6 +79,8 @@ export class AuthUIService {
         if (this.errorDisplay) {
             this.errorDisplay.textContent = message;
             this.errorDisplay.style.display = 'block';
+        } else {
+            alert(message);
         }
     }
 } 

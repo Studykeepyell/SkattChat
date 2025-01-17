@@ -54,7 +54,7 @@ export class AuthService {
     public async register(username: string, password: string): Promise<boolean> {
         try {
             console.log('[AUTH] Attempting registration for:', username);
-            const response = await HttpService.post('/api/auth/register', { username, password });
+            const response = await HttpService.post(API_CONFIG.ENDPOINTS.AUTH.REGISTER, { username, password });
             console.log('[AUTH] Registration response:', response);
 
             if (response.success) {

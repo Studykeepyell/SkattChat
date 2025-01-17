@@ -2,20 +2,21 @@ import { AuthPage } from './AuthPage';
 
 export class RegisterPage extends AuthPage {
     constructor() {
+        // Initialize with registration flag
         super('register-form', true);
-        this.setupAdditionalListeners();
     }
 
-    private setupAdditionalListeners() {
-        // Add any register-specific listeners here
-        document.addEventListener('DOMContentLoaded', () => {
-            const form = document.getElementById('register-form');
-            if (form) {
-                form.setAttribute('data-auth-type', 'register');
-            }
-        });
+    static initialize() {
+        // Wait for DOM to be loaded before creating the page instance
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', () => {
+                new RegisterPage();
+            });
+        } else {
+            new RegisterPage();
+        }
     }
 }
 
 // Initialize register page
-new RegisterPage(); 
+RegisterPage.initialize(); 
