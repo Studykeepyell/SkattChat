@@ -400,11 +400,11 @@ export class ChatSocketHandler {
         this.requestRooms();
     }
 
-    public createRoom(name: string) {
+    public createRoom(name: string, memberIds?: string[]) {
         if (!this.socket) {
             throw new Error('Socket not initialized');
         }
-        this.socket.emit('createRoom', { name });
+        this.socket.emit('createRoom', { name, members: memberIds });
     }
 
     public requestRooms() {

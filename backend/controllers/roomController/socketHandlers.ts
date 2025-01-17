@@ -66,22 +66,47 @@ export class RoomSocketHandlers {
 
     async handleCreateRoom(socket: CustomSocket, data: any) {
         try {
-            const { name } = data;
+            const { name, members } = data;
+            const allMembers = members ? [...members, socket.userId] : [socket.userId];
+            
+            // Generate a unique roomId
+            const roomId = `room_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+            
             const room = new ChatRoom({
+                roomId,
                 name,
                 type: 'public',
                 hostId: socket.userId,
-                members: [socket.userId],
-                memberProfiles: [{
-                    userId: socket.userId,
-                    role: 'host'
-                }]
+                members: allMembers,
+                memberProfiles: [
+                    {
+                        userId: socket.userId,
+                        role: 'host'
+                    },
+                    ...(members?.map((memberId: string) => ({
+                        userId: memberId,
+                        role: 'member'
+                    })) || [])
+                ],
+                settings: {
+                    allowNewMembers: true,
+                    maxMembers: 100,
+                    isModerated: true
+                }
             });
+            
             await room.save();
             
-            this.io.emit('roomCreated', room);
+            // Populate member details before emitting
+            const populatedRoom = await ChatRoom.findById(room._id)
+                .populate('members', 'username profileImage')
+                .populate('hostId', 'username profileImage')
+                .lean();
+            
+            this.io.emit('roomCreated', populatedRoom);
             await this.handleRequestRooms(socket);
         } catch (error) {
+            console.error('Failed to create room:', error);
             socket.emit('error', 'Failed to create room');
         }
     }

@@ -1104,3 +1104,119 @@ button:hover {
   font-style: italic;
   padding: 2rem;
 }
+
+/* Create Room Modal Styles */
+.create-room-modal {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 1000;
+}
+
+.modal-content {
+    background: var(--background-color);
+    border-radius: 8px;
+    width: 400px;
+    max-height: 80vh;
+    overflow-y: auto;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+    border: 1px solid var(--border-color);
+}
+
+.modal-header {
+    padding: 15px;
+    border-bottom: 1px solid var(--border-color);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.modal-body {
+    padding: 20px;
+}
+
+.modal-footer {
+    padding: 15px;
+    border-top: 1px solid var(--border-color);
+    text-align: right;
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+}
+
+.room-name-input {
+    width: 100%;
+    padding: 8px;
+    margin-bottom: 20px;
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    background: var(--input-background);
+    color: var(--text-color);
+}
+
+.friends-list {
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+.friend-item {
+    display: flex;
+    align-items: center;
+    padding: 10px;
+    border: 1px solid var(--border-color);
+    margin-bottom: 8px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.friend-item:hover {
+    background: var(--hover-color);
+}
+
+.friend-item.selected {
+    background: var(--primary-color);
+    color: white;
+}
+
+.friend-item img {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    margin-right: 10px;
+}
+
+.close-btn {
+    background: none;
+    border: none;
+    font-size: 24px;
+    cursor: pointer;
+    color: var(--text-color);
+}
+
+.create-btn {
+    padding: 8px 16px;
+    background: var(--primary-color);
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.create-btn:hover {
+    opacity: 0.9;
+}
+
+.cancel-btn {
+    padding: 8px 16px;
+    background: var(--background-color);
+    color: var(--text-color);
+    border: 1px solid var(--border-color);
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.cancel-btn:hover {
+    background: var(--hover-color);
+}

@@ -26,6 +26,7 @@ export class AccountPage {
             this.setupElements();
             this.loadSavedData();
             this.setupEventListeners();
+            this.loadUserProfile();
         } catch (error) {
             ErrorHandler.handle(error);
         }
@@ -194,8 +195,7 @@ export class AccountPage {
                 window.location.href = 'login.html';
                 return;
             }
-
-            // Rest of the code...
+            await this.loadFriends();
         } catch (error) {
             ErrorHandler.handle(error);
         }
@@ -206,7 +206,32 @@ export class AccountPage {
             const userId = StorageService.get(Constants.STORAGE_KEYS.USER_ID);
             if (!userId) return;
 
-            // Rest of the code...
+            const response = await HttpService.get(`/api/friends/${userId}/list`);
+            
+            if (response.success && response.friends) {
+                const friendsContainer = document.getElementById('friends');
+                if (!friendsContainer) return;
+
+                friendsContainer.innerHTML = ''; // Clear existing list
+                
+                response.friends.forEach((friend: any) => {
+                    const friendElement = document.createElement('li');
+                    friendElement.className = 'friend-item';
+                    
+                    const profileImage = friend.profileImage?.data 
+                        ? `${API_CONFIG.BASE_URL}/api/users/${friend._id}/profile-image`
+                        : '../assets/images/default-avatar.svg';
+
+                    friendElement.innerHTML = `
+                        <div class="friend-profile">
+                            <img src="${profileImage}" alt="${friend.username}'s profile" class="friend-avatar">
+                            <span class="friend-username">${friend.username}</span>
+                        </div>
+                    `;
+                    
+                    friendsContainer.appendChild(friendElement);
+                });
+            }
         } catch (error) {
             ErrorHandler.handle(error);
         }

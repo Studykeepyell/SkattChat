@@ -3,11 +3,13 @@ module.exports = {
     productName: "SkattChat",
     directories: {
         output: "dist/releases",
-        app: "."
+        app: ".",
+        buildResources: "resources/electron"
     },
     files: [
         "electron/dist/**/*",
-        "package.json"
+        "package.json",
+        "electron"
     ],
     asar: true,
     win: {
@@ -15,7 +17,7 @@ module.exports = {
             target: "nsis",
             arch: ["x64"]
         }],
-        icon: "resources/icon.ico",  // Make sure this exists
+        icon: "resources/electron/icons/win/icon.ico",
         sign: false,
         artifactName: "${productName}-Setup-${version}.${ext}"
     },
@@ -24,9 +26,9 @@ module.exports = {
         createDesktopShortcut: true,
         shortcutName: "SkattChat",
         uninstallDisplayName: "SkattChat",
-        installerIcon: "resources/icon.ico",  // Make sure this exists
-        uninstallerIcon: "resources/icon.ico",  // Make sure this exists
-        installerHeaderIcon: "resources/icon.ico",  // Make sure this exists
+        installerIcon: "resources/electron/icons/win/installer.ico",
+        uninstallerIcon: "resources/electron/icons/win/uninstaller.ico",
+        installerHeaderIcon: "resources/electron/icons/win/header.ico",
         differentialPackage: false,
         removeDefaultUninstallWelcomePage: true
     }

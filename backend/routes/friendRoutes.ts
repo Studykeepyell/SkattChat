@@ -183,6 +183,41 @@ router.get('/requests', authMiddleware, (async (req: AuthRequest, res) => {
     }
 }) as RequestHandler);
 
+// Get user's friends list
+router.get('/:userId/list', authMiddleware, (async (req: AuthRequest, res) => {
+    try {
+        const { userId } = req.params;
+        const currentUserId = req.user?.id;
+
+        if (!currentUserId) {
+            return res.status(401).json({
+                success: false,
+                message: 'User not authenticated'
+            });
+        }
+
+        // Get user with populated friends
+        const user = await User.findById(userId)
+            .populate('friends', 'username profileImage')
+            .select('friends');
+
+        if (!user) {
+            return res.status(404).json({
+                success: false,
+                message: 'User not found'
+            });
+        }
+
+        res.json({
+            success: true,
+            friends: user.friends
+        });
+    } catch (error) {
+        console.error('Get friends list error:', error);
+        res.status(500).json({ success: false, message: 'Failed to get friends list' });
+    }
+}) as RequestHandler);
+
 // Send friend request
 router.post('/requests/send', authMiddleware, (async (req: AuthRequest, res) => {
     try {
