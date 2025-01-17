@@ -36,10 +36,23 @@ export const login = async (req: Request, res: Response) => {
             return res.status(401).json({ success: false, error: 'Invalid credentials' });
         }
 
-        // Debug JWT_SECRET
+        // Debug JWT secrets
         console.log('[LOGIN] JWT_SECRET exists:', !!process.env.JWT_SECRET);
         console.log('[LOGIN] JWT_SECRET length:', process.env.JWT_SECRET?.length);
-        console.log('[LOGIN] JWT_SECRET first 10 chars:', process.env.JWT_SECRET?.substring(0, 10));
+        console.log('[LOGIN] JWT_REFRESH_SECRET exists:', !!process.env.JWT_REFRESH_SECRET);
+        console.log('[LOGIN] JWT_REFRESH_SECRET length:', process.env.JWT_REFRESH_SECRET?.length);
+
+        // Verify secrets are configured
+        if (!process.env.JWT_SECRET || !process.env.JWT_REFRESH_SECRET) {
+            console.error('[LOGIN] Missing JWT secrets:', {
+                hasJwtSecret: !!process.env.JWT_SECRET,
+                hasRefreshSecret: !!process.env.JWT_REFRESH_SECRET
+            });
+            return res.status(500).json({ 
+                success: false, 
+                error: 'Server configuration error' 
+            });
+        }
 
         // Generate token with 'id' instead of 'userId'
         const payload = { id: user._id.toString() };
@@ -47,13 +60,24 @@ export const login = async (req: Request, res: Response) => {
 
         const token = jwt.sign(
             payload,
-            process.env.JWT_SECRET as string,
-            { expiresIn: '3d' }
+            process.env.JWT_SECRET,
+            { expiresIn: '1h' }  // Access token expires in 1 hour
         );
 
-        console.log('[LOGIN] Token generated successfully');
-        console.log('[LOGIN] Token length:', token?.length);
-        console.log('[LOGIN] Token first 20 chars:', token?.substring(0, 20));
+        // Generate refresh token
+        const refreshToken = jwt.sign(
+            payload,
+            process.env.JWT_REFRESH_SECRET,
+            { expiresIn: '7d' }  // Refresh token expires in 7 days
+        );
+
+        // Store refresh token in user document
+        user.refreshToken = refreshToken;
+        await user.save();
+
+        console.log('[LOGIN] Tokens generated successfully');
+        console.log('[LOGIN] Access token length:', token?.length);
+        console.log('[LOGIN] Refresh token length:', refreshToken?.length);
 
         // Verify the token immediately after generation
         try {
@@ -70,6 +94,7 @@ export const login = async (req: Request, res: Response) => {
             userId: user._id.toString(),
             username: user.username,
             token,
+            refreshToken,
             message: 'Login successful'
         };
 

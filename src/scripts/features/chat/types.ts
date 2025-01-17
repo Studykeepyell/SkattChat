@@ -1,12 +1,14 @@
 export interface ChatMessage {
-    username: string;
+    id?: string;
     userId: string;
+    username: string;
     message: string;
     timestamp: string;
-    sender?: string;
-    content?: string;
     messageType?: 'text' | 'gif';
     gifUrl?: string;
+    roomId?: string;
+    content?: string;
+    sender?: string;
 }
 
 export interface ChatRoom {

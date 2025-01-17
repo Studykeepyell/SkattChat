@@ -7,16 +7,6 @@
     <link rel="stylesheet" href="/dist/styles/index.css">
     <link rel="stylesheet" href="/dist/styles/chat.css">
 
-    <meta http-equiv="Content-Security-Policy" 
-          content="default-src 'self';
-                   script-src 'self' 'unsafe-inline' https://cdn.socket.io;
-                   style-src 'self' 'unsafe-inline';
-                   connect-src 'self' https://skattchat.online http://localhost:3000 
-                              ws://localhost:3000/socket.io/ wss://localhost:3000/socket.io/ 
-                              https://skattchat.online/socket.io/ wss://skattchat.online/socket.io/
-                              https://api.giphy.com;
-                   img-src 'self' data: https: blob:">
-
     <style> 
       .no-background { background: none; color: white; height:0.1% } 
       .dark-mode { filter: invert(1) hue-rotate(180deg); }
@@ -27,29 +17,29 @@
       <!-- Taskbar Section -->
       <nav class="taskbar" aria-label="Main navigation">
         <button
-          data-target="account.html"
+          data-target="/dist/pages/account.html"
           class="account-button"
           aria-label="Account"
         >
           <img
-            src="/assets/images/default-avatar.svg"
+            src="/dist/assets/images/default-avatar.svg"
             alt="Account"
             id="taskbar-profile-img"
             style="width: 32px; height: 32px; border-radius: 50%; object-fit: cover;"
           />
         </button>
         <button
-          data-target="addFriend.html"
+          data-target="/dist/pages/addFriend.html"
           aria-label="Add Friend"
           id="addFriendButton"
         >
-          <img src="../assets/images/add-friend.svg" class="button-icon" alt="Add Friend" />
+          <img src="/dist/assets/images/add-friend.svg" class="button-icon" alt="Add Friend" />
         </button>
-        <button data-target="" aria-label="Chat">
-          <img src="../assets/images/chat.svg" class="button-icon" alt="Chat" />
+        <button data-target="/dist/pages/chat.html" aria-label="Chat" class="active">
+          <img src="/dist/assets/images/chat.svg" class="button-icon" alt="Chat" />
         </button>
-        <button data-target="explore.html" aria-label="Navigate">
-          <img src="../assets/images/compass.svg" class="button-icon" alt="Navigate" />
+        <button data-target="/dist/pages/explore.html" aria-label="Navigate">
+          <img src="/dist/assets/images/compass.svg" class="button-icon" alt="Navigate" />
         </button>
         <button
           class="hamburger-icon"
@@ -65,11 +55,11 @@
       <!-- Bubble Menu Section -->
       <div class="bubble-menu" id="bubble-menu" aria-hidden="true">
         <ul>
-          <li><a href="../pages/settings.html">Settings</a></li>
-          <li><a href="../pages/login.html">Log Out</a></li>
-          <li><a href="../pages/account.html">Profile</a></li>
+          <li><a href="/dist/pages/settings.html">Settings</a></li>
+          <li><a href="/dist/pages/login.html">Log Out</a></li>
+          <li><a href="/dist/pages/account.html">Profile</a></li>
           <li><a href="#">Notifications</a></li>
-          <li><button id="darkModeButton" class="no-background">Darkmode</button></li>
+          <li><button id="darkModeButton" class="no-background">Theme</button></li>
         </ul>
       </div>
 

@@ -25,6 +25,7 @@ export class ChatHandler {
         socket.on('joinRoom', (data: any) => this.roomHandlers.handleJoinRoom(socket, data));
         socket.on('createRoom', (data: any) => this.roomHandlers.handleCreateRoom(socket, data));
         socket.on('requestRooms', () => this.roomHandlers.handleRequestRooms(socket));
+        socket.on('leaveRoom', (data: any) => this.roomHandlers.handleLeaveRoom(socket, data));
         
         // Listen for profile updates
         socket.on('profileUpdated', (data: { userId: string, profileImage: any }) => {

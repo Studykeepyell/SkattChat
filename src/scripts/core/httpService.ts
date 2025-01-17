@@ -3,9 +3,19 @@ import { Constants } from "./constants";
 
 // Base HTTP service for making API calls
 export class HttpService {
+    private static authToken: string | null = null;
+
+    static setAuthToken(token: string) {
+        if (!token) return;
+        const cleanToken = token.replace(/['"]+/g, '').trim();
+        this.authToken = cleanToken.startsWith('Bearer ') ? cleanToken : `Bearer ${cleanToken}`;
+        localStorage.setItem(Constants.STORAGE_KEYS.AUTH_TOKEN, this.authToken);
+        console.log('[HTTP] Token set:', this.authToken.substring(0, 20) + '...');
+    }
+
     private static getHeaders(isFormData = false) {
-        const token = localStorage.getItem(Constants.STORAGE_KEYS.AUTH_TOKEN);
-        const cleanToken = token?.replace(/['"]+/g, '');
+        const token = this.authToken || localStorage.getItem(Constants.STORAGE_KEYS.AUTH_TOKEN);
+        const cleanToken = token?.replace(/['"]+/g, '').trim();
         
         console.log('[HTTP] Using token:', cleanToken ? `${cleanToken.substring(0, 20)}...` : 'no token');
         
@@ -16,7 +26,7 @@ export class HttpService {
         }
         
         if (cleanToken) {
-            headers['Authorization'] = `Bearer ${cleanToken}`;
+            headers['Authorization'] = cleanToken.startsWith('Bearer ') ? cleanToken : `Bearer ${cleanToken}`;
             console.log('[HTTP] Authorization header set:', headers['Authorization'].substring(0, 30) + '...');
         }
         
@@ -51,9 +61,9 @@ export class HttpService {
         }
     }
 
-    static async put(url: string, data?: any) {
+    static async put(endpoint: string, data?: any) {
         try {
-            const response = await fetch(url, {
+            const response = await fetch(`${API_CONFIG.BASE_URL}${endpoint}`, {
                 method: 'PUT',
                 headers: this.getHeaders(),
                 body: data ? JSON.stringify(data) : undefined
@@ -61,6 +71,7 @@ export class HttpService {
             return await this.handleResponse(response);
         } catch (error) {
             this.handleError(error);
+            throw error;
         }
     }
 
@@ -92,8 +103,8 @@ export class HttpService {
                 localStorage.removeItem(Constants.STORAGE_KEYS.AUTH_TOKEN);
                 localStorage.removeItem(Constants.STORAGE_KEYS.USER_ID);
                 localStorage.removeItem(Constants.STORAGE_KEYS.USER_PROFILE);
-                // Force reload to login page
-                window.location.replace('/pages/login.html');
+                // Force reload to login page using relative path
+                window.location.href = '../pages/login.html';
                 // Stop execution
                 throw new Error('Authentication failed - redirecting to login');
             }

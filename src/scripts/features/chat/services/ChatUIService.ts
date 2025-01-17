@@ -2,6 +2,7 @@ import { ErrorHandler } from '../../../core/errorHandler';
 import { EventBus } from '../../../core/eventBus';
 import { Constants } from '../../../core/constants';
 import { StorageService } from '../../../core/storageService';
+import { API_CONFIG } from '../../../core/api.config';
 import { ChatService } from './chatService';
 import { MessageService } from '../messageService';
 import { ChatMessage, ChatRoom } from '../types';
@@ -96,10 +97,37 @@ export class ChatUIService {
         // First remove any existing handlers
         EventBus.unsubscribe(Constants.EVENTS.MESSAGES_LOADED, this.messagesLoadedHandler);
         EventBus.unsubscribe(Constants.EVENTS.ROOM_CHANGED, this.roomChangedHandler);
+        EventBus.unsubscribe(Constants.EVENTS.USER_JOINED_ROOM, this.handleUserJoinedRoom);
+        EventBus.unsubscribe(Constants.EVENTS.USER_LEFT_ROOM, this.handleUserLeftRoom);
 
         // Subscribe to message events
         EventBus.subscribe(Constants.EVENTS.MESSAGES_LOADED, this.messagesLoadedHandler);
         EventBus.subscribe(Constants.EVENTS.ROOM_CHANGED, this.roomChangedHandler);
+        EventBus.subscribe(Constants.EVENTS.USER_JOINED_ROOM, this.handleUserJoinedRoom);
+        EventBus.subscribe(Constants.EVENTS.USER_LEFT_ROOM, this.handleUserLeftRoom);
+    }
+
+    private handleUserJoinedRoom = (data: { userId: string, timestamp: string, activeUsers: string[] }) => {
+        console.log('[CHAT_UI] User joined:', data);
+        if (data.activeUsers) {
+            this.updateParticipantCount(data.activeUsers);
+        }
+    };
+
+    private handleUserLeftRoom = (data: { userId: string, timestamp: string, activeUsers: string[] }) => {
+        console.log('[CHAT_UI] User left:', data);
+        if (data.activeUsers) {
+            this.updateParticipantCount(data.activeUsers);
+        }
+    };
+
+    private updateParticipantCount(activeUsers: string[]) {
+        const participantSpan = document.querySelector('.participant-count');
+        if (participantSpan) {
+            const count = activeUsers.length;
+            participantSpan.textContent = `${count} participant${count !== 1 ? 's' : ''}`;
+            console.log('[CHAT_UI] Participant count updated to:', count);
+        }
     }
 
     private handleSubmit = async (event: Event) => {
@@ -175,6 +203,14 @@ export class ChatUIService {
         // Add profile image update handler
         EventBus.subscribe(Constants.EVENTS.UPDATE_ROOM_PROFILE, this.handleProfileImageUpdate.bind(this));
 
+        // Handle page visibility changes
+        document.addEventListener('visibilitychange', () => {
+            if (document.visibilityState === 'visible' && this.currentRoom) {
+                // Request updated room data when page becomes visible
+                this.chatService.requestRoomUpdate();
+            }
+        });
+
         // Add styles for GIF messages
         const style = document.createElement('style');
         style.textContent = `
@@ -212,6 +248,52 @@ export class ChatUIService {
         }
     }
 
+    private getOtherParticipantUsername(room: ChatRoom): string {
+        // If we have a room name in format "User1 & User2", extract the other username
+        const roomName = room.name || room.roomName;
+        if (roomName && roomName.includes(' & ')) {
+            console.log('[CHAT_UI] Room name contains &:', roomName);
+            const [user1Name, user2Name] = roomName.split(' & ').map(name => name.trim());
+            console.log('[CHAT_UI] Room name parts:', { user1Name, user2Name });
+            
+            // Get current user's profile
+            const userProfile = JSON.parse(StorageService.get(Constants.STORAGE_KEYS.USER_PROFILE) || '{}');
+            const currentUsername = userProfile.username;
+            console.log('[CHAT_UI] Current username from profile:', currentUsername);
+            
+            // Return the name that's not the current user's
+            if (currentUsername) {
+                if (user1Name.toLowerCase() === currentUsername.toLowerCase()) {
+                    return user2Name;
+                } else if (user2Name.toLowerCase() === currentUsername.toLowerCase()) {
+                    return user1Name;
+                }
+            }
+            
+            // If we couldn't match the current username, return the second name
+            return user2Name;
+        }
+
+        // If we have members array, try to find the other participant
+        if (room.members && Array.isArray(room.members)) {
+            const currentUserId = StorageService.get(Constants.STORAGE_KEYS.USER_ID);
+            const otherParticipant = room.members.find(
+                member => member._id?.toString() !== currentUserId
+            );
+            if (otherParticipant?.username) {
+                return otherParticipant.username;
+            }
+        }
+
+        // If we still don't have a name but have a room name without "&", use it
+        if (roomName && !roomName.includes(' & ')) {
+            return roomName;
+        }
+
+        console.error('[CHAT_UI] Could not determine other participant name. Room data:', room);
+        return 'Unknown User';
+    }
+
     public updateRoomDisplay(room: ChatRoom) {
         try {
             console.log('[CHAT_UI] Updating room display, full room data:', JSON.stringify(room, null, 2));
@@ -229,139 +311,100 @@ export class ChatUIService {
             console.log('[CHAT_UI] Current room ID:', this.currentRoom);
 
             // Get current user info
-            const userProfile = JSON.parse(StorageService.get(Constants.STORAGE_KEYS.USER_PROFILE) || '{}');
-            const authData = JSON.parse(StorageService.get('authData') || '{}');
             const currentUserId = StorageService.get(Constants.STORAGE_KEYS.USER_ID);
-            const currentUsername = (
-                userProfile.username || 
-                authData.username || 
-                StorageService.get('username') || 
-                ''
-            ).toLowerCase();
 
-            // Determine if this is a private chat (2 participants or contains "Chat Room for")
-            const participantCount = room.participants?.length || room.activeUsers?.length || 0;
-            const isPrivateChat = participantCount === 2 || (room.name?.includes('Chat Room for') || false);
-
-            // For private chats, update profile images
-            if (isPrivateChat && room.participants && isRoomChange) {
-                console.log('[CHAT_UI] Processing private room for profile updates');
-                const otherParticipant = room.participants.find(
-                    participant => participant.username?.toLowerCase() !== currentUsername
-                );
-                
-                if (otherParticipant && otherParticipant.profileImage) {
-                    // Update other participant's profile image in room
-                    EventBus.publish(Constants.EVENTS.UPDATE_ROOM_PROFILE, {
-                        roomId: newRoomId,
-                        targetUserId: otherParticipant._id,
-                        imageData: otherParticipant.profileImage.data,
-                        contentType: otherParticipant.profileImage.contentType || 'image/jpeg'
-                    });
-                }
-
-                // Also update current user's profile image in room
-                if (userProfile.profileImage) {
-                    EventBus.publish(Constants.EVENTS.UPDATE_ROOM_PROFILE, {
-                        roomId: newRoomId,
-                        targetUserId: currentUserId,
-                        imageData: userProfile.profileImage.data,
-                        contentType: userProfile.profileImage.contentType || 'image/jpeg'
-                    });
-                }
-            }
+            // Update active users count and determine if private chat
+            const activeUsers = room.activeUsers || [];
+            this.updateParticipantCount(activeUsers);
             
+            // Check if it's a private chat based on room ID format
+            const isPrivateChat = room.type === 'private' || 
+                                room.roomId?.startsWith('private_chat_') || 
+                                (room.members?.length === 2);
+
             // Update chat heading with room name and participant count
-            const chatHeading = document.getElementById('chat-heading');
-            
-            if (!chatHeading) {
+            if (!this.chatHeading) {
                 throw new Error('Chat heading element not found');
             }
             
-            console.log('[CHAT_UI] Participants:', room.participants || room.activeUsers);
+            console.log('[CHAT_UI] Participants:', room.members || room.participants || room.activeUsers);
             
-            // Get room name using the same logic as chat room list
-            let displayName = room.name || room.roomName;
-            console.log('[CHAT_UI] Initial display name:', displayName);
-            
-            // For private chats, find the other participant
-            if (isPrivateChat && room.participants) {
-                console.log('[CHAT_UI] Processing private room');
-                const otherParticipant = room.participants.find(
-                    participant => participant.username?.toLowerCase() !== currentUsername
-                );
-                if (otherParticipant) {
-                    console.log('[CHAT_UI] Found other participant:', otherParticipant);
-                    displayName = otherParticipant.username;
-                }
-            } else if (displayName?.includes('Chat Room for')) {
-                console.log('[CHAT_UI] Processing "Chat Room for" format');
-                const namesText = displayName.split('Chat Room for ')[1];
-                if (namesText) {
-                    const names = namesText.split(' and ').map(name => name.trim());
-                    console.log('[CHAT_UI] Names from room name:', names);
-                    const otherUser = names.find(name => name.toLowerCase() !== currentUsername);
-                    if (otherUser) {
-                        displayName = otherUser;
-                    }
-                }
-            }
-
-            // If no display name was set, use default
-            if (!displayName) {
-                console.log('[CHAT_UI] No display name found, using default');
-                displayName = 'General Chat';
-            }
-
-            console.log('[CHAT_UI] Final display name:', displayName);
-
             // Find or create the heading elements
-            let headingTitle = chatHeading.querySelector('h2');
-            let participantSpan = chatHeading.querySelector('.participant-count');
-            let profileImage = chatHeading.querySelector('.room-profile-image') as HTMLImageElement;
-            let lastActivitySpan = chatHeading.querySelector('.last-activity');
+            let headingTitle = this.chatHeading.querySelector('h2');
+            let participantSpan = this.chatHeading.querySelector('.participant-count');
+            let profileImage = this.chatHeading.querySelector('.room-profile-image') as HTMLImageElement;
+            let lastActivitySpan = this.chatHeading.querySelector('.last-activity');
             
             if (!headingTitle) {
                 headingTitle = document.createElement('h2');
-                chatHeading.appendChild(headingTitle);
+                this.chatHeading.appendChild(headingTitle);
             }
             
             if (!participantSpan) {
                 participantSpan = document.createElement('span');
                 participantSpan.className = 'participant-count';
-                chatHeading.appendChild(participantSpan);
+                this.chatHeading.appendChild(participantSpan);
             }
 
             if (!profileImage) {
                 profileImage = document.createElement('img');
                 profileImage.className = 'room-profile-image';
                 profileImage.onerror = () => {
-                    profileImage.src = '/assets/images/default-avatar.svg';
+                    profileImage.src = '/dist/assets/images/default-avatar.svg';
                 };
-                chatHeading.insertBefore(profileImage, headingTitle);
+                this.chatHeading.insertBefore(profileImage, headingTitle);
             }
 
             if (!lastActivitySpan) {
                 lastActivitySpan = document.createElement('span');
                 lastActivitySpan.className = 'last-activity';
-                chatHeading.appendChild(lastActivitySpan);
+                this.chatHeading.appendChild(lastActivitySpan);
             }
             
-            // Update the content
-            headingTitle.textContent = displayName;
-            participantSpan.textContent = `${participantCount} participant${participantCount !== 1 ? 's' : ''}`;
-
-            // Update profile image for private chats
-            if (isPrivateChat && room.participants) {
-                const otherParticipant = room.participants.find(
-                    participant => participant.username?.toLowerCase() !== currentUsername
-                );
-                if (otherParticipant?.profileImage?.data) {
-                    profileImage.src = `data:${otherParticipant.profileImage.contentType};base64,${otherParticipant.profileImage.data}`;
+            // For private chats, find the other participant
+            if (isPrivateChat) {
+                console.log('[CHAT_UI] Processing private room');
+                const displayName = this.getOtherParticipantUsername(room);
+                headingTitle.textContent = displayName;
+                
+                // Try to get profile image from members if available
+                if (room.members) {
+                    const otherParticipant = room.members.find(
+                        member => member._id?.toString() !== currentUserId
+                    );
+                    
+                    if (otherParticipant?.profileImage?.data) {
+                        if (otherParticipant.profileImage.data.startsWith('data:')) {
+                            profileImage.src = otherParticipant.profileImage.data;
+                        } else {
+                            profileImage.src = `data:${otherParticipant.profileImage.contentType || 'image/jpeg'};base64,${otherParticipant.profileImage.data}`;
+                        }
+                    } else if (otherParticipant?._id) {
+                        const imageUrl = `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.USER.PROFILE_IMAGE(otherParticipant._id.toString())}?${Date.now()}`;
+                        console.log('[CHAT_UI] Profile image URL:', imageUrl);
+                        profileImage.src = imageUrl;
+                    } else {
+                        profileImage.src = '/dist/assets/images/default-avatar.svg';
+                    }
                 } else {
-                    profileImage.src = '/assets/images/default-avatar.svg';
+                    // If no members data, try to get user ID from room ID
+                    const roomIdParts = room.roomId?.split('_') || [];
+                    if (roomIdParts.length === 4) {
+                        const otherUserId = roomIdParts[2] === currentUserId ? roomIdParts[3] : roomIdParts[2];
+                        const imageUrl = `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.USER.PROFILE_IMAGE(otherUserId)}?${Date.now()}`;
+                        console.log('[CHAT_UI] Profile image URL from room ID:', imageUrl);
+                        profileImage.src = imageUrl;
+                    } else {
+                        profileImage.src = '/dist/assets/images/default-avatar.svg';
+                    }
                 }
+            } else {
+                // For non-private rooms, use room name and default image
+                headingTitle.textContent = room.name || room.roomName || 'General Chat';
+                profileImage.src = '/dist/assets/images/default-avatar.svg';
             }
+
+            this.updateParticipantCount(activeUsers);
 
             // Update last activity
             if (room.lastMessageTime) {

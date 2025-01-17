@@ -23,7 +23,7 @@ export const refreshToken = async (req: Request, res: Response) => {
         const newAccessToken = jwt.sign(
             { id: decoded.id },
             process.env.JWT_SECRET as string,
-            { expiresIn: '1h' } // Access token lasts 1 hour
+            { expiresIn: '3d' } // Access token lasts 3 days
         );
 
         res.json({ accessToken: newAccessToken });

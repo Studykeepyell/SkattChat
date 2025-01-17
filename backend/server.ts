@@ -37,9 +37,10 @@ const app = express();
 const httpServer = createServer(app);
 const io = new Server(httpServer, {
     cors: {
-        origin: ['http://localhost:3000', 'https://skattchat.online', 'app://skattchat'],
+        origin: ['http://localhost:3000', 'http://localhost:3001', 'https://skattchat.online', 'app://skattchat'],
         methods: ['GET', 'POST'],
-        credentials: true
+        credentials: true,
+        allowedHeaders: ['Content-Type', 'Authorization', 'Accept']
     },
     transports: ['websocket', 'polling'],
     allowEIO3: true,
@@ -50,7 +51,7 @@ const io = new Server(httpServer, {
 // Unified CORS configuration
 const corsOptions = {
     origin: function (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) {
-        const allowedOrigins = ['http://localhost:3000', 'https://skattchat.online', 'app://skattchat'];
+        const allowedOrigins = ['http://localhost:3000', 'http://localhost:3001', 'https://skattchat.online', 'app://skattchat'];
         if (!origin || allowedOrigins.includes(origin)) {
             callback(null, true);
         } else {
@@ -71,10 +72,62 @@ app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
 // Configure security headers including CSP
 app.use((req, res, next) => {
-    res.setHeader(
-        'Content-Security-Policy',
-        "default-src 'self'; img-src 'self' data: blob:; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline';"
-    );
+    const isDev = process.env.NODE_ENV === 'development';
+    const cspDirectives = isDev ? {
+        'default-src': ["'self'"],
+        'connect-src': [
+            "'self'",
+            "http://localhost:3000",
+            "ws://localhost:3000",
+            "wss://localhost:3000",
+            "http://localhost:3001",
+            "ws://localhost:3001",
+            "wss://localhost:3001",
+            "http://localhost:3001/socket.io/",
+            "ws://localhost:3001/socket.io/",
+            "wss://localhost:3001/socket.io/",
+            "http://localhost:3000/socket.io/",
+            "ws://localhost:3000/socket.io/",
+            "wss://localhost:3000/socket.io/"
+        ],
+        'script-src': ["'self'", "'unsafe-inline'", "'unsafe-eval'"],
+        'style-src': ["'self'", "'unsafe-inline'"],
+        'img-src': ["'self'", "http://localhost:3000", "http://localhost:3001", "data:", "blob:", "file:"],
+        'font-src': ["'self'", "data:"],
+        'media-src': ["'self'"],
+        'worker-src': ["'self'", "blob:"],
+        'frame-ancestors': ["'self'"],
+        'base-uri': ["'self'"],
+        'form-action': ["'self'"],
+        'object-src': ["'none'"],
+        'manifest-src': ["'self'"]
+    } : {
+        'default-src': ["'self'"],
+        'connect-src': [
+            "'self'",
+            "https://skattchat.online",
+            "wss://skattchat.online",
+            "https://skattchat.online/socket.io/",
+            "wss://skattchat.online/socket.io/"
+        ],
+        'script-src': ["'self'", "'unsafe-inline'"],
+        'style-src': ["'self'", "'unsafe-inline'"],
+        'img-src': ["'self'", "https://skattchat.online", "data:", "blob:", "file:"],
+        'font-src': ["'self'", "data:"],
+        'media-src': ["'self'"],
+        'worker-src': ["'self'", "blob:"],
+        'frame-ancestors': ["'self'"],
+        'base-uri': ["'self'"],
+        'form-action': ["'self'"],
+        'object-src': ["'none'"],
+        'manifest-src': ["'self'"]
+    };
+
+    const cspHeader = Object.entries(cspDirectives)
+        .map(([key, values]) => `${key} ${values.join(' ')}`)
+        .join('; ');
+
+    res.setHeader('Content-Security-Policy', cspHeader);
     next();
 });
 

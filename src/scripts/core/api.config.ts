@@ -1,7 +1,7 @@
 // Base API configuration used throughout the application
 export const API_CONFIG = {
-    BASE_URL: process.env.API_URL || 'http://localhost:3000',
-    SOCKET_URL: process.env.SOCKET_URL || 'http://localhost:3000',
+    BASE_URL: process.env.API_URL || 'http://localhost:3001',
+    SOCKET_URL: process.env.SOCKET_URL || 'http://localhost:3001',
     ENDPOINTS: {
         AUTH: {
             LOGIN: '/api/auth/login',
@@ -27,7 +27,8 @@ export const API_CONFIG = {
         },
         USER: {
             PROFILE: '/api/users/profile',
-            UPDATE: '/api/users/update'
+            UPDATE: '/api/users/update',
+            PROFILE_IMAGE: (userId: string) => `/api/users/${userId}/profile-image`
         }
     },
     HEADERS: {

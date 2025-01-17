@@ -3,59 +3,81 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Add Friends</title>
-    <link rel="stylesheet" href="../styles/addFriend.css">
+    <title>Add Friends - Skattchat</title>
+    <link rel="stylesheet" href="/dist/styles/index.css">
+    <link rel="stylesheet" href="/dist/styles/chat.css">
 </head>
 <body>
-    <!-- Taskbar Section -->
-    <nav class="taskbar">
-        <a href="account.html" class="taskbar-button">
-            <img src="../assets/images/account.svg" class="button-icon" alt="Account"> 
-        </a>        
-        <a href="addFriend.html" class="taskbar-button">
-            <img src="../assets/images/add-friend.svg" class="button-icon" alt="Add Friend"> 
-        </a>
-        <a href="chat.html" class="taskbar-button">
-            <img src="../assets/images/chat.svg" class="button-icon" alt="Chat"> 
-        </a>        
-        <a href="navigate.html" class="taskbar-button">
-            <img src="../assets/images/compass.svg" class="button-icon" alt="Navigate">
-        </a>
-    </nav>
-    
-    <!-- Main Content Section -->
-    <div class="main-content">
-        <!-- Left Section: Search -->
-        <section class="search-section">
-            <h2>Find Friends</h2>
-            <form id="searchForm" class="search-form" onsubmit="return false">
-                <div class="search-box-container">
-                    <input type="text" 
-                           id="searchInput" 
-                           class="search-input"
-                           placeholder="Search by username..."
-                           required>
-                    <button type="submit" class="search-button">
-                        Search
-                    </button>
-                </div>
-            </form>
+    <div class="container">
+        <!-- Taskbar Section -->
+        <nav class="taskbar" aria-label="Main navigation">
+            <button
+                data-target="/dist/pages/account.html"
+                class="account-button"
+                aria-label="Account"
+            >
+                <img
+                    src="/dist/assets/images/default-avatar.svg"
+                    alt="Account"
+                    id="taskbar-profile-img"
+                    style="width: 32px; height: 32px; border-radius: 50%; object-fit: cover;"
+                />
+            </button>
+            <button
+                data-target="/dist/pages/addFriend.html"
+                aria-label="Add Friend"
+                class="active"
+                id="addFriendButton"
+            >
+                <img src="/dist/assets/images/add-friend.svg" class="button-icon" alt="Add Friend" />
+            </button>
+            <button data-target="/dist/pages/chat.html" aria-label="Chat">
+                <img src="/dist/assets/images/chat.svg" class="button-icon" alt="Chat" />
+            </button>
+            <button data-target="/dist/pages/explore.html" aria-label="Navigate">
+                <img src="/dist/assets/images/compass.svg" class="button-icon" alt="Navigate" />
+            </button>
+            <button class="hamburger-icon" id="hamburger-menu" aria-label="More options">
+                <span class="bar"></span>
+                <span class="bar"></span>
+                <span class="bar"></span>
+            </button>
+        </nav>
 
-            <section id="resultsContainer" class="results-container">
-                <!-- Search results will be dynamically added here -->
+        <!-- Bubble Menu Section -->
+        <div class="bubble-menu" id="bubble-menu" aria-hidden="true">
+            <ul>
+                <li><a href="/dist/pages/settings.html">Settings</a></li>
+                <li><a href="/dist/pages/login.html">Log Out</a></li>
+                <li><a href="/dist/pages/account.html">Profile</a></li>
+                <li><a href="#">Notifications</a></li>
+                <li><button id="darkModeButton" class="no-background">Theme</button></li>
+            </ul>
+        </div>
+
+        <!-- Main Content Section -->
+        <div class="content">
+            <!-- Search Section -->
+            <section class="search-section">
+                <h2>Find Friends</h2>
+                <form id="searchForm">
+                    <input type="text" id="searchInput" placeholder="Search for users...">
+                    <button type="submit">Search</button>
+                </form>
+                <div id="resultsContainer"></div>
             </section>
-        </section>
 
-        <!-- Divider -->
-        <div class="divider"></div>
-
-        <!-- Right Section: Friend Requests -->
-        <section class="requests-section">
-            <h2>Friend Requests</h2>
-            <div id="requestsContainer" class="requests-container">
-                <!-- Friend requests will be dynamically added here -->
-            </div>
-        </section>
+            <!-- Friend Requests Section -->
+            <section class="requests-section">
+                <h2>Friend Requests</h2>
+                <div id="requestsContainer"></div>
+            </section>
+        </div>
     </div>
+
+    <!-- Load scripts in correct order -->
+    <script defer src="/dist/runtime.bundle.js"></script>
+    <script defer src="/dist/vendors.bundle.js"></script>
+    <script defer src="/dist/friends.bundle.js"></script>
 </body>
 </html>

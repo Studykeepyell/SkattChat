@@ -30,10 +30,9 @@ export class AuthService {
                 { username, password }
             );
 
-            console.log('[AUTH] Login response success:', response.success);
-            console.log('[AUTH] Login response username:', response.username);
+            console.log('[AUTH] Login response:', { success: response.success, username: response.username });
 
-            if (response.success) {
+            if (response.success && response.token) {
                 this.setAuthData(response);
                 EventBus.publish(Constants.EVENTS.AUTH_CHANGE, { 
                     isAuthenticated: true,
@@ -48,37 +47,49 @@ export class AuthService {
             throw new Error(response.message || 'Login failed');
         } catch (error) {
             console.error('[AUTH] Login error:', error);
-            ErrorHandler.handle(error);
             throw error;
         }
     }
 
-    async register(username: string, password: string): Promise<RegisterResponse> {
+    public async register(username: string, password: string): Promise<boolean> {
         try {
             console.log('[AUTH] Attempting registration for:', username);
-            
-            const response = await HttpService.post(
-                API_CONFIG.ENDPOINTS.AUTH.REGISTER,
-                { username, password }
-            );
-
-            console.log('[AUTH] Registration response success:', response.success);
+            const response = await HttpService.post('/api/auth/register', { username, password });
+            console.log('[AUTH] Registration response:', response);
 
             if (response.success) {
-                this.setAuthData(response);
+                // Store username since it's not included in the response
+                StorageService.set('username', username);
+                
+                // Set auth data with the username we just used for registration
+                this.setAuthData({
+                    userId: response.userId,
+                    username: username,
+                    token: response.token,
+                    refreshToken: response.refreshToken
+                });
+
+                // Notify about successful registration
                 EventBus.publish(Constants.EVENTS.AUTH_CHANGE, { 
                     isAuthenticated: true,
                     user: {
                         id: response.userId,
+                        username: username,
                         token: response.token
                     }
                 });
-                return response;
+
+                return true;
             }
-            throw new Error(response.message || 'Registration failed');
+
+            // If the response indicates failure, throw the error message
+            if (response.message) {
+                throw new Error(response.message);
+            }
+            return false;
         } catch (error) {
-            console.error('[AUTH] Registration error:', error);
-            ErrorHandler.handle(error);
+            console.error('[AUTH] Registration failed:', error);
+            // Rethrow the error to be handled by the UI
             throw error;
         }
     }
@@ -115,33 +126,52 @@ export class AuthService {
         }
     }
 
-    private setAuthData(data: any) {
-        console.log('[AUTH] Setting auth data:', data);
-        
-        // Store full auth data as an object
-        StorageService.set('authData', {
-            userId: data.userId,
-            token: data.token,
-            username: data.username,
-            user: {
-                _id: data.userId,
-                username: data.username
+    private setAuthData(data: { 
+        userId?: string, 
+        username?: string, 
+        token?: string, 
+        refreshToken?: string 
+    }) {
+        try {
+            console.log('[AUTH] Setting auth data:', {
+                userId: data.userId,
+                username: data.username,
+                hasToken: !!data.token,
+                hasRefreshToken: !!data.refreshToken
+            });
+
+            if (!data.token || !data.userId || !data.username) {
+                console.log('[AUTH] Missing required auth data:', {
+                    hasToken: !!data.token,
+                    hasUserId: !!data.userId,
+                    hasUsername: !!data.username
+                });
+                throw new Error('Invalid authentication data received');
             }
-        });
 
-        // Store individual pieces for easy access
-        StorageService.set('token', data.token);
-        StorageService.set('userId', data.userId);
-        StorageService.set('username', data.username);
-        StorageService.set(Constants.STORAGE_KEYS.AUTH_TOKEN, data.token);
-        StorageService.set(Constants.STORAGE_KEYS.USER_ID, data.userId);
+            // Set the auth token in HttpService
+            HttpService.setAuthToken(data.token);
 
-        EventBus.publish(Constants.EVENTS.AUTH_CHANGE, {
-            isAuthenticated: true,
-            userId: data.userId,
-            username: data.username,
-            token: data.token
-        });
+            // Store auth data
+            StorageService.set(Constants.STORAGE_KEYS.AUTH_TOKEN, data.token);
+            StorageService.set(Constants.STORAGE_KEYS.USER_ID, data.userId);
+            StorageService.set('username', data.username);
+
+            if (data.refreshToken) {
+                StorageService.set(Constants.STORAGE_KEYS.REFRESH_TOKEN, data.refreshToken);
+            }
+
+            // Store initial user profile
+            StorageService.set('userProfile', JSON.stringify({
+                id: data.userId,
+                username: data.username
+            }));
+
+            return true;
+        } catch (error) {
+            console.error('[AUTH] Error setting auth data:', error);
+            throw error;
+        }
     }
 
     isAuthenticated(): boolean {

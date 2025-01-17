@@ -20,7 +20,8 @@ const userSchema = new mongoose.Schema({
     profileImage: {
         data: String,
         contentType: String
-    }
+    },
+    refreshToken: { type: String }  // Add refresh token field
 });
 
 // Add password comparison method

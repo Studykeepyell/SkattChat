@@ -10,6 +10,7 @@ export class ChatRoomService {
     private roomList: HTMLElement | null;
     private createRoomBtn: HTMLElement | null;
     private socketHandler: ChatSocketHandler;
+    private readonly DEFAULT_AVATAR = '/assets/images/default-avatar.svg';
 
     constructor() {
         this.roomList = null;
@@ -50,11 +51,21 @@ export class ChatRoomService {
         EventBus.subscribe(Constants.EVENTS.ROOM_CREATED, this.handleRoomCreated.bind(this));
         EventBus.subscribe(Constants.EVENTS.ROOMS_UPDATED, this.displayRooms.bind(this));
         EventBus.subscribe(Constants.EVENTS.PROFILE_IMAGE_UPDATED, this.handleProfileUpdate.bind(this));
+        // Add listener for page navigation to re-enable all rooms
+        window.addEventListener('beforeunload', () => {
+            const allRooms = document.querySelectorAll('.chat-room');
+            allRooms.forEach(room => {
+                const roomElement = room as HTMLElement;
+                roomElement.classList.remove('disabled');
+                roomElement.style.pointerEvents = '';
+                roomElement.style.opacity = '';
+            });
+        });
 
         document.addEventListener('DOMContentLoaded', this.requestInitialRooms.bind(this));
     }
 
-    private requestInitialRooms() {
+    public requestInitialRooms() {
         console.log('[CHAT_ROOM] Requesting initial room list');
         this.socketHandler.requestRooms();
     }
@@ -101,14 +112,20 @@ export class ChatRoomService {
         div.className = 'chat-room';
         div.setAttribute('data-room-id', roomData.roomId);
 
-        if (this.socketHandler.getCurrentRoom() === roomData.roomId) {
+        const isCurrentRoom = this.socketHandler.getCurrentRoom() === roomData.roomId;
+        if (isCurrentRoom) {
             div.classList.add('active');
+            div.classList.add('disabled');
+            div.style.pointerEvents = 'none';
+            div.style.opacity = '0.7';
         }
 
         const profileImg = this.createProfileImage(room, currentUsername, roomData);
         const roomContent = this.createRoomContent(room, roomData);
 
-        div.addEventListener('click', () => this.handleRoomClick(div, roomData.roomId));
+        if (!isCurrentRoom) {
+            div.addEventListener('click', () => this.handleRoomClick(div, roomData.roomId));
+        }
 
         div.appendChild(profileImg);
         div.appendChild(roomContent);
@@ -121,29 +138,39 @@ export class ChatRoomService {
         profileImg.className = 'room-profile-image';
         
         if (room.type === 'private' && room.members) {
+            // First try to find the other participant in members array
+            const currentUserId = StorageService.get(Constants.STORAGE_KEYS.USER_ID);
             const otherParticipant = room.members.find(
-                member => member.username?.toLowerCase() !== currentUsername?.toLowerCase()
+                member => member._id?.toString() !== currentUserId
             );
+            
+            console.log('[CHAT_ROOM] Found other participant:', otherParticipant);
             
             if (otherParticipant?.profileImage?.data) {
                 // Use the base64 data directly from the room data
                 console.log('[CHAT_ROOM] Using embedded profile image for:', otherParticipant.username);
-                profileImg.src = otherParticipant.profileImage.data;
+                if (otherParticipant.profileImage.data.startsWith('data:')) {
+                    profileImg.src = otherParticipant.profileImage.data;
+                } else {
+                    profileImg.src = `data:${otherParticipant.profileImage.contentType || 'image/jpeg'};base64,${otherParticipant.profileImage.data}`;
+                }
             } else if (otherParticipant?._id) {
                 // Fallback to API endpoint if no embedded data
                 console.log('[CHAT_ROOM] Falling back to API endpoint for:', otherParticipant._id);
-                profileImg.src = `${API_CONFIG.BASE_URL}/api/users/${otherParticipant._id}/profile-image?${Date.now()}`;
+                const imageUrl = `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.USER.PROFILE_IMAGE(otherParticipant._id.toString())}?${Date.now()}`;
+                console.log('[CHAT_ROOM] Profile image URL:', imageUrl);
+                profileImg.src = imageUrl;
             } else {
-                profileImg.src = '/assets/images/default-avatar.svg';
+                profileImg.src = this.DEFAULT_AVATAR;
             }
         } else {
-            profileImg.src = roomData.profileImage;
+            profileImg.src = roomData.profileImage || this.DEFAULT_AVATAR;
         }
 
         profileImg.onerror = ((e: Event | string) => {
             const target = e instanceof Event ? e.target as HTMLImageElement : null;
             console.error('[CHAT_ROOM] Error loading profile image:', target?.src);
-            profileImg.src = '/assets/images/default-avatar.svg';
+            profileImg.src = this.DEFAULT_AVATAR;
         }) as OnErrorEventHandler;
 
         return profileImg;
@@ -177,13 +204,16 @@ export class ChatRoomService {
         const timestampContainer = document.createElement('div');
         timestampContainer.className = 'timestamp-container';
         
-        // Try different sources for the timestamp
         const timestamp = document.createElement('div');
         timestamp.className = 'room-timestamp';
         
-        let timeToShow = room.lastMessageTime || 
-                        (typeof room.lastMessage === 'string' ? room.lastMessage : room.lastMessage?.timestamp) || 
-                        room.updatedAt;
+        // Prioritize last message timestamp
+        let timeToShow = null;
+        if (typeof room.lastMessage === 'object' && room.lastMessage?.timestamp) {
+            timeToShow = room.lastMessage.timestamp;
+        } else if (room.lastMessageTime) {
+            timeToShow = room.lastMessageTime;
+        }
                         
         if (timeToShow) {
             timestamp.textContent = this.formatLastActivity(new Date(timeToShow));
@@ -235,32 +265,122 @@ export class ChatRoomService {
 
     private handleRoomClick(roomElement: HTMLElement, roomId: string) {
         const allRooms = document.querySelectorAll('.chat-room');
-        allRooms.forEach(room => room.classList.remove('active'));
-        roomElement.classList.add('active');
+        allRooms.forEach(room => {
+            const element = room as HTMLElement;
+            element.classList.remove('active', 'disabled');
+            element.style.pointerEvents = '';
+            element.style.opacity = '';
+        });
+        
+        roomElement.classList.add('active', 'disabled');
+        roomElement.style.pointerEvents = 'none';
+        roomElement.style.opacity = '0.7';
+        
         EventBus.publish(Constants.EVENTS.JOIN_ROOM, roomId);
     }
 
     // Room Data Processing
-    private getRoomDisplayData(room: ChatRoom, currentUsername: string): RoomDisplayData {
-        const roomId = room._id || room.roomId || '';
-        let displayName = room.name || room.roomName || '';
-        let profileImage = '/assets/images/default-avatar.svg';
-        let lastActivity = room.lastMessageTime ? this.formatLastActivity(room.lastMessageTime) : undefined;
+    private getOtherParticipantUsername(room: ChatRoom): string {
+        if (!room.type || room.type !== 'private' || !room.roomId) {
+            return room.name || room.roomName || 'General Chat';
+        }
 
-        if (room.type === 'private' && room.members) {
-            const otherParticipant = room.members.find(
-                member => member.username?.toLowerCase() !== currentUsername?.toLowerCase()
-            );
-            if (otherParticipant) {
-                displayName = otherParticipant.username;
-                if (otherParticipant.profileImage?.data) {
-                    profileImage = otherParticipant.profileImage.data;
+        const currentUserId = StorageService.get(Constants.STORAGE_KEYS.USER_ID);
+        console.log('[CHAT_ROOM] Current user ID:', currentUserId);
+        
+        // Extract user IDs from room ID for private chats
+        // Format: private_chat_userId1_userId2
+        const roomIdParts = room.roomId.split('_');
+        if (roomIdParts.length !== 4) {
+            console.error('[CHAT_ROOM] Invalid room ID format:', room.roomId);
+            return room.name || 'Unknown User';
+        }
+
+        const user1Id = roomIdParts[2];
+        const user2Id = roomIdParts[3];
+        console.log('[CHAT_ROOM] Room users:', user1Id, user2Id);
+        
+        // Find which ID is not the current user's
+        const otherUserId = user1Id === currentUserId ? user2Id : user1Id;
+        console.log('[CHAT_ROOM] Other user ID:', otherUserId);
+
+        // Get current user's profile
+        const userProfile = JSON.parse(StorageService.get(Constants.STORAGE_KEYS.USER_PROFILE) || '{}');
+        const currentUsername = userProfile.username;
+        console.log('[CHAT_ROOM] Current username from profile:', currentUsername);
+
+        // If we have a room name in format "User1 & User2", extract the other username
+        if (room.name && room.name.includes(' & ')) {
+            console.log('[CHAT_ROOM] Room name contains &:', room.name);
+            const [user1Name, user2Name] = room.name.split(' & ').map(name => name.trim());
+            console.log('[CHAT_ROOM] Room name parts:', { user1Name, user2Name });
+            
+            // Return the name that's not the current user's
+            if (currentUsername) {
+                if (user1Name.toLowerCase() === currentUsername.toLowerCase()) {
+                    return user2Name;
+                } else if (user2Name.toLowerCase() === currentUsername.toLowerCase()) {
+                    return user1Name;
                 }
+            }
+            
+            // If we couldn't match the current username, return the second name
+            // This is a reasonable fallback since the room name is usually formatted as "CurrentUser & OtherUser"
+            return user2Name;
+        }
+
+        // If we have memberProfiles, use that as a backup
+        if (room.memberProfiles) {
+            const otherParticipant = room.memberProfiles.find(
+                member => member.userId.toString() === otherUserId
+            );
+            if (otherParticipant?.username) {
+                console.log('[CHAT_ROOM] Found username in memberProfiles:', otherParticipant.username);
+                return otherParticipant.username;
             }
         }
 
+        // If we still don't have a name but have a room name without "&", use it
+        if (room.name && !room.name.includes(' & ')) {
+            return room.name;
+        }
+
+        console.error('[CHAT_ROOM] Could not determine other participant name. Room data:', room);
+        return 'Unknown User';
+    }
+
+    private getRoomDisplayData(room: ChatRoom, currentUsername: string): RoomDisplayData {
+        const roomId = room._id || room.roomId || '';
+        let displayName = '';
+        let profileImage = '/dist/assets/images/default-avatar.svg';
+        let lastActivity = room.lastMessageTime ? this.formatLastActivity(room.lastMessageTime) : undefined;
+
+        // Check if it's a private chat (either explicitly marked or has exactly 2 members)
+        const isPrivateChat = room.type === 'private' || (room.members?.length === 2);
+        
+        if (isPrivateChat) {
+            displayName = this.getOtherParticipantUsername(room);
+            
+            // Set profile image if available
+            const currentUserId = StorageService.get(Constants.STORAGE_KEYS.USER_ID);
+            const otherParticipant = room.memberProfiles?.find(
+                member => member.userId.toString() !== currentUserId
+            );
+            
+            if (otherParticipant?.profileImage?.data) {
+                if (otherParticipant.profileImage.data.startsWith('data:')) {
+                    profileImage = otherParticipant.profileImage.data;
+                } else {
+                    profileImage = `data:${otherParticipant.profileImage.contentType || 'image/jpeg'};base64,${otherParticipant.profileImage.data}`;
+                }
+            }
+        } else {
+            // For non-private rooms, use the room name
+            displayName = room.name || room.roomName || 'General Chat';
+        }
+
         return {
-            displayName: displayName || 'General Chat',
+            displayName,
             roomId,
             profileImage,
             lastActivity

@@ -24,9 +24,12 @@ export class AuthPage {
         const token = StorageService.get(Constants.STORAGE_KEYS.AUTH_TOKEN);
         const userId = StorageService.get(Constants.STORAGE_KEYS.USER_ID);
 
+        console.log('Auth check - Token exists:', token);
+        console.log('Auth check - UserID exists:', userId);
+
         if (token && userId) {
-            // If already authenticated, redirect to chat
-            window.location.href = '/dist/pages/chat.html';
+            // If already authenticated, redirect to chat using relative path
+            window.location.href = '../pages/chat.html';
         }
     }
 

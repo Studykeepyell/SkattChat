@@ -32,7 +32,7 @@ export class FriendService {
 
     async loadFriendRequests() {
         try {
-            const userId = StorageService.get('userId');
+            const userId = StorageService.get(Constants.STORAGE_KEYS.USER_ID);
             if (!userId) throw new Error('User ID not found');
 
             const response = await HttpService.get(
@@ -105,7 +105,7 @@ export class FriendService {
                     roomId: `private_chat_${currentUserId}_${friendId}`,
                     type: 'private',
                     members: [currentUserId, friendId],
-                    name: `Chat with ${friendProfile.username}`,
+                    name: `${currentUserProfile.username} & ${friendProfile.username}`,
                     memberProfiles: [
                         {
                             userId: currentUserId,

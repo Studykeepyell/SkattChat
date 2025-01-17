@@ -2,11 +2,13 @@
 export const Constants = {
     API_URL: process.env.NODE_ENV === 'production' 
         ? 'https://skattchat.online' 
-        : 'http://localhost:3000',
+        : 'http://localhost:3001',
     STORAGE_KEYS: {
-        AUTH_TOKEN: 'auth_token',
-        USER_ID: 'user_id',
-        USER_PROFILE: 'user_profile'
+        AUTH_TOKEN: 'authToken',
+        USER_ID: 'userId',
+        USER_PROFILE: 'userProfile',
+        USERNAME: 'username',
+        REFRESH_TOKEN: 'refreshToken'
     },
     EVENTS: {
         // Auth Events
@@ -27,6 +29,8 @@ export const Constants = {
         ROOM_LEFT: 'roomLeft',
         ROOM_UPDATED: 'roomUpdated',
         UPDATE_ROOM_PROFILE: 'updateRoomProfile',
+        USER_JOINED_ROOM: 'userJoinedRoom',
+        USER_LEFT_ROOM: 'userLeftRoom',
         
         // Socket Events
         CONNECT: 'socket:connect',
@@ -59,7 +63,10 @@ export const Constants = {
         // Video Call Events
         LOCAL_STREAM_READY: 'local-stream-ready',
         MIC_TOGGLE: 'mic-toggle',
-        VIDEO_TOGGLE: 'video-toggle'
+        VIDEO_TOGGLE: 'video-toggle',
+        
+        // Theme Events
+        THEME_CHANGE: 'themeChange'
     },
     TIMEOUTS: {
         API_REQUEST: 30000,

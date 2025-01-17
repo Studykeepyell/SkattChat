@@ -3,6 +3,7 @@ import { ErrorHandler } from '../../core/errorHandler';
 import { EventBus } from '../../core/eventBus';
 import { Constants } from '../../core/constants';
 import { StorageService } from '../../core/storageService';
+import { API_CONFIG } from '../../core/api.config';
 import { ChatMessage, MessageData } from './types';
 
 export class MessageService {
@@ -132,10 +133,12 @@ export class MessageService {
             });
         }
 
-        // Get current user's username
-        const authData = StorageService.get('authData');
-        const currentUsername = authData ? JSON.parse(authData).username : '';
-        const isCurrentUser = username.toLowerCase() === currentUsername?.toLowerCase();
+        // Get current user's ID
+        const currentUserId = StorageService.get(Constants.STORAGE_KEYS.USER_ID);
+        console.log('[MESSAGE_SERVICE] Message User ID:', userId);
+        console.log('[MESSAGE_SERVICE] Current User ID:', currentUserId);
+        const isCurrentUser = userId === currentUserId;
+        console.log('[MESSAGE_SERVICE] Is Current User:', isCurrentUser);
 
         // Add date separator if needed
         if (dateDividerText !== lastMessageDate) {
@@ -155,7 +158,7 @@ export class MessageService {
         // Add profile image
         const profileImg = document.createElement('img');
         profileImg.className = 'profile-image';
-        profileImg.src = `/api/users/${userId}/profile-image?${Date.now()}`; // Add timestamp to prevent caching
+        profileImg.src = `${API_CONFIG.BASE_URL}/api/users/${userId}/profile-image?${Date.now()}`; // Add timestamp to prevent caching
         profileImg.style.width = '40px';
         profileImg.style.height = '40px';
         profileImg.style.borderRadius = '50%';

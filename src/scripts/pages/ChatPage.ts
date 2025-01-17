@@ -23,6 +23,7 @@ import { EmojiService } from '../features/chat/services/EmojiService';
 
 // Friend module
 import { FriendModule } from '../features/friend/index';
+import { ChatRoom } from '../features/chat/types';
 
 export class ChatPage {
     private static instance: ChatPage;
@@ -76,34 +77,45 @@ export class ChatPage {
     }
 
     private async initializeComponents() {
-        // Initialize friend module
-        this.initializeFriendModule();
-        
-        // Setup event listeners
-        this.setupEventListeners();
+        try {
+            // Initialize socket first
+            console.log('Initializing socket handler...');
+            this.services.socket.initialize();
 
-        // Load user profile
-        console.log('Loading user profile...');
-        await this.services.profile.loadUserProfile();
+            // Initialize UI services
+            console.log('Initializing UI services...');
+            this.services.taskbar.initialize();
+            this.services.theme.initialize();
+            this.services.menu.initialize();
+            this.services.ui.initialize();
 
-        // Initialize UI services
-        this.services.taskbar.initialize();
-        this.services.theme.initialize();
-        this.services.menu.initialize();
-        this.services.ui.initialize();
+            // Initialize chat room service after socket is ready
+            console.log('Initializing chat room service...');
+            this.services.room.initialize();
 
-        // Initialize chat services
-        this.services.socket.initialize();
-        this.services.room.initialize();
+            // Initialize friend module
+            console.log('Initializing friend module...');
+            this.initializeFriendModule();
+            
+            // Setup event listeners
+            this.setupEventListeners();
 
-        // Initialize UI components
-        const messageInputRoot = document.getElementById('message-input-root');
-        if (messageInputRoot) {
-            this.services.messageInput = new MessageInputService(messageInputRoot);
-            this.services.emoji.initialize();
+            // Load user profile
+            console.log('Loading user profile...');
+            await this.services.profile.loadUserProfile();
+
+            // Initialize message input last
+            const messageInputRoot = document.getElementById('message-input-root');
+            if (messageInputRoot) {
+                this.services.messageInput = new MessageInputService(messageInputRoot);
+                this.services.emoji.initialize();
+            }
+
+            console.log('Chat page initialization complete');
+        } catch (error) {
+            console.error('Error during component initialization:', error);
+            throw error;
         }
-
-        console.log('Chat page initialization complete');
     }
 
     private initializeServices(auth: ChatAuthService): void {
@@ -164,8 +176,16 @@ export class ChatPage {
     }
 
     private setupEventListeners() {
+        // Core events
         EventBus.subscribe(Constants.EVENTS.AUTH_CHANGE, this.services.auth.handleAuthChange.bind(this.services.auth));
         EventBus.subscribe(Constants.EVENTS.PROFILE_UPDATE, this.services.profile.handleProfileUpdate.bind(this.services.profile));
+        
+        // Room events
+        EventBus.subscribe(Constants.EVENTS.ROOM_CHANGED, (room: ChatRoom) => {
+            if (room.lastMessage) {
+                this.services.room.requestInitialRooms();
+            }
+        });
     }
 }
 

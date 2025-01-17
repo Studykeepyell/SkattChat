@@ -519,20 +519,32 @@ button:hover {
 .bubble-menu {
   display: none;
   position: fixed;
-  bottom: 10%;
-  left: 50%;
-  transform: translateX(-50%);
+  left: 8%; /* Position right after the taskbar which is 8% width */
+  bottom: 20px; /* Align with hamburger menu which is at the bottom */
   width: 12.5rem;
   background-color: #37474F;
   color: #ECEFF1;
   border-radius: 0.5rem;
-  box-shadow: 0 0.25rem 0.5rem rgba(0, 0, 0, 0.1);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
   padding: 1rem;
-  z-index: 1000;
+  z-index: 9999;
+  transform: none;
 }
 
 .bubble-menu.active {
   display: block;
+  animation: fadeIn 0.2s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateX(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
 }
 
 .bubble-menu ul {
@@ -947,4 +959,148 @@ button:hover {
     border-radius: 50%;
     margin-right: 12px;
     object-fit: cover;
+}
+
+@keyframes newMessageBorder {
+    0% { border-color: transparent; }
+    50% { border-color: #ff4444; }
+    100% { border-color: transparent; }
+}
+
+.chat-room.new-message {
+    animation: newMessageBorder 1s ease-in-out;
+    border: 2px solid transparent;
+}
+
+.chat-room {
+    border: 2px solid transparent;
+    transition: border-color 0.3s ease;
+}
+
+/* Friends Page Styles */
+.search-section, .requests-section {
+  padding: 2rem;
+  background: #fff;
+  border-radius: 0.5rem;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  margin-bottom: 2rem;
+}
+
+.search-section h2, .requests-section h2 {
+  color: #37474F;
+  margin-bottom: 1.5rem;
+  font-size: 1.5rem;
+}
+
+#searchForm {
+  display: flex;
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+#searchInput {
+  flex: 1;
+  padding: 0.75rem 1rem;
+  border: 1px solid #e0e0e0;
+  border-radius: 0.5rem;
+  font-size: 1rem;
+  transition: all 0.3s ease;
+}
+
+#searchInput:focus {
+  outline: none;
+  border-color: #00BCD4;
+  box-shadow: 0 0 0 2px rgba(0, 188, 212, 0.1);
+}
+
+#searchForm button {
+  padding: 0.75rem 1.5rem;
+  background-color: #00BCD4;
+  color: white;
+  border: none;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+#searchForm button:hover {
+  background-color: #0097A7;
+  transform: scale(1.05);
+}
+
+.box {
+  display: flex;
+  align-items: center;
+  padding: 1rem;
+  background: #f5f5f5;
+  border-radius: 0.5rem;
+  margin-bottom: 1rem;
+  transition: all 0.3s ease;
+}
+
+.box:hover {
+  background: #e0e0e0;
+  transform: translateX(5px);
+}
+
+.box img {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  margin-right: 1rem;
+  object-fit: cover;
+}
+
+.user-info {
+  flex: 1;
+  font-size: 1rem;
+  color: #37474F;
+}
+
+.box button {
+  padding: 0.5rem 1rem;
+  background-color: #00BCD4;
+  color: white;
+  border: none;
+  border-radius: 0.25rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.box button:hover:not(:disabled) {
+  background-color: #0097A7;
+  transform: scale(1.05);
+}
+
+.box button:disabled {
+  background-color: #ccc;
+  cursor: not-allowed;
+}
+
+.button-container {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.accept-button {
+  background-color: #4CAF50 !important;
+}
+
+.accept-button:hover {
+  background-color: #388E3C !important;
+}
+
+.decline-button {
+  background-color: #f44336 !important;
+}
+
+.decline-button:hover {
+  background-color: #d32f2f !important;
+}
+
+.no-requests {
+  text-align: center;
+  color: #757575;
+  font-style: italic;
+  padding: 2rem;
 }

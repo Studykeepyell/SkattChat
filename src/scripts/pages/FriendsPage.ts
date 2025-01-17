@@ -3,6 +3,11 @@ import { ErrorHandler } from '../core/errorHandler';
 import { HttpService } from '../core/httpService';
 import { API_CONFIG } from '../core/api.config';
 import { StorageService } from '../core/storageService';
+import { Constants } from '../core/constants';
+import { TaskbarService } from '../features/layout/TaskbarService';
+import { MenuService } from '../features/layout/MenuService';
+import { ThemeService } from '../features/layout/ThemeService';
+import { EventBus } from '../core/eventBus';
 
 interface FriendRequestResponse {
     success: boolean;
@@ -10,36 +15,89 @@ interface FriendRequestResponse {
 }
 
 export class FriendsPage {
+    private static instance: FriendsPage;
     private friendModule!: FriendModule;
     private searchForm!: HTMLFormElement | null;
     private searchInput!: HTMLInputElement | null;
     private resultsContainer!: HTMLElement | null;
     private requestsContainer!: HTMLElement | null;
-    private readonly DEFAULT_PROFILE = 'data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgdmlld0JveD0iMCAwIDI0IDI0IiBmaWxsPSJub25lIiBzdHJva2U9ImN1cnJlbnRDb2xvciIgc3Ryb2tlLXdpZHRoPSIyIiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiPjxwYXRoIGQ9Ik0yMCAyMXYtMmE0IDQgMCAwIDAtNC00SDhhNCA0IDAgMCAwLTQgNHYyIj48L3BhdGg+PGNpcmNsZSBjeD0iMTIiIGN5PSI3IiByPSI0Ij48L2NpcmNsZT48L3N2Zz4=';
+    private readonly DEFAULT_PROFILE = '/dist/assets/images/default-avatar.svg';
+    private services!: {
+        taskbar: TaskbarService;
+        menu: MenuService;
+        theme: ThemeService;
+    };
 
-    constructor() {
-        this.initialize();
+    private constructor() {}
+
+    public static async init(): Promise<FriendsPage> {
+        if (!FriendsPage.instance) {
+            FriendsPage.instance = new FriendsPage();
+            await FriendsPage.instance.initialize();
+        }
+        return FriendsPage.instance;
     }
 
-    private initialize() {
+    private async initialize() {
         try {
             // Check if user is authenticated
-            const token = StorageService.get('token');
-            const userId = StorageService.get('userId');
+            const token = StorageService.get(Constants.STORAGE_KEYS.AUTH_TOKEN);
+            const userId = StorageService.get(Constants.STORAGE_KEYS.USER_ID);
 
             if (!token || !userId) {
                 window.location.href = '/dist/pages/login.html';
                 return;
             }
 
+            console.log('Starting friends page initialization...');
+            await this.initializeComponents();
+            console.log('Friends page initialization complete');
+        } catch (error) {
+            console.error('Error during friends page initialization:', error);
+            ErrorHandler.handle(error);
+            window.location.href = '/dist/pages/login.html';
+        }
+    }
+
+    private async initializeComponents() {
+        try {
+            // Initialize services
+            console.log('Initializing services...');
+            this.initializeServices();
+
+            // Load profile image and setup listener
+            console.log('Loading profile image...');
+            this.loadProfileImage();
+            this.setupProfileUpdateListener();
+
+            // Initialize friend module
+            console.log('Initializing friend module...');
             this.friendModule = new FriendModule();
             this.friendModule.initialize();
+
+            // Setup UI elements
+            console.log('Setting up UI elements...');
             this.setupElements();
             this.setupEventListeners();
-            this.loadFriendRequests(); // Load initial friend requests
+
+            // Load initial data
+            console.log('Loading initial data...');
+            await this.loadFriendRequests();
         } catch (error) {
-            ErrorHandler.handle(error);
+            console.error('Error during component initialization:', error);
+            throw error;
         }
+    }
+
+    private initializeServices(): void {
+        this.services = {
+            taskbar: new TaskbarService(),
+            menu: new MenuService(),
+            theme: new ThemeService()
+        };
+
+        // Initialize all services
+        Object.values(this.services).forEach(service => service.initialize());
     }
 
     private setupElements() {
@@ -85,7 +143,7 @@ export class FriendsPage {
     }
 
     private async fetchFriends() {
-        const userId = StorageService.get('userId');
+        const userId = StorageService.get(Constants.STORAGE_KEYS.USER_ID);
         if (!userId) {
             throw new Error('User ID not found');
         }
@@ -122,7 +180,9 @@ export class FriendsPage {
         userBox.className = 'box';
 
         const userImage = document.createElement('img');
-        const profileImagePath = user.profileImage?.data ? `/api/users/${user._id}/profile-image` : this.DEFAULT_PROFILE;
+        const profileImagePath = user.profileImage?.data 
+            ? `${API_CONFIG.BASE_URL}/api/users/${user._id}/profile-image` 
+            : this.DEFAULT_PROFILE;
         userImage.src = profileImagePath;
         userImage.alt = 'User profile';
         userImage.onerror = () => {
@@ -247,8 +307,46 @@ export class FriendsPage {
 
         return requestBox;
     }
+
+    private loadProfileImage(): void {
+        const userId = StorageService.get(Constants.STORAGE_KEYS.USER_ID);
+        if (userId) {
+            const taskbarProfileImg = document.getElementById('taskbar-profile-img') as HTMLImageElement;
+            if (taskbarProfileImg) {
+                const imageUrl = `${API_CONFIG.BASE_URL}/api/users/${userId}/profile-image?${Date.now()}`;
+                console.log('Loading profile image from:', imageUrl);
+                taskbarProfileImg.src = imageUrl;
+                taskbarProfileImg.onerror = () => {
+                    console.log('Profile image load failed, using default');
+                    taskbarProfileImg.src = this.DEFAULT_PROFILE;
+                };
+            }
+        }
+    }
+
+    private setupProfileUpdateListener(): void {
+        // Listen for profile updates from other components
+        EventBus.subscribe(Constants.EVENTS.PROFILE_UPDATE, (profile: any) => {
+            console.log('Profile update received:', profile);
+            const taskbarProfileImg = document.getElementById('taskbar-profile-img') as HTMLImageElement;
+            if (taskbarProfileImg && profile.profileImage) {
+                taskbarProfileImg.src = profile.profileImage;
+            }
+        });
+    }
 }
 
-document.addEventListener('DOMContentLoaded', () => {
-    new FriendsPage();
-}); 
+// Initialize the application when the DOM is ready
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => {
+        FriendsPage.init().catch(error => {
+            console.error('Failed to initialize friends page:', error);
+            window.location.href = '/dist/pages/login.html';
+        });
+    });
+} else {
+    FriendsPage.init().catch(error => {
+        console.error('Failed to initialize friends page:', error);
+        window.location.href = '/dist/pages/login.html';
+    });
+} 

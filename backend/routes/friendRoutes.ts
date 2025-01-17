@@ -77,7 +77,7 @@ router.put('/requests/accept', authMiddleware, (async (req: AuthRequest, res) =>
             ChatRoom.create({
                 roomId: `private_chat_${request.sender._id}_${request.receiver._id}`,
                 type: 'private',
-                name: `Chat with ${request.sender.username}`,
+                name: `${request.receiver.username} & ${request.sender.username}`,
                 members: [request.sender._id, request.receiver._id],
                 memberProfiles: [
                     {

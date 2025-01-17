@@ -107,39 +107,28 @@ export class RoomSocketHandlers {
             const messages = await this.getMessages(roomId);
             console.log('[CHAT] Retrieved message history:', messages);
 
-            // Use the existing room instead of finding it again
-            const room = existingRoom;
-
-            if (room.type === 'private') {
-                const memberIds = room.members;
-                const users = (await Promise.all(memberIds.map((id: Types.ObjectId) => 
-                    User.findById(id).select('_id username').lean()
-                ))).filter(Boolean);
-
-                const otherUser = users.find(u => u?._id.toString() !== socket.userId);
-                if (otherUser?.username) {
-                    room.name = `Chat with ${otherUser.username}`;
-                }
-            }
-        
             // Join the socket room
             await socket.join(roomId);
             console.log(`User ${socket.id} joined room: ${roomId}`);
+
+            // Get current active users in the room
+            const roomSockets = await this.io.in(roomId).fetchSockets();
+            const activeUsers = roomSockets.map(s => (s as unknown as CustomSocket).userId).filter(Boolean);
         
             // Notify other users in the room
             socket.to(roomId).emit('userJoined', {
-                userId: socket.id,
-                timestamp: new Date().toISOString()
+                userId: socket.userId,
+                timestamp: new Date().toISOString(),
+                activeUsers
             });
         
-            // Send room data to joining user
+            // Send room data to joining user without updating timestamp
             socket.emit('roomUpdate', {
                 roomId,
-                roomName: room.name,
-                activeUsers: Array.from(this.io.sockets.adapter.rooms.get(roomId) || []),
+                roomName: existingRoom.name,
+                activeUsers,
                 metadata: {
-                    createdAt: existingRoom.createdAt,
-                    lastActivity: existingRoom.updatedAt
+                    createdAt: existingRoom.createdAt
                 }
             });
 
@@ -153,6 +142,27 @@ export class RoomSocketHandlers {
                 details: error.message,
                 code: 'ROOM_LOAD_ERROR'
             });
+        }
+    }
+
+    async handleLeaveRoom(socket: CustomSocket, data: { roomId: string, userId: string }) {
+        try {
+            const { roomId } = data;
+            socket.leave(roomId);
+
+            // Get remaining active users in the room
+            const roomSockets = await this.io.in(roomId).fetchSockets();
+            const activeUsers = roomSockets.map(s => (s as unknown as CustomSocket).userId).filter(Boolean);
+
+            // Notify others that user left with updated active users count
+            socket.broadcast.to(roomId).emit('userLeft', { 
+                userId: socket.userId,
+                timestamp: new Date().toISOString(),
+                activeUsers
+            });
+        } catch (error) {
+            console.error('Error handling leave room:', error);
+            socket.emit('errorMessage', { error: 'Failed to leave room' });
         }
     }
 
@@ -304,4 +314,48 @@ export class RoomSocketHandlers {
             return [];
         }
     }
+
+    async handleMessage(socket: CustomSocket, data: any) {
+        try {
+            const { roomId, message, timestamp } = data;
+            
+            // Update room's last message and timestamp
+            await ChatRoom.findOneAndUpdate(
+                { roomId },
+                { 
+                    lastMessage: message,
+                    lastMessageTime: timestamp || new Date().toISOString()
+                }
+            );
+
+            // Create message data with notification flag and roomId
+            const messageData = {
+                ...message,
+                roomId, // Include roomId in the message
+                timestamp: timestamp || new Date().toISOString(),
+                shouldNotify: true
+            };
+
+            // Broadcast message to all users in the room except sender
+            socket.broadcast.to(roomId).emit('message', messageData);
+
+            // Send acknowledgment to sender
+            socket.emit('message', {
+                ...message,
+                roomId,
+                timestamp: timestamp || new Date().toISOString(),
+                shouldNotify: false
+            });
+
+            // Trigger room list update for all users in the room
+            const room = await ChatRoom.findOne({ roomId });
+            if (room) {
+                this.io.to(roomId).emit('roomUpdate', room);
+            }
+        } catch (error) {
+            console.error('Error handling message:', error);
+            socket.emit('errorMessage', { error: 'Failed to send message' });
+        }
+    }
+
 } 

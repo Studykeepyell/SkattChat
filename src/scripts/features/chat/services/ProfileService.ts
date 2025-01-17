@@ -5,6 +5,8 @@ import { UserProfile } from './ChatAuthService';
 import { API_CONFIG } from '../../../core/api.config';
 
 export class ProfileService {
+    private readonly DEFAULT_AVATAR = '/dist/assets/images/default-avatar.svg';
+
     constructor(private currentUser: UserProfile | null) {
         console.log('ProfileService initialized with user:', {
             hasUser: !!currentUser,
@@ -53,7 +55,7 @@ export class ProfileService {
             // Handle image load error
             profileImg.onerror = () => {
                 console.log('Profile image load failed, using default');
-                profileImg.src = '/assets/images/default-avatar.svg';
+                profileImg.src = this.DEFAULT_AVATAR;
             };
 
             // Handle successful load
@@ -62,17 +64,12 @@ export class ProfileService {
             };
         } catch (error) {
             console.error('Error updating profile image:', error);
-            profileImg.src = '/assets/images/default-avatar.svg';
+            profileImg.src = this.DEFAULT_AVATAR;
         }
     }
 
     private updateUsername(): void {
-        const usernameElement = document.getElementById("username-display");
-        console.log('Updating username:', {
-            hasElement: !!usernameElement,
-            username: this.currentUser?.profile?.username
-        });
-
+        const usernameElement = document.getElementById("taskbar-username");
         if (usernameElement && this.currentUser?.profile?.username) {
             usernameElement.textContent = this.currentUser.profile.username;
         }
