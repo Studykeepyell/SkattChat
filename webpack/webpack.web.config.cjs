@@ -107,7 +107,8 @@ module.exports = merge(common, {
     proxy: [{
       context: ['/api', '/socket.io'],
       target: 'http://localhost:3001',
-      ws: true
+      ws: true,
+      changeOrigin: true
     }],
     open: true,
     compress: true

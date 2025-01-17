@@ -5,8 +5,8 @@ export class AuthModule {
     private authService: AuthService;
     private authUI: AuthUIService;
 
-    constructor(formId: string) {
+    constructor(formId: string, isRegistration: boolean = false) {
         this.authService = new AuthService();
-        this.authUI = new AuthUIService(formId);
+        this.authUI = new AuthUIService(formId, isRegistration);
     }
 } 

@@ -6,13 +6,13 @@ import { StorageService } from '../../core/storageService';
 export class AuthPage {
     protected authModule: AuthModule = {} as AuthModule;
 
-    constructor(formId: string) {
+    constructor(formId: string, isRegistration: boolean = false) {
         try {
-            this.authModule = new AuthModule(formId);
+            this.authModule = new AuthModule(formId, isRegistration);
             this.setupErrorHandling();
             
             // Only check auth status on login page
-            if (window.location.pathname.includes('login.html')) {
+            if (!isRegistration && window.location.pathname.includes('login.html')) {
                 this.checkAuthStatus();
             }
         } catch (error) {

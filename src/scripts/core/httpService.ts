@@ -38,7 +38,8 @@ export class HttpService {
             console.log(`[HTTP] Making GET request to: ${endpoint}`);
             const response = await fetch(`${API_CONFIG.BASE_URL}${endpoint}`, {
                 method: 'GET',
-                headers: this.getHeaders()
+                headers: this.getHeaders(),
+                credentials: 'include'
             });
             return this.handleResponse(response);
         } catch (error) {
@@ -52,7 +53,8 @@ export class HttpService {
             const response = await fetch(`${API_CONFIG.BASE_URL}${endpoint}`, {
                 method: 'POST',
                 headers: this.getHeaders(),
-                body: JSON.stringify(data)
+                body: JSON.stringify(data),
+                credentials: 'include'
             });
             return this.handleResponse(response);
         } catch (error) {
@@ -66,7 +68,8 @@ export class HttpService {
             const response = await fetch(`${API_CONFIG.BASE_URL}${endpoint}`, {
                 method: 'PUT',
                 headers: this.getHeaders(),
-                body: data ? JSON.stringify(data) : undefined
+                body: data ? JSON.stringify(data) : undefined,
+                credentials: 'include'
             });
             return await this.handleResponse(response);
         } catch (error) {
@@ -81,7 +84,8 @@ export class HttpService {
             const response = await fetch(`${API_CONFIG.BASE_URL}${endpoint}`, {
                 method: 'POST',
                 headers: this.getHeaders(true), // Pass true for FormData
-                body: formData
+                body: formData,
+                credentials: 'include'
             });
             return this.handleResponse(response);
         } catch (error) {

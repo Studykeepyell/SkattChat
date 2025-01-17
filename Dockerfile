@@ -1,41 +1,59 @@
-FROM node:18-alpine AS builder
+FROM node:20-alpine AS builder
 
 # Set working directory
 WORKDIR /app
 
+# Install build dependencies
+RUN apk add --no-cache python3 make g++ gcc
+
 # Copy package files
 COPY package*.json ./
+COPY backend/package*.json ./backend/
 
 # Install dependencies
-RUN npm install
+RUN npm install --ignore-scripts
+RUN cd backend && npm install --ignore-scripts
 
-# Copy source code
-COPY src ./src
-COPY backend ./backend
-COPY public ./public
-COPY tsconfig*.json ./
-COPY vite.config.* ./
+# Copy source files
+COPY . .
 
-# Build the application
-RUN npm run build
+# Build web files
+RUN npm run build:web
 
-# Production stage
-FROM node:18-alpine
+# Second stage
+FROM node:20-alpine AS backend
 
 WORKDIR /app
 
-# Copy package files and install production dependencies
-COPY package*.json ./
-RUN npm install --production
+# Install build dependencies and node-pre-gyp
+RUN apk add --no-cache python3 make g++ gcc && \
+    npm install -g node-pre-gyp
 
-# Copy built frontend from builder stage
-COPY --from=builder /app/dist ./dist
+# Create backend directory and copy package files
+RUN mkdir -p backend
+COPY backend/package*.json backend/
 
-# Copy backend files
-COPY --from=builder /app/backend ./backend
+# Install production dependencies and rebuild bcrypt
+WORKDIR /app/backend
+RUN npm install --omit=dev && \
+    npm rebuild bcrypt --build-from-source
 
-# Expose port for the Node.js backend
-EXPOSE 3000
+# Switch back to app directory
+WORKDIR /app
 
-# Start the application
-CMD ["npm", "start"]
+# Copy built web files from builder stage
+COPY --from=builder /app/public/dist ./public/dist
+COPY --from=builder /app/public/assets ./public/assets
+COPY --from=builder /app/public/styles ./public/styles
+COPY --from=builder /app/public/index.html ./public/index.html
+COPY --from=builder /app/public/favicon.ico ./public/favicon.ico
+
+# Copy compiled backend files
+COPY --from=builder /app/backend/dist ./backend/dist
+COPY backend/.env ./backend/.env
+
+# Expose port for backend
+EXPOSE 3001
+
+# Start the backend server using the compiled JS file
+CMD ["node", "backend/dist/server.js"]

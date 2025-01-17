@@ -1,0 +1,30 @@
+# Dependencies
+node_modules
+npm-debug.log
+
+# Build output
+dist
+build
+release
+
+# Version control
+.git
+.gitignore
+
+# Environment files
+.env
+.env.*
+
+# IDE files
+.idea
+.vscode
+
+# Temporary files
+*.swp
+*~
+.DS_Store
+
+# Large directories
+images/
+temp/
+.temp/ 

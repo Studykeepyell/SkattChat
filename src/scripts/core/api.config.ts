@@ -1,7 +1,11 @@
 // Base API configuration used throughout the application
 export const API_CONFIG = {
-    BASE_URL: process.env.API_URL || 'http://localhost:3001',
-    SOCKET_URL: process.env.SOCKET_URL || 'http://localhost:3001',
+    BASE_URL: process.env.NODE_ENV === 'production' 
+        ? 'https://skattchat.online' 
+        : 'http://localhost',
+    SOCKET_URL: process.env.NODE_ENV === 'production'
+        ? 'https://skattchat.online'
+        : 'http://localhost',
     ENDPOINTS: {
         AUTH: {
             LOGIN: '/api/auth/login',

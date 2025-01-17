@@ -2,7 +2,7 @@
 export const Constants = {
     API_URL: process.env.NODE_ENV === 'production' 
         ? 'https://skattchat.online' 
-        : 'http://localhost:3001',
+        : 'http://localhost',
     STORAGE_KEYS: {
         AUTH_TOKEN: 'authToken',
         USER_ID: 'userId',

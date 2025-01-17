@@ -8,7 +8,8 @@ const pathBrowserify = require('path-browserify');
 const env = {
     ...process.env,
     ...dotenv.config().parsed,
-    NODE_ENV: process.env.NODE_ENV || 'development'
+    NODE_ENV: process.env.NODE_ENV || 'development',
+    API_URL: process.env.NODE_ENV === 'production' ? 'https://skattchat.online' : ''
 };
 
 // Stringify all values
