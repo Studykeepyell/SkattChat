@@ -139,28 +139,22 @@ function createWindow(): void {
         
         // Handle absolute paths that start with C:/ or similar
         if (/^[A-Za-z]:/i.test(normalizedUrl)) {
-            // If it's a direct path to dist/pages, use it as is
-            if (normalizedUrl.includes('electron/dist')) {
-                const relativePath = normalizedUrl.substring(normalizedUrl.indexOf('electron/dist') + 'electron/dist'.length).replace(/^\//, '');
-                const filePath = path.join(process.cwd(), 'electron', 'dist', relativePath);
-                console.log('Full path request:', filePath);
-                return callback({ path: filePath });
-            }
-            
-            // If it's a path like C:/dist/pages/chat.html, reconstruct it
+            // If it's a path within the app.asar, reconstruct it relative to app root
             if (normalizedUrl.includes('/dist/')) {
-                const relativePath = normalizedUrl.substring(normalizedUrl.indexOf('/dist/') + '/dist/'.length);
-                const filePath = path.join(process.cwd(), 'electron', 'dist', relativePath);
-                console.log('Reconstructed path:', filePath);
+                const relativePath = normalizedUrl.substring(normalizedUrl.indexOf('/dist/') + 1);
+                const filePath = path.join(app.getAppPath(), relativePath);
+                console.log('Reconstructed asar path:', filePath);
                 return callback({ path: filePath });
             }
         }
         
-        // For relative paths
-        const filePath = path.join(process.cwd(), 'electron', 'dist', normalizedUrl);
+        // For relative paths in development
+        const filePath = isDev 
+            ? path.join(process.cwd(), normalizedUrl)
+            : path.join(app.getAppPath(), normalizedUrl);
         
         console.log('Request URL:', request.url);
-        console.log('Normalized URL (no query):', normalizedUrl);
+        console.log('Normalized URL:', normalizedUrl);
         console.log('Final Path:', filePath);
         
         // Check if file exists
@@ -173,10 +167,14 @@ function createWindow(): void {
     });
 
     // Updated path resolution logic
-    const indexPath = path.join(process.cwd(), 'electron', 'dist', 'pages', 'login.html');
+    const indexPath = isDev 
+        ? path.join(process.cwd(), 'dist', 'pages', 'login.html')
+        : path.join(app.getAppPath(), 'dist', 'pages', 'login.html');
 
     console.log('Current working directory:', process.cwd());
+    console.log('App directory:', app.getAppPath());
     console.log('Loading index from:', indexPath);
+    console.log('Is Development:', isDev);
 
     // Verify file exists before loading
     if (!require('fs').existsSync(indexPath)) {
@@ -187,6 +185,8 @@ function createWindow(): void {
                     <h2>Error loading application</h2>
                     <p>Could not find the login page at: ${indexPath}</p>
                     <p>Current directory: ${process.cwd()}</p>
+                    <p>App directory: ${app.getAppPath()}</p>
+                    <p>Is Development: ${isDev}</p>
                 </body>
             </html>
         `);

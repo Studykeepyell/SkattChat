@@ -15,13 +15,28 @@ module.exports = merge(common, {
     friends: path.resolve(process.cwd(), 'src/scripts/pages/FriendsPage.ts'),
     account: path.resolve(process.cwd(), 'src/scripts/pages/AccountPage.ts'),
     explore: path.resolve(process.cwd(), 'src/scripts/pages/ExplorePage.ts'),
-    videoCall: path.resolve(process.cwd(), 'src/scripts/pages/VideoCallPage.ts')
+    videoCall: path.resolve(process.cwd(), 'src/scripts/pages/VideoCallPage.ts'),
+    // Download related entries
+    downloadHandler: path.resolve(process.cwd(), 'public/download/download-handler.ts'),
+    apiConfig: path.resolve(process.cwd(), 'public/download/api.config.ts'),
+    downloadInit: path.resolve(process.cwd(), 'public/download/init.ts'),
+    downloadButtons: path.resolve(process.cwd(), 'public/download/download-buttons.ts'),
   },
   output: {
     path: path.resolve(process.cwd(), 'public/dist'),
     filename: '[name].bundle.js',
     clean: true,
-    publicPath: '/'
+    publicPath: '/dist/',
+    library: {
+      type: 'window',
+      name: '[name]'
+    }
+  },
+  optimization: {
+    splitChunks: {
+      chunks: 'all',
+      name: 'vendors'
+    }
   },
   target: 'web',
   devtool: 'inline-source-map',

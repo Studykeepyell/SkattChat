@@ -1,59 +1,56 @@
-class DownloadHandler {
-    private baseUrl: string;
-    private downloadEndpoint: string;
+import API_CONFIG from './api.config';
 
+interface DownloadHandler {
+    downloadApp(platform: 'windows' | 'mac' | 'linux'): void;
+}
+
+declare global {
+    interface Window {
+        downloadHandler: DownloadHandler;
+        apiConfig: typeof API_CONFIG;
+    }
+}
+
+class DownloadHandlerImpl implements DownloadHandler {
     constructor() {
-        this.baseUrl = window.location.origin;
-        this.downloadEndpoint = '/api/downloads';
+        console.log('DownloadHandler initialized');
     }
 
-    async downloadApp(platform: string) {
+    downloadApp(platform: 'windows' | 'mac' | 'linux'): void {
+        console.log(`Attempting to download for ${platform}`);
         try {
-            const response = await fetch(`${this.downloadEndpoint}/latest/${platform}`, {
-                method: 'GET',
-                headers: {
-                    'Accept': 'application/octet-stream'
-                }
-            });
+            const config = window.apiConfig || API_CONFIG;
+            let downloadUrl: string;
 
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
+            switch (platform) {
+                case 'windows':
+                    downloadUrl = config.ENDPOINTS.DOWNLOADS.WINDOWS;
+                    break;
+                case 'mac':
+                    downloadUrl = config.ENDPOINTS.DOWNLOADS.MAC;
+                    break;
+                case 'linux':
+                    downloadUrl = config.ENDPOINTS.DOWNLOADS.LINUX;
+                    break;
+                default:
+                    throw new Error(`Unsupported platform: ${platform}`);
             }
 
-            // Create blob with proper type
-            const blob = await response.blob();
-            const filename = this.getFilenameFromResponse(response) || 'SkattChat-x64-Setup.exe';
-            
-            // Create and click download link
-            const url = window.URL.createObjectURL(new Blob([blob], { 
-                type: 'application/octet-stream' 
-            }));
-            const a = document.createElement('a');
-            a.style.display = 'none';
-            a.href = url;
-            a.download = filename;
-            document.body.appendChild(a);
-            a.click();
-            
-            // Cleanup after short delay to ensure download starts
-            setTimeout(() => {
-                window.URL.revokeObjectURL(url);
-                document.body.removeChild(a);
-            }, 100);
+            if (platform === 'windows') {
+                console.log(`Downloading from: ${downloadUrl}`);
+                window.location.href = downloadUrl;
+            } else {
+                alert(`Downloads for ${platform} are coming soon!`);
+            }
         } catch (error) {
             console.error('Download error:', error);
             alert('Download failed. Please try again later.');
         }
     }
-
-    getFilenameFromResponse(response: any) {
-        const disposition = response.headers.get('content-disposition');
-        if (disposition && disposition.includes('filename=')) {
-            return disposition.split('filename=')[1].replace(/"/g, '');
-        }
-        return null;
-    }
-    
 }
 
-export default DownloadHandler;
+// Create the handler instance
+const handler = new DownloadHandlerImpl();
+
+// Export for webpack to expose to window
+export default handler;

@@ -9,9 +9,9 @@ const API_CONFIG = {
         }
     },
     FILENAMES: {
-        WINDOWS: 'Skychat-Setup.exe',
-        MAC: 'Skychat.dmg',
-        LINUX: 'Skychat.AppImage'
+        WINDOWS: 'SkattChat Setup 1.0.0',
+        MAC: 'SkattChat.dmg',
+        LINUX: 'SkattChat.AppImage'
     }
 };
 

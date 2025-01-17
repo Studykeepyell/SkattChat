@@ -15,16 +15,12 @@
   <link rel="stylesheet" href="/styles/download.css">
   <link rel="stylesheet" href="/styles/fonts.css">
   
-  <script>
-    window.addEventListener('error', function(e) {
-      if (e.target.tagName === 'LINK' || e.target.tagName === 'SCRIPT') {
-        console.warn(`Resource loading failed: ${e.target.src || e.target.href}`);
-      }
-    }, true);
-  </script>
-  
-  <script src="/dist/app.bundle.js"></script>
-  <script src="/dist/scripts/download-handler.js"></script>
+  <!-- Load the bundles -->
+  <script src="./dist/vendors.bundle.js"></script>
+  <script src="./dist/apiConfig.bundle.js"></script>
+  <script src="./dist/downloadHandler.bundle.js"></script>
+  <script src="./dist/downloadInit.bundle.js"></script>
+  <script src="./dist/downloadButtons.bundle.js"></script>
 </head>
 
 <body>
@@ -45,18 +41,15 @@
             <a href="#" class="btn btn--action btn--large btn--dark btn-group-btn">explore <span class="btn-group-btn-pill">something new</span></a>
     
             <!-- Updated download buttons -->
-            <button onclick="downloadHandler.downloadApp('windows')" 
-                    class="btn btn--action btn--large btn--dark btn-group-btn download-btn windows-dl">
+            <a href="/downloads/SkattChat Setup 1.0.0.exe" class="btn btn--action btn--large btn--dark btn-group-btn download-btn windows-dl" data-platform="windows" download="SkattChat Setup 1.0.0.exe">
                 <i class="ri-windows-fill"></i> Download for Windows
-            </button>
-            <button onclick="downloadHandler.downloadApp('mac')" 
-                    class="btn btn--action btn--large btn--dark btn-group-btn download-btn mac-dl">
+            </a>
+            <a href="#" class="btn btn--action btn--large btn--dark btn-group-btn download-btn mac-dl" data-platform="mac" download>
                 <i class="ri-apple-fill"></i> Download for macOS
-            </button>
-            <button onclick="downloadHandler.downloadApp('linux')" 
-                    class="btn btn--action btn--large btn--dark btn-group-btn download-btn linux-dl">
+            </a>
+            <a href="#" class="btn btn--action btn--large btn--dark btn-group-btn download-btn linux-dl" data-platform="linux" download>
                 <i class="ri-ubuntu-fill"></i> Download for Linux
-            </button>
+            </a>
         </div>
     </section>
     
@@ -173,18 +166,15 @@
           <div class="benefits__footer-btn-group btn-group">
             <a href="#" class="btn btn--action btn--large btn--dark btn-group-btn">explore <span
                 class="btn-group-btn-pill">something new</span></a>
-            <button onclick="downloadHandler.downloadApp('windows')" 
-                    class="btn btn--action btn--large btn--dark btn-group-btn download-btn windows-dl">
+            <a href="./downloads/SkattChat Setup 1.0.0.exe" class="btn btn--action btn--large btn--dark btn-group-btn download-btn windows-dl" data-platform="windows" download="SkattChat Setup 1.0.0.exe">
                 <i class="ri-windows-fill"></i> Download for Windows
-            </button>
-            <button onclick="downloadHandler.downloadApp('mac')" 
-                    class="btn btn--action btn--large btn--dark btn-group-btn download-btn mac-dl">
+            </a>
+            <a href="#" class="btn btn--action btn--large btn--dark btn-group-btn download-btn mac-dl" data-platform="mac" download>
                 <i class="ri-apple-fill"></i> Download for macOS
-            </button>
-            <button onclick="downloadHandler.downloadApp('linux')" 
-                    class="btn btn--action btn--large btn--dark btn-group-btn download-btn linux-dl">
+            </a>
+            <a href="#" class="btn btn--action btn--large btn--dark btn-group-btn download-btn linux-dl" data-platform="linux" download>
                 <i class="ri-ubuntu-fill"></i> Download for Linux
-            </button>
+            </a>
           </div>
         </div>
 
@@ -212,10 +202,6 @@
 
   </main>
   <script src="/socket.io/socket.io.js"></script>
-  <script>
-    // Initialize download handler
-    const downloadHandler = new DownloadHandler();
-  </script>
 </body>
 
 </html>

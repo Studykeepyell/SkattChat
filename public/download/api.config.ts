@@ -1,30 +1,42 @@
-export {};
+interface ApiConfig {
+    BASE_URL: string;
+    ENDPOINTS: {
+        DOWNLOADS: {
+            WINDOWS: string;
+            MAC: string;
+            LINUX: string;
+            VERIFY: (platform: string) => string;
+        }
+    };
+    FILENAMES: {
+        WINDOWS: string;
+        MAC: string;
+        LINUX: string;
+    };
+}
 
 declare global {
     interface Window {
-        API_CONFIG: typeof API_CONFIG;
+        apiConfig: ApiConfig;
     }
 }
 
-const API_CONFIG = {
+const API_CONFIG: ApiConfig = {
     BASE_URL: window.location.origin,
     ENDPOINTS: {
         DOWNLOADS: {
-            WINDOWS: '/api/downloads/latest/windows',
-            MAC: '/api/downloads/latest/mac',
-            LINUX: '/api/downloads/latest/linux',
-            VERIFY: (platform: string) => `/api/downloads/latest/${platform}/verify`
+            WINDOWS: '/dist/releases/SkattChat-Setup-1.0.0.exe',
+            MAC: '/dist/releases/SkattChat-1.0.0.dmg',
+            LINUX: '/dist/releases/SkattChat-1.0.0.AppImage',
+            VERIFY: (platform: string) => `/api/downloads/verify/${platform}`
         }
     },
     FILENAMES: {
-        WINDOWS: 'SkyChat-Setup.exe',
-        MAC: 'SkyChat.dmg',
-        LINUX: 'SkyChat.AppImage'
+        WINDOWS: 'SkattChat Setup 1.0.0.exe',
+        MAC: 'SkattChat-1.0.0.dmg',
+        LINUX: 'SkattChat-1.0.0.AppImage'
     }
 };
 
-if (typeof module !== 'undefined' && module.exports) {
-    module.exports = API_CONFIG;
-} else {
-    window.API_CONFIG = API_CONFIG;
-}
+// Export for webpack
+export default API_CONFIG;

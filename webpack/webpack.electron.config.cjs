@@ -45,7 +45,7 @@ const mainConfig = {
     entry: path.resolve(process.cwd(), 'electron/main.ts'),
     output: {
         filename: 'main.bundle.cjs',
-        path: path.resolve(process.cwd(), 'electron/dist'),
+        path: path.resolve(process.cwd(), 'dist'),
         clean: false,
         library: {
             type: 'commonjs2'
@@ -71,7 +71,7 @@ const preloadConfig = {
     entry: path.resolve(process.cwd(), 'electron/preload.ts'),
     output: {
         filename: 'preload.bundle.cjs',
-        path: path.resolve(process.cwd(), 'electron/dist'),
+        path: path.resolve(process.cwd(), 'dist'),
         clean: false
     },
     module: {
@@ -127,7 +127,7 @@ const rendererConfig = {
         videoCall: path.resolve(process.cwd(), 'src/scripts/pages/VideoCallPage.ts')
     },
     output: {
-        path: path.resolve(process.cwd(), 'electron/dist'),
+        path: path.resolve(process.cwd(), 'dist'),
         filename: '[name].bundle.js',
         clean: false,
         publicPath: '../'
@@ -240,17 +240,12 @@ const rendererConfig = {
             patterns: [
                 {
                     from: path.resolve(process.cwd(), 'src/assets'),
-                    to: path.resolve(process.cwd(), 'electron/dist/assets'),
+                    to: path.resolve(process.cwd(), 'dist/assets'),
                     noErrorOnMissing: true
                 },
                 {
                     from: path.resolve(process.cwd(), 'src/styles'),
-                    to: path.resolve(process.cwd(), 'electron/dist/styles'),
-                    noErrorOnMissing: true
-                },
-                {
-                    from: path.resolve(process.cwd(), 'src/resources'),
-                    to: path.resolve(process.cwd(), 'electron/dist/resources'),
+                    to: path.resolve(process.cwd(), 'dist/styles'),
                     noErrorOnMissing: true
                 }
             ]

@@ -1,7 +1,7 @@
 const { contextBridge, ipcRenderer } = require('electron');
 
 // Define allowed IPC channels
-const validChannels = ['auth:login', 'auth:register', 'chat:message', 'video:call'] as const;
+const validChannels = ['auth:login', 'auth:register', 'chat:message', 'video:call', 'download'] as const;
 type ValidChannel = typeof validChannels[number];
 
 interface IpcRenderer {
@@ -11,6 +11,7 @@ interface IpcRenderer {
 
 interface Api {
     request(endpoint: string, options?: RequestInit): Promise<unknown>;
+    download(url: string, filename: string): Promise<void>;
 }
 
 interface ElectronAPI {
@@ -52,6 +53,14 @@ try {
                         return response.json();
                     } catch (error) {
                         console.error('API request failed:', error);
+                        throw error;
+                    }
+                },
+                async download(url: string, filename: string) {
+                    try {
+                        ipcRenderer.send('download', { url, filename });
+                    } catch (error) {
+                        console.error('Download failed:', error);
                         throw error;
                     }
                 }
