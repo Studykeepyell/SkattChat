@@ -1,0 +1,60 @@
+version: '3.8'
+
+services:
+  backend:
+    build:
+      context: ../..
+      dockerfile: docker/dev/Dockerfile.dev
+    container_name: skattchat-backend-dev
+    ports:
+      - "3001:3001"
+    environment:
+      - NODE_ENV=development
+      - PORT=3001
+      - HOST=0.0.0.0
+      - MONGO_URI=mongodb+srv://Sky:Sky090726@cluster1.ripon.mongodb.net/?retryWrites=true&w=majority&appName=Cluster1
+      - JWT_SECRET=4a3f0b1cdd785d0871e3b7e5a3db4f8a0c6d8e8f0e7c9b1c2d3e4f5a6b7c8d9e
+      - JWT_REFRESH_SECRET=1a1ee034eb0ca536992c894897eaef94f7c73a5538b0d16ae53d2a650ff57f7a
+      - LOCAL_API_URL=http://localhost
+      - ONLINE_API_URL=https://skattchat.online
+      - OPENAI_API_KEY=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
+      - GIPHY_API_KEY=xvALP5ayBaiAvATq6Sx8VpxhS30zCeD2
+      - CORS_ORIGIN=http://localhost
+    volumes:
+      - ../../backend:/app/backend
+      - ../../backend/dist:/app/backend/dist
+      - ../../src:/app/src
+      - ../../public:/app/public
+      - ../../public/download:/app/public/download
+      - ../../public/downloads:/app/public/downloads
+      - ../../webpack:/app/webpack
+      - ../../.env:/app/.env
+      - /app/backend/node_modules
+    networks:
+      - skattchat-network-dev
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:3001/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  nginx:
+    build:
+      context: ../..
+      dockerfile: docker/dev/Dockerfile.nginx
+    container_name: skattchat-nginx-dev
+    ports:
+      - "80:80"
+    depends_on:
+      backend:
+        condition: service_healthy
+    volumes:
+      - ./nginx.dev.conf:/etc/nginx/conf.d/default.conf
+      - ../../public:/usr/share/nginx/html
+    networks:
+      - skattchat-network-dev
+
+networks:
+  skattchat-network-dev:
+    driver: bridge
+    name: skattchat-network-dev 

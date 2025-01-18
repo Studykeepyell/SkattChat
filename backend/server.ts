@@ -24,7 +24,8 @@ import friendRoutes from './routes/friendRoutes.js';
 config({ path: join(__dirname, '../.env') });
 
 const isDevelopment = process.env.NODE_ENV === 'development';
-console.log('Environment:', process.env.NODE_ENV);
+console.log('[SERVER] Environment:', process.env.NODE_ENV);
+console.log('[SERVER] MongoDB URI:', process.env.MONGODB_URI);
 
 // Ensure downloads directory exists
 const DOWNLOADS_DIR = join(__dirname, '../dist/releases');
@@ -35,25 +36,19 @@ if (!existsSync(DOWNLOADS_DIR)) {
 // App and Server Setup
 const app = express();
 const httpServer = createServer(app);
-const io = new Server(httpServer, {
-    cors: {
-        origin: ['http://localhost', 'http://localhost:3000', 'http://localhost:3001', 'https://skattchat.online', 'app://skattchat'],
-        methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-        credentials: true,
-        allowedHeaders: ['Content-Type', 'Authorization', 'Accept']
-    },
-    transports: ['websocket', 'polling'],
-    allowEIO3: true,
-    pingTimeout: 60000,
-    maxHttpBufferSize: 1e8
-});
 
-// Unified CORS configuration
+// Unified CORS configuration for both Express and Socket.IO
+const allowedOrigins = isDevelopment 
+    ? ['http://localhost', 'http://localhost:80', 'http://localhost:3000', 'http://localhost:3001', 'http://localhost:8080']
+    : ['https://skattchat.online', 'app://skattchat'];
+
+console.log('[SERVER] Allowed origins:', allowedOrigins);
+
 const corsOptions = {
     origin: function (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) {
-        const allowedOrigins = ['http://localhost', 'http://localhost:3000', 'http://localhost:3001', 'https://skattchat.online', 'app://skattchat'];
         // Allow requests with no origin (like mobile apps or curl requests)
         if (!origin || allowedOrigins.includes(origin)) {
+            console.log('[CORS] Accepted origin:', origin);
             callback(null, true);
         } else {
             console.log('[CORS] Rejected origin:', origin);
@@ -67,6 +62,20 @@ const corsOptions = {
     preflightContinue: false
 };
 
+// Socket.IO setup with CORS
+const io = new Server(httpServer, {
+    cors: {
+        origin: allowedOrigins,
+        methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+        credentials: true,
+        allowedHeaders: ['Content-Type', 'Authorization', 'Accept']
+    },
+    transports: ['websocket', 'polling'],
+    allowEIO3: true,
+    pingTimeout: 60000,
+    maxHttpBufferSize: 1e8
+});
+
 // Apply CORS middleware
 app.use(cors(corsOptions));
 
@@ -76,6 +85,8 @@ app.options('*', cors(corsOptions));
 // Body parsing middleware
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
+
+
 
 // Configure security headers including CSP
 app.use((req, res, next) => {
@@ -144,16 +155,8 @@ app.use((req, res, next) => {
 // Debugging middleware
 app.use((req, res, next) => {
     console.log(`[${req.method}] ${req.path}`);
-    if (Object.keys(req.body).length) console.log('Body:', req.body);
-    if (req.headers.authorization) console.log('Auth header present');
-    next();
-});
-
-// Image request logging
-app.use((req, res, next) => {
-    if (req.path.includes('/assets/images/')) {
-        console.log('Image request:', req.path);
-    }
+    if (Object.keys(req.body).length) console.log('[REQUEST] Body:', req.body);
+    if (req.headers.authorization) console.log('[REQUEST] Auth header present');
     next();
 });
 
@@ -190,7 +193,7 @@ app.get('/pages/:page', (req, res) => {
 
 // Error handler
 const errorHandler: ErrorRequestHandler = (err, req, res, next) => {
-    console.error('Error occurred:', err);
+    console.error('[ERROR]:', err);
     res.status(err.status || 500).json({
         error: isDevelopment ? err.message : 'Internal Server Error',
         details: isDevelopment ? err.stack : undefined
@@ -202,10 +205,25 @@ app.use(errorHandler);
 // Socket.IO setup
 setupSocket(io);
 
-// Database connection
-connectDB();
+// Database connection and server start
+const startServer = async () => {
+    try {
+        // Connect to MongoDB first
+        await connectDB();
+        console.log('[SERVER] MongoDB connected successfully');
 
-// Start server
-const PORT = parseInt(process.env.PORT || '3001', 10);
-const HOST = process.env.HOST || '0.0.0.0';
-httpServer.listen(PORT, () => console.log(`Server running at http://${HOST}:${PORT}`));
+        // Then start the server
+        const PORT = parseInt(process.env.PORT || '3001', 10);
+        const HOST = process.env.HOST || '0.0.0.0';
+        
+        httpServer.listen(PORT, () => {
+            console.log(`[SERVER] Running at http://${HOST}:${PORT}`);
+            console.log(`[SERVER] Development mode: ${isDevelopment}`);
+        });
+    } catch (error) {
+        console.error('[SERVER] Failed to start:', error);
+        process.exit(1);
+    }
+};
+
+startServer();

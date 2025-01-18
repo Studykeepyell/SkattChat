@@ -20,6 +20,10 @@ COPY . .
 # Build web files
 RUN npm run build:web
 
+# Build backend TypeScript files
+WORKDIR /app/backend
+RUN npm run build
+
 # Second stage
 FROM node:20-alpine AS backend
 
@@ -50,10 +54,22 @@ COPY --from=builder /app/public/favicon.ico ./public/favicon.ico
 
 # Copy compiled backend files
 COPY --from=builder /app/backend/dist ./backend/dist
-COPY backend/.env ./backend/.env
+
+# Create directory for uploads
+RUN mkdir -p backend/uploads
+
+# Set environment variables with defaults
+ENV NODE_ENV=production \
+    PORT=3001 \
+    HOST=0.0.0.0 \
+    CORS_ORIGIN=https://skattchat.online
 
 # Expose port for backend
 EXPOSE 3001
+
+# Create a healthcheck
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+    CMD wget --no-verbose --tries=1 --spider http://localhost:${PORT}/api/health || exit 1
 
 # Start the backend server using the compiled JS file
 CMD ["node", "backend/dist/server.js"]

@@ -2,10 +2,10 @@
 export const API_CONFIG = {
     BASE_URL: process.env.NODE_ENV === 'production' 
         ? 'https://skattchat.online' 
-        : 'http://localhost',
+        : 'http://localhost:3001',
     SOCKET_URL: process.env.NODE_ENV === 'production'
         ? 'https://skattchat.online'
-        : 'http://localhost',
+        : 'http://localhost:3001',
     ENDPOINTS: {
         AUTH: {
             LOGIN: '/api/auth/login',

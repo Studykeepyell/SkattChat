@@ -6,7 +6,9 @@ export class AuthModule {
     private authUI: AuthUIService;
 
     constructor(formId: string, isRegistration: boolean = false) {
+        console.log('[AUTH MODULE] Initializing with:', { formId, isRegistration });
         this.authService = new AuthService();
         this.authUI = new AuthUIService(formId, isRegistration);
+        console.log('[AUTH MODULE] Initialized UI service');
     }
 } 

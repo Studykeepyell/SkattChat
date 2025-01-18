@@ -8,13 +8,20 @@ export class AuthPage {
 
     constructor(formId: string, isRegistration: boolean = false) {
         try {
+            console.log('[AUTH PAGE] Initializing with:', { formId, isRegistration });
+            
             // Set the form type before initializing the auth module
             const form = document.getElementById(formId);
             if (form) {
+                // Ensure the form type is set correctly
                 form.setAttribute('data-auth-type', isRegistration ? 'register' : 'login');
+                console.log('[AUTH PAGE] Set form type to:', form.getAttribute('data-auth-type'));
+            } else {
+                console.error('[AUTH PAGE] Form not found:', formId);
             }
 
-            this.authModule = new AuthModule(formId, isRegistration);
+            // Initialize auth module with explicit boolean
+            this.authModule = new AuthModule(formId, Boolean(isRegistration));
             this.setupErrorHandling();
             
             // Only check auth status on login page
@@ -22,6 +29,7 @@ export class AuthPage {
                 this.checkAuthStatus();
             }
         } catch (error) {
+            console.error('[AUTH PAGE] Initialization error:', error);
             ErrorHandler.handle(error);
         }
     }
