@@ -12,15 +12,21 @@ RUN apt-get update && apt-get install -y \
     libvips-dev \
     && rm -rf /var/lib/apt/lists/*
 
+# Set npm to use cache and be less verbose
+ENV npm_config_loglevel=error \
+    npm_config_progress=false \
+    npm_config_fund=false \
+    npm_config_audit=false \
+    npm_config_update_notifier=false
+
 # Copy package files
 COPY package*.json ./
 COPY backend/package*.json ./backend/
 
-# Install backend dependencies and rebuild sharp
+# Install backend dependencies with optimized flags
 RUN cd backend && \
-    npm install && \
-    npm uninstall sharp && \
-    npm install --platform=linux --arch=x64 sharp --save && \
+    npm ci --quiet --only=production && \
+    npm install sharp --platform=linux --arch=x64 --quiet && \
     cd ..
 
 # Copy compiled backend files

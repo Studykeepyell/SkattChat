@@ -1,23 +1,17 @@
 FROM nginx:alpine
 
-WORKDIR /usr/share/nginx/html
+# Copy static files
+COPY public /usr/share/nginx/html
 
-# Remove default nginx static assets
-RUN rm -rf ./*
-
-# Copy static assets
-COPY public/assets ./assets
-COPY public/styles ./styles
-COPY public/dist ./dist
-COPY public/index.html .
-COPY public/favicon.ico .
-
-# Create SSL directory
-RUN mkdir -p /etc/nginx/ssl
-
-# Copy nginx configuration
+# Copy SSL configuration
 COPY docker/prod/nginx.conf /etc/nginx/conf.d/default.conf
 
-EXPOSE 80
+# Create directory for certbot
+RUN mkdir -p /var/www/certbot
 
+# Expose ports
+EXPOSE 80
+EXPOSE 443
+
+# Start Nginx
 CMD ["nginx", "-g", "daemon off;"] 
