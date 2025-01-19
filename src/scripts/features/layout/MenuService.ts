@@ -46,23 +46,6 @@ export class MenuService {
         // Add the click listener
         newHamburgerMenu.addEventListener('click', handleClick);
 
-        document.addEventListener('click', (event) => {
-            const target = event.target as HTMLElement;
-            
-            // Ignore clicks on GIF-related elements
-            if (target.closest('.gif-container') || 
-                target.closest('.gif-preview') || 
-                target.closest('.gif-search-results') ||
-                target.closest('.gif-search-input')) {
-                return;
-            }
-
-            if (!newHamburgerMenu.contains(target) && !bubbleMenu.contains(target)) {
-                console.log('[MenuService] Clicking outside, closing menu');
-                bubbleMenu.classList.remove('active');
-            }
-        });
-
         console.log('[MenuService] Setup complete');
     }
 } 
