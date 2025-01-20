@@ -36,19 +36,6 @@ module.exports = {
                 exclude: /node_modules/
             },
             {
-                test: /\.css$/i,
-                use: [
-                    'style-loader',
-                    {
-                        loader: 'css-loader',
-                        options: {
-                            importLoaders: 1,
-                            modules: false
-                        }
-                    }
-                ]
-            },
-            {
                 test: /\.(png|jpg|gif|svg|woff|woff2|eot|ttf|otf)$/,
                 type: 'asset',
                 parser: {

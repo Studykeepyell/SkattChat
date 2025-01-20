@@ -6,7 +6,7 @@ import { join, dirname } from 'path';
 import { readFileSync, existsSync, mkdirSync } from 'fs';
 import { config } from 'dotenv';
 import { fileURLToPath } from 'url';
-
+import gameRoutes from './routes/gameRoutes.js';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
@@ -167,7 +167,7 @@ app.use('/api/users', userRoutes);
 app.use('/api/downloads', downloadRoutes);
 app.use('/api/chat/rooms', roomRoutes);
 app.use('/api/friends', friendRoutes);
-
+app.use('/api/game', gameRoutes);
 // Set up static routes AFTER API routes
 app.use(express.static(join(__dirname, '../../public')));
 app.use('/assets', express.static(join(__dirname, '../../public/assets')));

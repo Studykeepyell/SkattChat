@@ -342,6 +342,16 @@ export class ChatRoomService {
         const div = document.createElement('div');
         div.className = 'chat-room';
         div.setAttribute('data-room-id', roomData.roomId);
+        
+        // Set room type, defaulting to 'public' if not specified
+        const roomType = room.type || 'public';
+        div.setAttribute('data-room-type', roomType);
+        
+        console.log('[CHAT_ROOM] Creating room element:', {
+            roomId: roomData.roomId,
+            roomType,
+            isPrivate: roomType === 'private'
+        });
 
         const isCurrentRoom = this.socketHandler.getCurrentRoom() === roomData.roomId;
         if (isCurrentRoom) {
@@ -375,11 +385,8 @@ export class ChatRoomService {
                 member => member._id?.toString() !== currentUserId
             );
             
-            console.log('[CHAT_ROOM] Found other participant:', otherParticipant);
-            
             if (otherParticipant?.profileImage?.data) {
                 // Use the base64 data directly from the room data
-                console.log('[CHAT_ROOM] Using embedded profile image for:', otherParticipant.username);
                 if (otherParticipant.profileImage.data.startsWith('data:')) {
                     profileImg.src = otherParticipant.profileImage.data;
                 } else {
@@ -387,9 +394,7 @@ export class ChatRoomService {
                 }
             } else if (otherParticipant?._id) {
                 // Fallback to API endpoint if no embedded data
-                console.log('[CHAT_ROOM] Falling back to API endpoint for:', otherParticipant._id);
                 const imageUrl = `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.USER.PROFILE_IMAGE(otherParticipant._id.toString())}?${Date.now()}`;
-                console.log('[CHAT_ROOM] Profile image URL:', imageUrl);
                 profileImg.src = imageUrl;
             } else {
                 profileImg.src = this.DEFAULT_AVATAR;

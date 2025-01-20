@@ -1,0 +1,61 @@
+<!doctype html>
+<html>
+  <head>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Rhythm Game</title>
+    <script type="module" src="/dist/game/gamescreen.js" defer></script>
+  </head>
+  <body>
+    <div class="light x1"></div>
+    <div class="light x2"></div>
+    <div class="light x3"></div>
+    <div class="light x4"></div>
+    <div class="light x5"></div>
+    <div class="light x6"></div>
+    <div class="light x7"></div>
+    <div class="light x8"></div>
+    <div class="light x9"></div>
+
+    <!-- Settings Button -->
+    <button id="settingsBtn" class="settings-button">
+      <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="3"></circle>
+        <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+      </svg>
+    </button>
+
+    <!-- Settings Modal -->
+    <div id="settingsModal" class="settings-modal">
+      <div class="modal-content">
+        <h2>Game Settings</h2>
+        <button id="homeBtn" class="modal-button">Return to Home</button>
+        <button id="endBtn" class="modal-button">End Game</button>
+        <button id="resumeBtn" class="modal-button">Resume Game</button>
+      </div>
+    </div>
+
+    <div id="game-container" class="game-container">
+      <h1 id="songTitle">Song 1</h1>
+      <h1 id="countdown">3</h1>
+
+      <div id="track-container">
+        <div class="lane">
+          <div class="indicator">D</div>
+        </div>
+        <div class="lane">
+          <div class="indicator">F</div>
+        </div>
+        <div class="lane">
+          <div class="indicator">J</div>
+        </div>
+        <div class="lane">
+          <div class="indicator">K</div>
+        </div>
+      </div>
+    </div>
+
+    <div id="log-container"></div>
+    <div class="log-entry"></div>
+    <audio id="gameMusic" src="/dist/resources/songs/fingerdash.m4a"></audio>
+  </body>
+</html>

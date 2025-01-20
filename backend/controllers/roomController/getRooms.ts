@@ -1,14 +1,13 @@
 import { Request, Response } from 'express';
-import ChatRoom from '../../models/chatroom/ChatRoom.js';
+import { DefaultRoomService } from '../../services/defaultRoomService.js';
 
 interface AuthRequest extends Request {
-    user?: { id: string; username: string };
+    user?: { _id: string };
 }
 
 export const getRooms = async (req: AuthRequest, res: Response) => {
     try {
-        const userId = req.user?.id;
-
+        const userId = req.user?._id;
         if (!userId) {
             return res.status(401).json({
                 success: false,
@@ -16,22 +15,22 @@ export const getRooms = async (req: AuthRequest, res: Response) => {
             });
         }
 
-        const rooms = await ChatRoom.find({
-            members: userId
-        })
-        .populate('members', 'username profileImage')
-        .populate('hostId', 'username profileImage')
-        .sort({ lastMessageTime: -1 });
+        // Ensure user is in default room
+        await DefaultRoomService.ensureDefaultRoomExists();
+        await DefaultRoomService.addUserToDefaultRoom(userId.toString());
 
-        res.json({
+        // Get only rooms visible to this user
+        const rooms = await DefaultRoomService.getVisibleRooms(userId.toString());
+
+        return res.status(200).json({
             success: true,
             rooms
         });
     } catch (error) {
-        console.error('Get rooms error:', error);
-        res.status(500).json({
+        console.error('[ROOM_CONTROLLER] Error getting rooms:', error);
+        return res.status(500).json({
             success: false,
-            message: 'Failed to get rooms'
+            message: 'Error retrieving rooms'
         });
     }
 }; 

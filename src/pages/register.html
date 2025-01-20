@@ -10,8 +10,23 @@
     <div class="register-container">
         <h2>Register</h2>
         <form id="register-form" data-auth-type="register">
-            <input type="text" id="username" name="username" placeholder="Username" required>
-            <input type="password" id="password" name="password" placeholder="Password" required>
+            <div class="input-group">
+                <input type="text" id="username" name="username" placeholder="Username" required>
+                <button type="button" id="generate-username" class="generate-btn">Random</button>
+            </div>
+            <div class="input-group">
+                <input type="password" id="password" name="password" placeholder="Password" required>
+                <div class="password-requirements">
+                    <p>Password must contain:</p>
+                    <ul>
+                        <li id="length">8+ characters</li>
+                        <li id="uppercase">Uppercase letter</li>
+                        <li id="lowercase">Lowercase letter</li>
+                        <li id="number">Number</li>
+                        <li id="special">Special character</li>
+                    </ul>
+                </div>
+            </div>
             <button type="submit">Register</button>
         </form>
         <p>Have an account? <a href="login.html">Login here</a></p>

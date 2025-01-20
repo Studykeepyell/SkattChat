@@ -6,6 +6,10 @@ export interface IChatRoom extends Document {
     name: string;
     description?: string;
     hostId?: mongoose.Types.ObjectId;
+    profileImage?: {
+        data: string;
+        contentType: string;
+    };
     members: mongoose.Types.ObjectId[];
     memberProfiles: {
         userId: mongoose.Types.ObjectId;
@@ -59,6 +63,10 @@ const chatRoomSchema = new mongoose.Schema({
         required: function(this: any) { 
             return this.type === 'public'; 
         }
+    },
+    profileImage: {
+        data: String,
+        contentType: String
     },
     members: [{
         type: mongoose.Schema.Types.ObjectId,

@@ -1,12 +1,17 @@
 import { Request, Response } from 'express';
 import User from '../../models/User.js';
-import path from 'path';
+import { join, dirname } from 'path';
+import { fileURLToPath } from 'url';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 export const getProfileImage = async (req: Request, res: Response) => {
     try {
         const user = await User.findById(req.params.userId);
         if (!user || !user.profileImage || !user.profileImage.data) {
-            return res.sendFile(path.join(__dirname, '../../../public/assets/images/default-avatar.svg'));
+            const defaultImagePath = join(__dirname, '../../../public/assets/images/default-avatar.svg');
+            return res.sendFile(defaultImagePath);
         }
 
         // Extract the base64 data (remove the "data:image/webp;base64," prefix)

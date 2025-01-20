@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Rhythm Master</title>
+    <link rel="stylesheet" href="/dist/game/startscreen.css" />
+    <script src="startscreen.js" defer></script>
+  </head>
+  <body>
+    <button id="backButton" onclick="window.location.href='/dist/pages/explore.html'" class="back-button">
+      Back to Explore
+    </button>
+    <h1><img class="logo" src="/dist/resources/visuals/logo.png" alt="RhythMaster logo" /></h1>
+    <p class="instructions">Pick a song!</p>
+    <div class="song-menu">
+      <button data-song-index="0">MDK - Fingerdash</button>
+      <button data-song-index="1">Seven Nation Army</button>
+      <button data-song-index="-1">Basxhkzir - Only Alone</button>
+    </div>
+    <div class="gif-container">
+      <div class="music-gif">
+        <img src="/dist/resources/visuals/music.gif" alt="music gif" />
+      </div>
+      <div class="lightning-gif">
+        <img src="/dist/resources/visuals/lightning.gif" alt="lightning gif" />
+      </div>
+    </div>
+  </body>
+</html>

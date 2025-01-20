@@ -14,56 +14,41 @@ export interface ChatMessage {
 export interface ChatRoom {
     _id?: string;
     roomId?: string;
+    type?: 'private' | 'public';
     name?: string;
-    type: string;
-    members: Array<{
-        _id: string;
-        username: string;
-        profileImage?: {
-            data: string;
-            contentType: string;
-        };
-    }>;
+    roomName?: string;
     description?: string;
     hostId?: string;
-    memberProfiles: {
+    profileImage?: {
+        data: string;
+        contentType: string;
+    };
+    members?: any[];
+    memberProfiles?: {
         userId: string;
-        role: 'host' | 'moderator' | 'member';
         username?: string;
+        role?: 'host' | 'moderator' | 'member';
         profileImage?: {
             data: string;
             contentType: string;
         };
     }[];
     messages?: string[];
-    unreadCounts?: {
-        userId: string;
-        count: number;
-    }[];
     lastMessage?: {
         content: string;
         sender: string;
-        timestamp: Date;
+        timestamp: string;
     } | string;
+    lastMessageTime?: string;
+    activeUsers?: string[];
+    participants?: any[];
     settings?: {
         allowNewMembers: boolean;
         maxMembers: number;
         isModerated: boolean;
     };
-    createdAt?: Date;
-    updatedAt?: Date;
-    participants?: Array<{
-        _id: string;
-        username: string;
-        profileImage?: {
-            data: string;
-            contentType: string;
-        };
-    }>;
-    lastMessageTime?: string | Date;
-    isPrivate?: boolean;
-    roomName?: string;
-    activeUsers?: string[];
+    createdAt?: string;
+    updatedAt?: string;
 }
 
 export interface ChatParticipant {

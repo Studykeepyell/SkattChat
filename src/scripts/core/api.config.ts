@@ -2,10 +2,10 @@
 export const API_CONFIG = {
     BASE_URL: process.env.NODE_ENV === 'production' 
         ? 'https://skattchat.online' 
-        : '',
+        : 'http://localhost:3001',
     SOCKET_URL: process.env.NODE_ENV === 'production'
         ? 'https://skattchat.online'
-        : '',
+        : 'http://localhost:3001',
     ENDPOINTS: {
         AUTH: {
             LOGIN: '/api/auth/login',
@@ -19,7 +19,7 @@ export const API_CONFIG = {
             FETCH_ROOMS: '/api/chat/rooms',
             MARK_READ: (roomId: string) => `/api/chat/rooms/${roomId}/read`,
             JOIN_ROOM: (roomId: string) => `/api/chat/rooms/${roomId}/join`,
-            UPDATE_PROFILE_IMAGE: (roomId: string) => `/api/chat/rooms/${roomId}/profile-image`,
+            UPDATE_PROFILE_IMAGE: (roomId: string) => `/api/files/rooms/${roomId}/profile-image`,
             CREATE_ROOM: '/api/chat/rooms/create'
         },
         FRIEND_REQUESTS: {

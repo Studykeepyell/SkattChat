@@ -35,7 +35,9 @@ function createWindow(): void {
         width: 1200,
         height: 800,
         webPreferences: {
-            preload: path.join(__dirname, 'preload.bundle.cjs'),
+            preload: isDev 
+                ? path.join(__dirname, 'preload.bundle.cjs')
+                : path.join(app.getAppPath(), 'dist', 'preload.bundle.cjs'),
             nodeIntegration: false,
             contextIsolation: true,
             webSecurity: true,

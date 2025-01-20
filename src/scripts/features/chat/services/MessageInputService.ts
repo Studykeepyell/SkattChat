@@ -45,12 +45,7 @@ export class MessageInputService {
                                 </svg>
                             </button>
 
-                            <button type="button" class="file-button button-ghost" title="File">
-                                <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                                    <path d="M13 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"></path>
-                                    <polyline points="13 2 13 9 20 9"></polyline>
-                                </svg>
-                            </button>
+                           
 
                             <button type="button" class="scissors-button button-ghost" title="Scissors">
                                 <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -125,11 +120,11 @@ export class MessageInputService {
 
             if (window.matchMedia('(display-mode: standalone)').matches) {
                 // PWA or mobile - open in new tab
-                window.open(`/pages/video-call.html?roomId=${this.currentRoomId}`, '_blank');
+                window.open(`/dist/pages/video-call.html?roomId=${this.currentRoomId}`, '_blank');
             } else {
                 // Desktop - open in new window
                 window.open(
-                    `/pages/video-call.html?roomId=${this.currentRoomId}`,
+                    `/dist/pages/video-call.html?roomId=${this.currentRoomId}`,
                     'Video Call',
                     `width=${width},height=${height},left=${left},top=${top}`
                 );

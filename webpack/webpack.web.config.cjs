@@ -16,6 +16,13 @@ module.exports = merge(common, {
     account: path.resolve(process.cwd(), 'src/scripts/pages/AccountPage.ts'),
     explore: path.resolve(process.cwd(), 'src/scripts/pages/ExplorePage.ts'),
     videoCall: path.resolve(process.cwd(), 'src/scripts/pages/VideoCallPage.ts'),
+    
+    // Rhythm Game entries
+    'game/endscreen': path.resolve(process.cwd(), 'src/RythtmGame/endscreen.js'),
+    'game/gamescreen': path.resolve(process.cwd(), 'src/RythtmGame/gamescreen.js'),
+    'game/startscreen': path.resolve(process.cwd(), 'src/RythtmGame/startscreen.js'),
+    'game/levels': path.resolve(process.cwd(), 'src/RythtmGame/levels.js'),
+    
     // Download related entries
     downloadHandler: path.resolve(process.cwd(), 'public/download/download-handler.ts'),
     apiConfig: path.resolve(process.cwd(), 'public/download/api.config.ts'),
@@ -24,7 +31,8 @@ module.exports = merge(common, {
   },
   output: {
     path: path.resolve(process.cwd(), 'public/dist'),
-    filename: '[name].bundle.js',
+    filename: '[name].js',
+    chunkFilename: '[name].bundle.js',
     clean: true,
     publicPath: '/dist/',
     library: {
@@ -33,9 +41,27 @@ module.exports = merge(common, {
     }
   },
   optimization: {
+    runtimeChunk: 'single',
     splitChunks: {
       chunks: 'all',
-      name: 'vendors'
+      maxInitialRequests: Infinity,
+      minSize: 0,
+      cacheGroups: {
+        vendor: {
+          test: /[\\/]node_modules[\\/]/,
+          name: 'vendors',
+          chunks: 'all',
+          enforce: true
+        },
+        common: {
+          name: 'common',
+          minChunks: 2,
+          chunks: 'all',
+          priority: -20,
+          reuseExistingChunk: true,
+          enforce: true
+        }
+      },
     }
   },
   target: 'web',
@@ -48,27 +74,55 @@ module.exports = merge(common, {
           loader: 'ts-loader',
           options: {
             transpileOnly: true,
-            configFile: path.resolve(process.cwd(), 'tsconfig.json'),
-            compilerOptions: {
-              module: 'esnext',
-              moduleResolution: 'node'
-            }
-          }
+          },
         },
         exclude: /node_modules/,
       },
       {
+        test: /\.js$/,
+        exclude: /node_modules/,
+        use: {
+          loader: 'babel-loader',
+          options: {
+            presets: ['@babel/preset-env'],
+            plugins: [
+              '@babel/plugin-transform-runtime',
+              '@babel/plugin-transform-class-properties'
+            ],
+          },
+        },
+      },
+      {
         test: /\.css$/,
-        use: ['style-loader', 'css-loader'],
+        use: [
+          'style-loader',
+          {
+            loader: 'css-loader',
+            options: {
+              importLoaders: 1,
+              modules: false
+            }
+          }
+        ]
       },
       {
         test: /\.(png|svg|jpg|jpeg|gif)$/i,
         type: 'asset/resource',
+        generator: {
+          filename: 'resources/visuals/[name][ext]',
+        },
+      },
+      {
+        test: /\.(mp3|wav|m4a)$/i,
+        type: 'asset/resource',
+        generator: {
+          filename: 'resources/songs/[name][ext]',
+        },
       },
     ],
   },
   resolve: {
-    extensions: ['.tsx', '.ts', '.js', '.jsx'],
+    extensions: ['.tsx', '.ts', '.js', '.jsx', '.json'],
     alias: {
       '@': path.resolve(process.cwd(), 'src'),
       '@shared': path.resolve(process.cwd(), 'shared'),
@@ -79,22 +133,16 @@ module.exports = merge(common, {
   devServer: {
     static: {
       directory: path.join(process.cwd(), 'public'),
-      publicPath: '/'
+      publicPath: '/',
     },
     hot: true,
     liveReload: true,
     client: {
       overlay: true,
       progress: true,
-      reconnect: true
     },
     port: 3000,
-    historyApiFallback: {
-      rewrites: [
-        { from: /^\/pages\/.*/, to: '/pages/index.html' },
-        { from: /./, to: '/pages/login.html' }
-      ]
-    },
+    historyApiFallback: true,
     devMiddleware: {
       writeToDisk: true,
     },
@@ -108,7 +156,7 @@ module.exports = merge(common, {
       context: ['/api', '/socket.io'],
       target: 'http://localhost:3001',
       ws: true,
-      changeOrigin: true
+      changeOrigin: true,
     }],
     open: true,
     compress: true
@@ -138,7 +186,7 @@ module.exports = merge(common, {
     new HtmlWebpackPlugin({
       template: path.resolve(process.cwd(), 'src/pages/account.html'),
       filename: 'pages/account.html',
-      chunks: ['vendors', 'runtime', 'account']
+      chunks: ['runtime', 'vendors', 'common', 'account']
     }),
     new HtmlWebpackPlugin({
       template: path.resolve(process.cwd(), 'src/pages/settings.html'),
@@ -159,6 +207,26 @@ module.exports = merge(common, {
       template: path.resolve(process.cwd(), 'src/pages/video-call.html'),
       filename: 'pages/video-call.html',
       chunks: ['vendors', 'runtime', 'videoCall']
+    }),
+    new HtmlWebpackPlugin({
+      template: path.resolve(process.cwd(), 'src/RythtmGame/index.html'),
+      filename: 'game/index.html',
+      chunks: ['runtime', 'vendors', 'game/startscreen', 'game/styles/startscreen']
+    }),
+    new HtmlWebpackPlugin({
+      template: path.resolve(process.cwd(), 'src/RythtmGame/gamescreen.html'),
+      filename: 'game/gamescreen.html',
+      chunks: ['runtime', 'vendors', 'game/gamescreen']
+    }),
+    new HtmlWebpackPlugin({
+      template: path.resolve(process.cwd(), 'src/RythtmGame/endscreen.html'),
+      filename: 'game/endscreen.html',
+      chunks: ['runtime', 'vendors', 'game/endscreen', 'game/styles/endscreen']
+    }),
+    new HtmlWebpackPlugin({
+      template: path.resolve(process.cwd(), 'src/pages/explore.html'),
+      filename: 'pages/explore.html',
+      chunks: ['runtime', 'vendors', 'explore']
     }),
     new CopyWebpackPlugin({
       patterns: [
@@ -191,8 +259,8 @@ module.exports = merge(common, {
           noErrorOnMissing: true
         },
         {
-          from: path.resolve(process.cwd(), 'src/pages/explore.html'),
-          to: path.resolve(process.cwd(), 'public/dist/pages/explore.html'),
+          from: path.resolve(process.cwd(), 'src/RythtmGame/resources'),
+          to: path.resolve(process.cwd(), 'public/dist/resources'),
           noErrorOnMissing: true
         }
       ],

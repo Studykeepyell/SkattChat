@@ -7,7 +7,8 @@ module.exports = {
     },
     files: [
         "dist/**/*",
-        "package.json"
+        "package.json",
+        "!**/node_modules/**/*"
     ],
     extraMetadata: {
         main: "dist/main.bundle.cjs"

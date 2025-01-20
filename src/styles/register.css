@@ -12,9 +12,7 @@ body {
     align-items: center;
     height: 100vh;
     background: linear-gradient(135deg, #6A67CE, #4E4CB0);
-
-    /*Omar*/ 
-    color: #d1cbcb;
+    color: #333;
 }
 
 /* Container styling */
@@ -40,19 +38,84 @@ body {
     color: #555;
 }
 
+/* Input groups */
+.input-group {
+    position: relative;
+    margin-bottom: 1rem;
+}
+
 /* Input fields */
 #register-form input[type="text"],
 #register-form input[type="password"] {
     width: 100%;
     padding: 12px;
-    margin: 10px 0;
+    margin: 5px 0;
     border: 1px solid #ccc;
     border-radius: 4px;
     font-size: 1rem;
 }
 
+/* Generate username button */
+.generate-btn {
+    position: absolute;
+    right: 5px;
+    top: 50%;
+    transform: translateY(-50%);
+    padding: 8px 12px;
+    background-color: #4E4CB0;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 0.9rem;
+}
+
+.generate-btn:hover {
+    background-color: #6A67CE;
+}
+
+/* Password requirements */
+.password-requirements {
+    text-align: left;
+    margin-top: 5px;
+    font-size: 0.8rem;
+    color: #666;
+    background: #f8f8f8;
+    padding: 10px;
+    border-radius: 4px;
+}
+
+.password-requirements p {
+    margin-bottom: 5px;
+    color: #4E4CB0;
+    font-weight: bold;
+}
+
+.password-requirements ul {
+    list-style: none;
+    padding-left: 10px;
+}
+
+.password-requirements li {
+    margin: 3px 0;
+    position: relative;
+    padding-left: 20px;
+}
+
+.password-requirements li::before {
+    content: '✕';
+    position: absolute;
+    left: 0;
+    color: #ff4444;
+}
+
+.password-requirements li.valid::before {
+    content: '✓';
+    color: #4CAF50;
+}
+
 /* Submit button */
-#register-form button {
+#register-form button[type="submit"] {
     width: 100%;
     padding: 12px;
     background-color: #4E4CB0;
@@ -62,8 +125,9 @@ body {
     border-radius: 4px;
     cursor: pointer;
     transition: background 0.3s ease;
+    margin-top: 1rem;
 }
 
-#register-form button:hover {
+#register-form button[type="submit"]:hover {
     background-color: #6A67CE;
 }

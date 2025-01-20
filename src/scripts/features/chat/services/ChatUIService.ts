@@ -6,6 +6,7 @@ import { API_CONFIG } from '../../../core/api.config';
 import { ChatService } from './chatService';
 import { MessageService } from '../messageService';
 import { ChatMessage, ChatRoom } from '../types';
+import { HttpService } from '../../../core/httpService';
 
 export class ChatUIService {
     private messageInput: HTMLInputElement | null;
@@ -401,7 +402,22 @@ export class ChatUIService {
             } else {
                 // For non-private rooms, use room name and default image
                 headingTitle.textContent = room.name || room.roomName || 'General Chat';
-                profileImage.src = '/dist/assets/images/default-avatar.svg';
+                
+                // Set profile image for public rooms
+                if (room.profileImage?.data) {
+                    if (room.profileImage.data.startsWith('data:')) {
+                        profileImage.src = room.profileImage.data;
+                    } else {
+                        profileImage.src = `data:${room.profileImage.contentType || 'image/jpeg'};base64,${room.profileImage.data}`;
+                    }
+                } else {
+                    profileImage.src = '/dist/assets/images/default-avatar.svg';
+                }
+                
+                // Add click handler and styling for public rooms
+                profileImage.style.cursor = 'pointer';
+                profileImage.title = 'Click to change room image';
+                profileImage.onclick = () => this.handleProfileImageChange(room);
             }
 
             this.updateParticipantCount(activeUsers);
@@ -448,5 +464,94 @@ export class ChatUIService {
         }
         
         return 'Just now';
+    }
+
+    private async handleProfileImageChange(room: ChatRoom): Promise<void> {
+        const roomId = room._id || room.roomId;
+        if (!roomId) {
+            console.error('[CHAT_UI] Cannot update profile image: Room ID is undefined');
+            ErrorHandler.handle(new Error('Room ID is missing'));
+            return;
+        }
+
+        // Create file input
+        const fileInput = document.createElement('input');
+        fileInput.type = 'file';
+        fileInput.accept = 'image/*';
+        fileInput.style.display = 'none';
+        document.body.appendChild(fileInput);
+
+        // Handle file selection
+        fileInput.addEventListener('change', async (event) => {
+            const file = (event.target as HTMLInputElement).files?.[0];
+            if (!file) {
+                document.body.removeChild(fileInput);
+                return;
+            }
+
+            try {
+                console.log('[CHAT_UI] Uploading profile image for room:', roomId);
+                
+                const formData = new FormData();
+                formData.append('roomImage', file);
+                formData.append('roomId', roomId);
+
+                const response = await HttpService.upload(
+                    API_CONFIG.ENDPOINTS.CHAT.UPDATE_PROFILE_IMAGE(roomId),
+                    formData
+                );
+
+                if (response.success) {
+                    // Update room profile image in UI
+                    const banner = document.getElementById('chat-heading');
+                    if (banner) {
+                        const profileImg = banner.querySelector('img') as HTMLImageElement;
+                        if (profileImg) {
+                            // Add timestamp to force browser to reload the image
+                            profileImg.src = `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.CHAT.UPDATE_PROFILE_IMAGE(roomId)}?${Date.now()}`;
+                        }
+                    }
+
+                    // Update room list image
+                    const roomElement = document.querySelector(`[data-room-id="${roomId}"]`);
+                    if (roomElement) {
+                        const roomImg = roomElement.querySelector('img') as HTMLImageElement;
+                        if (roomImg) {
+                            // Add timestamp to force browser to reload the image
+                            roomImg.src = `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.CHAT.UPDATE_PROFILE_IMAGE(roomId)}?${Date.now()}`;
+                        }
+                    }
+
+                    // Keep all existing room data and just mark it as updated
+                    const updatedRoom = {
+                        ...room,
+                        profileImage: {
+                            ...room.profileImage,
+                            lastUpdated: Date.now()
+                        }
+                    };
+                    
+                    // Notify about room update
+                    EventBus.publish(Constants.EVENTS.ROOM_UPDATED, updatedRoom);
+                    
+                    // Notify socket to broadcast the update to other clients
+                    EventBus.publish(Constants.EVENTS.UPDATE_ROOM_PROFILE, {
+                        roomId,
+                        imageUrl: `${API_CONFIG.BASE_URL}${API_CONFIG.ENDPOINTS.CHAT.UPDATE_PROFILE_IMAGE(roomId)}`,
+                        room: updatedRoom
+                    });
+                } else {
+                    throw new Error(response.message || 'Failed to update room profile image');
+                }
+            } catch (error) {
+                console.error('[CHAT_UI] Error updating room profile image:', error);
+                ErrorHandler.handle(error);
+            } finally {
+                document.body.removeChild(fileInput);
+            }
+        });
+
+        // Trigger file selection
+        fileInput.click();
     }
 } 

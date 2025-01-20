@@ -2,7 +2,7 @@
 export const Constants = {
     API_URL: process.env.NODE_ENV === 'production' 
         ? 'https://skattchat.online' 
-        : 'http://localhost',
+        : 'http://localhost:3001',
     STORAGE_KEYS: {
         AUTH_TOKEN: 'authToken',
         USER_ID: 'userId',
@@ -71,5 +71,10 @@ export const Constants = {
     TIMEOUTS: {
         API_REQUEST: 30000,
         SOCKET_RECONNECT: 5000
+    },
+    ENDPOINTS: {
+        ROOM: {
+            PROFILE_IMAGE: (roomId: string) => `/api/files/rooms/${roomId}/profile-image`
+        }
     }
 }; 

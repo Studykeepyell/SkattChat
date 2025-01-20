@@ -71,7 +71,9 @@ const preloadConfig = {
     entry: path.resolve(process.cwd(), 'electron/preload.ts'),
     output: {
         filename: 'preload.bundle.cjs',
-        path: path.resolve(process.cwd(), 'dist'),
+        path: isDev 
+            ? path.resolve(process.cwd(), 'dist')
+            : path.resolve(process.cwd(), 'dist'),
         clean: false
     },
     module: {
