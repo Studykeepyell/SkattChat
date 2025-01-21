@@ -10,7 +10,7 @@
         "build:shared": "tsc -p shared/tsconfig.json && webpack --config webpack/webpack.shared.config.js",
         "build:electron": "cross-env NODE_ENV=production webpack --config webpack/webpack.electron.config.cjs",
         "build:web": "cross-env NODE_ENV=development webpack --config webpack/webpack.web.config.cjs",
-        "clean": "rimraf electron/dist/* dist/*",
+        "clean": "node scripts/clean.js",
         "prebuild": "node scripts/ensure-directories.js",
         "dev": "concurrently \"npm run watch:shared\" \"npm run dev:electron\" \"npm run dev:web\"",
         "dev:web": "cross-env NODE_ENV=development webpack serve --config webpack/webpack.web.config.cjs --open",
