@@ -31,13 +31,14 @@
         "analyze": "webpack-bundle-analyzer stats.json",
         "prepare": "husky install",
         "electron:build": "npm run build && electron-builder --config electron-builder.config.cjs",
-        "postinstall": "electron-builder install-app-deps"
+        "postinstall": "node -e \"process.env.SKIP_ELECTRON || require('child_process').execSync('electron-builder install-app-deps')\""
     },
     "dependencies": {
         "@types/react": "^19.0.2",
         "@types/react-dom": "^19.0.2",
         "axios": "^1.7.9",
         "cors": "^2.8.5",
+        "docker": "^1.0.0",
         "dotenv": "^16.4.7",
         "react": "^19.0.0",
         "react-dom": "^19.0.0",

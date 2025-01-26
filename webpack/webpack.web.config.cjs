@@ -5,6 +5,14 @@ const CopyWebpackPlugin = require('copy-webpack-plugin');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
 const webpack = require('webpack');
 
+const isDev = process.env.NODE_ENV === 'development';
+const API_URL = isDev ? 'http://localhost:3001' : 'https://skattchat.online';
+
+// Define environment variables for the frontend
+const FRONTEND_ENV = {
+  'process.env.NODE_ENV': JSON.stringify(process.env.NODE_ENV || 'development')
+};
+
 module.exports = merge(common, {
   mode: 'development',
   entry: {
@@ -31,14 +39,10 @@ module.exports = merge(common, {
   },
   output: {
     path: path.resolve(process.cwd(), 'public/dist'),
-    filename: '[name].js',
+    filename: '[name].bundle.js',
     chunkFilename: '[name].bundle.js',
-    clean: true,
     publicPath: '/dist/',
-    library: {
-      type: 'window',
-      name: '[name]'
-    }
+    clean: true
   },
   optimization: {
     runtimeChunk: 'single',
@@ -136,32 +140,29 @@ module.exports = merge(common, {
       publicPath: '/',
     },
     hot: true,
-    liveReload: true,
+    liveReload: false,
     client: {
       overlay: true,
       progress: true,
+      reconnect: true,
     },
     port: 3000,
     historyApiFallback: true,
     devMiddleware: {
       writeToDisk: true,
     },
-    watchFiles: {
-      paths: ['src/**/*'],
-      options: {
-        usePolling: true
-      }
-    },
     proxy: [{
       context: ['/api', '/socket.io'],
-      target: 'http://localhost:3001',
-      ws: true,
+      target: 'http://backend:3001',  // Use container name for internal routing
       changeOrigin: true,
+      ws: true
     }],
-    open: true,
-    compress: true
+    watchFiles: ['src/**/*'],
+    hot: 'only',
   },
   plugins: [
+    new webpack.HotModuleReplacementPlugin(),
+    new webpack.DefinePlugin(FRONTEND_ENV),
     // HTML templates for each page
     new HtmlWebpackPlugin({
       template: path.resolve(process.cwd(), 'src/pages/login.html'),

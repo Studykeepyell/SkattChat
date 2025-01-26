@@ -5,9 +5,7 @@ WORKDIR /usr/share/nginx/html
 # Remove default nginx static assets
 RUN rm -rf ./*
 
-# Copy static assets from context
-COPY public/assets ./assets
-COPY public/styles ./styles
+# Copy static assets and dist files
 COPY public/dist ./dist
 COPY public/index.html .
 COPY public/favicon.ico .

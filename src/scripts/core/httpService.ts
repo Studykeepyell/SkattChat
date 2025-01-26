@@ -17,9 +17,9 @@ export class HttpService {
         const token = this.authToken || localStorage.getItem(Constants.STORAGE_KEYS.AUTH_TOKEN);
         const cleanToken = token?.replace(/['"]+/g, '').trim();
         
-        console.log('[HTTP] Using token:', cleanToken ? `${cleanToken.substring(0, 20)}...` : 'no token');
-        
-        const headers: Record<string, string> = {};
+        const headers: Record<string, string> = {
+            'Accept': 'application/json'
+        };
         
         if (!isFormData) {
             headers['Content-Type'] = 'application/json';
@@ -27,7 +27,6 @@ export class HttpService {
         
         if (cleanToken) {
             headers['Authorization'] = cleanToken.startsWith('Bearer ') ? cleanToken : `Bearer ${cleanToken}`;
-            console.log('[HTTP] Authorization header set:', headers['Authorization'].substring(0, 30) + '...');
         }
         
         return headers;
@@ -35,11 +34,11 @@ export class HttpService {
 
     static async get(endpoint: string) {
         try {
-            console.log(`[HTTP] Making GET request to: ${endpoint}`);
             const response = await fetch(`${API_CONFIG.BASE_URL}${endpoint}`, {
                 method: 'GET',
                 headers: this.getHeaders(),
-                credentials: 'include'
+                credentials: 'include',
+                mode: 'cors'
             });
             return this.handleResponse(response, endpoint);
         } catch (error) {
@@ -54,7 +53,8 @@ export class HttpService {
                 method: 'POST',
                 headers: this.getHeaders(),
                 body: JSON.stringify(data),
-                credentials: 'include'
+                credentials: 'include',
+                mode: 'cors'
             });
             return this.handleResponse(response, endpoint);
         } catch (error) {
@@ -69,7 +69,8 @@ export class HttpService {
                 method: 'PUT',
                 headers: this.getHeaders(),
                 body: data ? JSON.stringify(data) : undefined,
-                credentials: 'include'
+                credentials: 'include',
+                mode: 'cors'
             });
             return await this.handleResponse(response, endpoint);
         } catch (error) {
@@ -80,12 +81,12 @@ export class HttpService {
 
     static async upload(endpoint: string, formData: FormData) {
         try {
-            console.log(`[HTTP] Making upload request to: ${endpoint}`);
             const response = await fetch(`${API_CONFIG.BASE_URL}${endpoint}`, {
                 method: 'POST',
-                headers: this.getHeaders(true), // Pass true for FormData
+                headers: this.getHeaders(true),
                 body: formData,
-                credentials: 'include'
+                credentials: 'include',
+                mode: 'cors'
             });
             return this.handleResponse(response, endpoint);
         } catch (error) {
@@ -95,40 +96,33 @@ export class HttpService {
     }
 
     private static async handleResponse(response: Response, endpoint?: string) {
-        const responseText = await response.text();
-        console.log('[HTTP] Response status:', response.status);
-        console.log('[HTTP] Response body:', responseText);
-
-        if (!response.ok) {
-            if ((response.status === 403 || response.status === 401) && !endpoint?.includes('/register')) {
-                console.error('[HTTP] Authentication failed. Token:', 
-                    localStorage.getItem(Constants.STORAGE_KEYS.AUTH_TOKEN)?.substring(0, 20) + '...');
-                
-                localStorage.removeItem(Constants.STORAGE_KEYS.AUTH_TOKEN);
-                localStorage.removeItem(Constants.STORAGE_KEYS.USER_ID);
-                localStorage.removeItem(Constants.STORAGE_KEYS.USER_PROFILE);
-                
-                if (endpoint?.includes('/login')) {
-                    throw new Error('Invalid credentials');
-                } else {
-                    window.location.href = '../pages/login.html';
-                    throw new Error('Authentication failed - redirecting to login');
-                }
-            }
-
-            try {
-                const errorData = JSON.parse(responseText);
-                throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
-            } catch (e) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
-        }
-
         try {
-            return responseText ? JSON.parse(responseText) : {};
+            const responseText = await response.text();
+            const data = responseText ? JSON.parse(responseText) : {};
+
+            if (!response.ok) {
+                if ((response.status === 403 || response.status === 401) && 
+                    !endpoint?.includes('/register') && 
+                    !endpoint?.includes('/login')) {
+                    // Only clear auth and redirect for non-auth endpoints
+                    localStorage.removeItem(Constants.STORAGE_KEYS.AUTH_TOKEN);
+                    localStorage.removeItem(Constants.STORAGE_KEYS.USER_ID);
+                    localStorage.removeItem(Constants.STORAGE_KEYS.USER_PROFILE);
+                    
+                    window.location.href = '/pages/login.html';
+                    throw new Error('Authentication failed');
+                }
+
+                throw new Error(data.error || `HTTP error! status: ${response.status}`);
+            }
+
+            return data;
         } catch (e) {
-            console.error('[HTTP] Failed to parse response:', e);
-            return {};
+            if (e instanceof SyntaxError) {
+                console.error('[HTTP] Failed to parse response:', e);
+                return {};
+            }
+            throw e;
         }
     }
 

@@ -1,6 +1,5 @@
-FROM node:20-slim
+FROM node:20-slim AS builder
 
-# Set working directory
 WORKDIR /app
 
 # Install build dependencies
@@ -10,45 +9,55 @@ RUN apt-get update && apt-get install -y \
     curl \
     libvips \
     libvips-dev \
-    wget \
     && rm -rf /var/lib/apt/lists/*
 
-# Set npm to use cache and be less verbose
+# Optimize npm settings
 ENV npm_config_loglevel=error \
     npm_config_progress=false \
     npm_config_fund=false \
     npm_config_audit=false \
-    npm_config_update_notifier=false
+    npm_config_update_notifier=false \
+    NODE_ENV=production
 
-# Copy package files
-COPY package*.json ./
-COPY backend/package*.json ./backend/
+# Copy only necessary files
+COPY ./backend/package*.json ./backend/
+COPY ./backend/dist ./backend/dist
 
-# Install backend dependencies with optimized flags
+# Install production dependencies
 RUN cd backend && \
-    npm ci --quiet --only=production && \
+    npm ci --omit=dev && \
     npm install sharp --platform=linux --arch=x64 --quiet && \
-    cd ..
+    npm cache clean --force
 
-# Copy compiled backend files
-COPY backend/dist ./backend/dist
+# Copy frontend static files
+COPY ./public ./public
 
-# Copy other necessary files
-COPY public ./public
+# Production stage
+FROM node:20-slim
 
-# Create directory for uploads
-RUN mkdir -p backend/uploads
+WORKDIR /app
 
-# Expose port for backend
-EXPOSE 3001
+# Install only the essential runtime dependencies
+RUN apt-get update && apt-get install -y \
+    curl \
+    libvips \
+    && rm -rf /var/lib/apt/lists/*
 
-# Set environment variables for production
 ENV NODE_ENV=production \
     SHARP_IGNORE_GLOBAL_LIBVIPS=1
 
-# Create a healthcheck
-HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-    CMD wget --no-verbose --tries=1 --spider http://localhost:${PORT}/api/health || exit 1
+# Copy only necessary files from builder
+COPY --from=builder /app/backend/dist ./backend/dist
+COPY --from=builder /app/public ./public
+COPY --from=builder /app/backend/package.json ./backend/
+COPY --from=builder /app/backend/node_modules ./backend/node_modules
 
-# Start production server
+# Create uploads directory
+RUN mkdir -p backend/uploads
+
+EXPOSE 3001
+
+HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
+    CMD curl -f http://localhost:3001/api/health || exit 1
+
 CMD ["node", "backend/dist/server.js"]

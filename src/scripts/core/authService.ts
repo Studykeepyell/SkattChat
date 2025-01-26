@@ -14,11 +14,14 @@ export class AuthService {
             if (response.success) {
                 this.setAuthData(response);
                 EventBus.publish(Constants.EVENTS.AUTH_CHANGE, { isAuthenticated: true });
+                
+                // Redirect to chat page after successful login
+                window.location.href = '/pages/chat.html';
                 return response;
             }
             throw new Error(response.message || 'Login failed');
         } catch (error) {
-            console.error('Login error:', error);
+            console.error('[AUTH] Login error:', error);
             throw error;
         }
     }
@@ -53,5 +56,25 @@ export class AuthService {
 
     static isAuthenticated(): boolean {
         return !!localStorage.getItem(Constants.STORAGE_KEYS.AUTH_TOKEN);
+    }
+
+    static async refreshToken() {
+        const refreshToken = localStorage.getItem(Constants.STORAGE_KEYS.REFRESH_TOKEN);
+        if (!refreshToken) return false;
+
+        try {
+            const response = await HttpService.post(API_CONFIG.ENDPOINTS.AUTH.REFRESH, {
+                refreshToken
+            });
+            
+            if (response.success) {
+                this.setAuthData(response);
+                return true;
+            }
+            return false;
+        } catch (error) {
+            console.error('[AUTH] Token refresh failed:', error);
+            return false;
+        }
     }
 } 

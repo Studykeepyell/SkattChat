@@ -1,17 +1,17 @@
 // Base API configuration used throughout the application
+const isDev = process.env.NODE_ENV === 'development';
+const baseUrl = isDev ? 'http://localhost:3001' : 'https://skattchat.online';
+
 export const API_CONFIG = {
-    BASE_URL: process.env.NODE_ENV === 'production' 
-        ? 'https://skattchat.online' 
-        : 'http://localhost:3001',
-    SOCKET_URL: process.env.NODE_ENV === 'production'
-        ? 'https://skattchat.online'
-        : 'http://localhost:3001',
+    BASE_URL: baseUrl,
+    SOCKET_URL: baseUrl,
     ENDPOINTS: {
         AUTH: {
             LOGIN: '/api/auth/login',
             REGISTER: '/api/auth/register',
             LOGOUT: '/api/auth/logout',
-            VERIFY: '/api/auth/verify'
+            VERIFY: '/api/auth/verify',
+            REFRESH: '/api/auth/refresh'
         },
         CHAT: {
             SEND: '/api/chat/send',
@@ -36,6 +36,7 @@ export const API_CONFIG = {
         }
     },
     HEADERS: {
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
+        'Accept': 'application/json'
     }
 }; 

@@ -1,9 +1,8 @@
 FROM node:20-slim
 
-# Set working directory
 WORKDIR /app
 
-# Install build dependencies
+# Install essential build dependencies
 RUN apt-get update && apt-get install -y \
     python3 \
     build-essential \
@@ -12,35 +11,32 @@ RUN apt-get update && apt-get install -y \
     libvips-dev \
     && rm -rf /var/lib/apt/lists/*
 
-# Set npm to use cache and be less verbose
+# Optimize npm settings
 ENV npm_config_loglevel=error \
     npm_config_progress=false \
     npm_config_fund=false \
     npm_config_audit=false \
-    npm_config_update_notifier=false
+    npm_config_update_notifier=false \
+    SHARP_IGNORE_GLOBAL_LIBVIPS=1 \
+    NODE_ENV=development
 
 # Copy package files
 COPY package*.json ./
 COPY backend/package*.json ./backend/
 
-# Install backend dependencies with optimized flags
-RUN cd backend && \
-    npm ci --quiet --only=production && \
-    npm install sharp --platform=linux --arch=x64 --quiet && \
-    cd ..
+# Install dependencies
+RUN npm install && \
+    cd backend && \
+    npm install && \
+    npm install sharp --platform=linux --arch=x64 --quiet
 
-# Copy compiled backend files
-COPY backend/dist ./backend/dist
+# Copy source files
+COPY . .
 
-# Copy other necessary files
-COPY public ./public
+# Build the application
+RUN npm run build:web
 
-# Expose port for backend
-EXPOSE 3001
+EXPOSE 3000 3001
 
-# Set environment variables for development
-ENV NODE_ENV=development \
-    SHARP_IGNORE_GLOBAL_LIBVIPS=1
-
-# Start development server with watch mode
-CMD ["node", "--watch", "backend/dist/server.js"] 
+# Start development servers
+CMD ["npm", "run", "dev"] 

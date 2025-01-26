@@ -1,3 +1,5 @@
+import { Constants } from './constants';
+
 export class ErrorHandler {
     static handle(error: any) {
         console.error('Application error:', error);
@@ -6,7 +8,11 @@ export class ErrorHandler {
             // Handle HTTP errors
             switch (error.response.status) {
                 case 401:
-                    this.handleUnauthorized();
+                    // Only handle unauthorized for non-auth pages
+                    if (!window.location.pathname.includes('/login') && 
+                        !window.location.pathname.includes('/register')) {
+                        this.handleUnauthorized();
+                    }
                     break;
                 case 403:
                     this.handleForbidden();
@@ -27,8 +33,13 @@ export class ErrorHandler {
     }
 
     private static handleUnauthorized() {
-        // Redirect to login page
-        window.location.href = '/pages/login.html';
+        localStorage.removeItem(Constants.STORAGE_KEYS.AUTH_TOKEN);
+        localStorage.removeItem(Constants.STORAGE_KEYS.USER_ID);
+        localStorage.removeItem(Constants.STORAGE_KEYS.USER_PROFILE);
+        
+        if (!window.location.pathname.includes('/login')) {
+            window.location.href = '/pages/login.html';
+        }
     }
 
     private static handleForbidden() {

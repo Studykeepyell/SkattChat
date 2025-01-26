@@ -6,6 +6,7 @@ electron/node_modules/
 temp
 .env
 .env.*
+!.env.example
 dist
 release
 .temp

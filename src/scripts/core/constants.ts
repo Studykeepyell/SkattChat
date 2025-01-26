@@ -1,8 +1,8 @@
+import { API_CONFIG } from './api.config';
+
 // Application-wide constants
 export const Constants = {
-    API_URL: process.env.NODE_ENV === 'production' 
-        ? 'https://skattchat.online' 
-        : 'http://localhost:3001',
+    API_URL: API_CONFIG.BASE_URL,
     STORAGE_KEYS: {
         AUTH_TOKEN: 'authToken',
         USER_ID: 'userId',
@@ -76,5 +76,6 @@ export const Constants = {
         ROOM: {
             PROFILE_IMAGE: (roomId: string) => `/api/files/rooms/${roomId}/profile-image`
         }
-    }
+    },
+    SOCKET_URL: API_CONFIG.SOCKET_URL
 }; 

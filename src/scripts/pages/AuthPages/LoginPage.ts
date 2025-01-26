@@ -1,4 +1,5 @@
 import { AuthPage } from './AuthPage';
+import { AuthService } from '../../core/authService';
 
 class LoginPage extends AuthPage {
     constructor() {
@@ -17,6 +18,12 @@ class LoginPage extends AuthPage {
 // Initialize the application when the DOM is ready
 function initializeLoginPage() {
     try {
+        // Redirect already authenticated users
+        if (AuthService.isAuthenticated()) {
+            window.location.href = '/pages/chat.html';
+            return;
+        }
+        
         new LoginPage();
     } catch (error) {
         console.error('Failed to initialize login page:', error);
